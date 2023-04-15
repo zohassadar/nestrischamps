@@ -1,30 +1,26 @@
 import fs from 'fs';
 import { globSync } from 'glob';
 
-const datadogRUMViewSnippet = `<script>
-(function(h,o,u,n,d) {
-  h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-  d=o.createElement(u);d.async=1;d.src=n
-  n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-})(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum.js','DD_RUM')
-window.DD_RUM.onReady(function() {
-  window.DD_RUM.init({
-	clientToken: 'pubc59962a6065abb8b530083bf912fa444',
-	applicationId: '5835e801-4ec9-45d0-94cb-d3d9f30f97fd',
-	site: 'datadoghq.com',
-	service: 'nestrischamps-view',
-	env: 'production',
-	version: '1.0.0',
-	sessionSampleRate: 100,
-	sessionReplaySampleRate: 0,
-	trackUserInteractions: /\\/replay\\//.test(document.location.pathname),
-	trackResources: true,
-	trackLongTasks: true,
-	defaultPrivacyLevel: 'allow',
-  });
+const datadogRUMViewSnippet = `
+<script src="https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum.js" type="text/javascript"></script>
+<script>
+window.DD_RUM && window.DD_RUM.init({
+  clientToken: 'pubc59962a6065abb8b530083bf912fa444',
+  applicationId: '5835e801-4ec9-45d0-94cb-d3d9f30f97fd',
+  site: 'datadoghq.com',
+  service: 'nestrischamps-view',
+  env: 'production',
+  version: '1.0.0',
+  sessionSampleRate: 100,
+  sessionReplaySampleRate: 0,
+  trackUserInteractions: /\\/replay\\//.test(document.location.pathname),
+  trackResources: true,
+  trackLongTasks: true,
+  defaultPrivacyLevel: 'allow',
+});
 
-  window.DD_RUM.startSessionReplayRecording();
-})
+window.DD_RUM &&
+window.DD_RUM.startSessionReplayRecording();
 </script>`;
 
 const layouts = {
@@ -98,7 +94,7 @@ for (const [name, layout] of Object.entries(layouts)) {
 		if (/www\.datadoghq-browser-agent\.com/.test(content)) continue; // don't double inject
 		fs.writeFileSync(
 			path,
-			content.replace('</head>', `${datadogRUMViewSnippet}</head>`)
+			content.replace('<head>', `<head>${datadogRUMViewSnippet}`)
 		);
 	} catch (err) {
 		console.error(
