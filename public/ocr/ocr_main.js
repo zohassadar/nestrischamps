@@ -192,13 +192,23 @@ rom_selector.addEventListener('change', evt => {
 		palette_selector.disabled = false;
 
 		if (rom_selector.value === 'classic') {
+			// Allows all color matching options
+			first_option.disabled = false;
 			first_option.hidden = false;
 		} else {
+			first_option.disabled = true;
 			first_option.hidden = true;
 
-			if (palettes.length <= 1) {
+			const valid_palettes = Object.keys(palettes);
+
+			if (palette_selector.value === '') {
+				// read from frame is not allowed!
+				palette_selector.value = valid_palettes[0]; // pick first palette as new default
+			}
+
+			// If there's a single valid palette, we hide the palette selector
+			if (valid_palettes.length <= 1) {
 				hideAndResetColorMatching();
-				palette_selector.value = Object.keys(palettes)[0];
 			}
 		}
 	}
@@ -410,8 +420,14 @@ conn_host.addEventListener('change', connect);
 conn_port.addEventListener('change', connect);
 
 clear_config.addEventListener('click', evt => {
-	localStorage.removeItem('config');
-	location.reload();
+	if (
+		confirm(
+			'You are about to remove your current configuration. You will have to recalibrate. Are you sure?'
+		)
+	) {
+		localStorage.removeItem('config');
+		location.reload();
+	}
 });
 
 save_game_palette.addEventListener('click', evt => {
@@ -547,7 +563,7 @@ video.addEventListener('click', async evt => {
 
 	setTimeout(() => {
 		alert(
-			'Rough calibration has been completed 🎉!\n\nYou now MUST inspect and fine tune all the fields (location and size) to make them pixel perfect.'
+			'Rough calibration has been completed 🎉!\n\nYou now MUST inspect and fine tune all the fields (location and size) to make them pixel perfect!'
 		);
 	}, 100); // sad (and gross) delay
 });

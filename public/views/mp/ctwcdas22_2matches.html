@@ -42,6 +42,10 @@
 				top: 403px;
 			}
 
+			.match.small .tetris_rate {
+				width: 50px;
+			}
+
 			.match.small .flag {
 				--border-size: 15;
 				border-image-slice: 15 15 15 15;
@@ -83,8 +87,8 @@
 					<div class="box runway">
 						<div class="header">RUNWAY</div>
 						<div class="content">
-							<div class="value">000000</div>
-							<div class="diff">000000</div>
+							<div class="value">0&#x202F;000&#x202F;000</div>
+							<div class="diff">0&#x202F;000&#x202F;000</div>
 							<div class="tetris_diff">000</div>
 						</div>
 					</div>
@@ -92,21 +96,21 @@
 					<div class="box projection">
 						<div class="header">PROJECTION</div>
 						<div class="content">
-							<div class="value">000000</div>
-							<div class="diff">000000</div>
+							<div class="value">0&#x202F;000&#x202F;000</div>
+							<div class="diff">0&#x202F;000&#x202F;000</div>
 							<div class="tetris_diff">000</div>
 						</div>
 					</div>
 
 					<div class="box runway transition">
 						<div class="header">TR RUNWAY</div>
-						<div class="content">0000000</div>
+						<div class="content">000&#x202F;000</div>
 					</div>
 
 					<div class="box score">
 						<div class="aligner">
-							<div class="header">0000000</div>
-							<div class="value diff">0000000</div>
+							<div class="header">0&#x202F;000&#x202F;000</div>
+							<div class="value diff">0&#x202F;000&#x202F;000</div>
 						</div>
 					</div>
 
@@ -143,19 +147,6 @@
 					<div class="box board"></div>
 				</div>
 			</template>
-			<template id="curtain">
-				<div class="curtain">
-					<br />
-					<br />
-					<br />
-					<img class="ctg" src="/images/ctwc_das.png" width="180" />
-					<br />
-					<br />
-					<br />
-					<br />
-					<img src="/brand/logo.v3.white.png" />
-				</div>
-			</template>
 		</div>
 		<!-- End Stream BG -->
 
@@ -173,7 +164,7 @@
 		<script type="module">
 			import '/views/bg.js';
 			import { peerServerOptions } from '/views/constants.js';
-			import { translate } from '/views/utils.js';
+			import { translate, readableScoreFomatter } from '/views/utils.js';
 			import CTMCompetitionPlayer from '/views/CTMCompetitionPlayer.js';
 			import Competition from '/views/competition.js';
 
@@ -200,13 +191,6 @@
 					player_node.classList.add(`p${player_num}`);
 					match_node.appendChild(player_node);
 
-					const curtain_template = document.getElementById('curtain');
-					const curtain_fragment = document.importNode(
-						curtain_template.content,
-						true
-					);
-					const curtain_node = curtain_fragment.querySelector('.curtain');
-
 					const player = new CTMCompetitionPlayer(
 						{
 							name: player_node.querySelector(`.name .header`),
@@ -221,7 +205,6 @@
 							drought: player_node.querySelector(`.drought .value`),
 							runway_game: player_node.querySelector(`.runway .value`),
 							video: player_node.querySelector(`video`),
-							curtain: curtain_node,
 
 							projection: player_node.querySelector(`.projection .value`),
 
@@ -250,6 +233,7 @@
 							preview_pixel_size: 2,
 							preview_align: 'cc',
 							stereo: translate([1, 2], [-1, 1], player_num),
+							format_score: v => readableScoreFomatter(v),
 						}
 					);
 
@@ -272,10 +256,11 @@
 					};
 
 					let rotate_animation_id;
-					const logo = curtain_node.querySelector('.ctg');
 
 					function rotateLogo() {
-						resetLogo();
+						const logo = player.curtain_container.querySelector('img.logo');
+
+						resetLogo(logo);
 
 						const start_ts = Date.now();
 						const duration = 850;
@@ -290,14 +275,14 @@
 							if (elapsed < duration) {
 								rotate_animation_id = window.requestAnimationFrame(steps);
 							} else {
-								resetLogo();
+								resetLogo(logo);
 							}
 						};
 
 						rotate_animation_id = window.requestAnimationFrame(steps);
 					}
 
-					function resetLogo() {
+					function resetLogo(logo) {
 						window.cancelAnimationFrame(rotate_animation_id);
 						logo.style.transform = null;
 					}

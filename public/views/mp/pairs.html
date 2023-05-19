@@ -65,7 +65,7 @@
 
 					<div class="box score">
 						<div class="header">PLAYER</div>
-						<div class="value">0000000</div>
+						<div class="value">0&#x202F;000&#x202F;000</div>
 					</div>
 
 					<div class="box running_trt"></div>
@@ -99,7 +99,7 @@
 			import Color from '/views/color.js';
 			import Gradient from '/views/gradient.js';
 			import { peerServerOptions } from '/views/constants.js';
-			import { translate } from '/views/utils.js';
+			import { translate, readableScoreFomatter } from '/views/utils.js';
 			import Player from '/views/Player.js';
 			import Competition from '/views/competition.js';
 
@@ -113,34 +113,15 @@
 				new Color(255, 165, 0),
 				'#fd0009'
 			);
-			const numberFormatter = new Intl.NumberFormat();
 
-			function updateDiffs() {
-				teams
-					.sort((t1, t2) =>
-						t2.score === t1.score ? t1.idx - t2.idx : t2.score - t1.score
-					)
-					.forEach((team, idx) => {
-						const color = color_gradient
-							.getColorAt(idx / (teams.length - 1))
-							.toHexString();
+			const pairs_re = /^[234]$/;
+			const pair_width = 447;
+			const players = [];
 
-						team.rank_node.style.color = color;
-						team.node.querySelector('.aligner .letter').textContent = `${
-							team.letter
-						} ${idx + 1}`;
-						team.node.querySelector('.aligner .letter').style.color = color;
+			let num_teams = 4;
 
-						if (idx > 0) {
-							const diff = team.score - teams[idx - 1].score;
-							team.rank_node.querySelector('.diff').textContent =
-								numberFormatter.format(diff);
-						} else {
-							team.rank_node.querySelector('.diff').textContent = '';
-						}
-
-						leaderboard_values.appendChild(team.rank_node);
-					});
+			if (pairs_re.test(QueryString.get('pairs'))) {
+				num_teams = parseInt(QueryString.get('pairs'), 10);
 			}
 
 			class Team {
@@ -173,27 +154,46 @@
 						0
 					);
 					this.node.querySelector('.aligner .sum').textContent =
-						numberFormatter.format(this.score);
+						readableScoreFomatter(this.score);
 					this.rank_node.querySelector('.score2').textContent =
-						numberFormatter.format(this.score);
+						readableScoreFomatter(this.score);
 					updateDiffs();
 				}
-			}
-
-			const pairs_re = /^[234]$/;
-			const pair_width = 447;
-			const players = [];
-
-			let num_teams = 4;
-
-			if (pairs_re.test(QueryString.get('pairs'))) {
-				num_teams = parseInt(QueryString.get('pairs'), 10);
 			}
 
 			const teams = Array(num_teams)
 				.fill()
 				.map((_, idx) => new Team(idx));
 
+			const rank_colors = teams.map((_, idx) =>
+				color_gradient.getColorAt(idx / (teams.length - 1)).toHexString()
+			);
+
+			function updateDiffs() {
+				teams
+					.sort((t1, t2) =>
+						t2.score === t1.score ? t1.idx - t2.idx : t2.score - t1.score
+					)
+					.forEach((team, idx) => {
+						const color = rank_colors[idx];
+
+						team.rank_node.style.color = color;
+						team.node.querySelector('.aligner .letter').textContent = `${
+							team.letter
+						} ${idx + 1}`;
+						team.node.querySelector('.aligner .letter').style.color = color;
+
+						if (idx > 0) {
+							const diff = team.score - teams[idx - 1].score;
+							team.rank_node.querySelector('.diff').textContent =
+								readableScoreFomatter(diff);
+						} else {
+							team.rank_node.querySelector('.diff').textContent = '';
+						}
+
+						leaderboard_values.appendChild(team.rank_node);
+					});
+			}
 			function setWinner(player_idx) {
 				const winning_team = players[player_idx]?.team;
 
@@ -251,7 +251,7 @@
 								preview_pixel_size: 2,
 								preview_align: 'tr',
 								stereo: translate([0, num_teams - 1], [-1, 1], team_idx),
-								format_score: v => numberFormatter.format(v),
+								format_score: v => readableScoreFomatter(v),
 							}
 						);
 

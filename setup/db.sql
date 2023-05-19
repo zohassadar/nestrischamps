@@ -17,6 +17,7 @@ CREATE TABLE twitch_users (
 	city VARCHAR( 100 ),
 	interests VARCHAR ( 300 ) default '',
 	style play_style default 'das',
+	timezone TEXT NOT NULL CHECK (now() AT TIME ZONE timezone IS NOT NULL) DEFAULT 'UTC',
 
 	created_on timestamptz NOT NULL,
 	last_login timestamptz NOT NULL
@@ -43,17 +44,20 @@ CREATE TABLE scores (
 	transition INTEGER DEFAULT NULL,
 	num_frames INTEGER DEFAULT 0,
 	frame_file VARCHAR(256) DEFAULT '',
+	competition BOOLEAN default false,
 	manual BOOLEAN default false,
-	timezone TEXT NOT NULL CHECK (now() AT TIME ZONE timezone IS NOT NULL) DEFAULT 'UTC',
 
 	CONSTRAINT fk_player
 		FOREIGN KEY(player_id)
 			REFERENCES twitch_users(id)
 );
 
-CREATE UNIQUE INDEX IDX_scores_manual_scores on scores (player_id, start_level) where manual;
-CREATE INDEX IDX_scores_player_datetime ON scores (player_id, datetime);
+CREATE UNIQUE INDEX IDX_scores_manual_scores on scores (player_id, start_level, competition) where manual;
+CREATE INDEX IDX_scores_player_level_competition ON scores (player_id, start_level, competition);
 CREATE INDEX IDX_scores_player_score ON scores (player_id, score);
+CREATE INDEX IDX_scores_player_session ON scores (player_id, session);
+CREATE INDEX IDX_scores_player_level ON scores (player_id, start_level);
+CREATE INDEX IDX_scores_player_datetime ON scores (player_id, datetime);
 CREATE INDEX IDX_scores_datetime ON scores (datetime);
 
 CREATE TABLE sessions (
@@ -67,8 +71,8 @@ ALTER TABLE sessions ADD CONSTRAINT session_pkey PRIMARY KEY (sid) NOT DEFERRABL
 
 CREATE INDEX IDX_session_expire ON sessions (expire);
 
-INSERT INTO twitch_users VALUES (1, 'player1', 'player1@nestrischamps.com', 'PLAYER1', '', '', 'Player 1', '', NOW(), '', '', '', 'das', NOW(), NOW());
-INSERT INTO twitch_users VALUES (2, 'player2', 'player2@nestrischamps.com', 'PLAYER2', '', '', 'Player 2', '', NOW(), '', '', '', 'das', NOW(), NOW());
-INSERT INTO twitch_users VALUES (3, 'player3', 'player3@nestrischamps.com', 'PLAYER3', '', '', 'Player 3', '', NOW(), '', '', '', 'das', NOW(), NOW());
-INSERT INTO twitch_users VALUES (4, 'player4', 'player4@nestrischamps.com', 'PLAYER4', '', '', 'Player 4', '', NOW(), '', '', '', 'das', NOW(), NOW());
+INSERT INTO twitch_users VALUES (1, 'player1', 'player1@nestrischamps.io', 'PLAYER1', '', '', 'Player 1', '', NOW(), '', '', '', 'das', 'UTC', NOW(), NOW());
+INSERT INTO twitch_users VALUES (2, 'player2', 'player2@nestrischamps.io', 'PLAYER2', '', '', 'Player 2', '', NOW(), '', '', '', 'das', 'UTC', NOW(), NOW());
+INSERT INTO twitch_users VALUES (3, 'player3', 'player3@nestrischamps.io', 'PLAYER3', '', '', 'Player 3', '', NOW(), '', '', '', 'das', 'UTC', NOW(), NOW());
+INSERT INTO twitch_users VALUES (4, 'player4', 'player4@nestrischamps.io', 'PLAYER4', '', '', 'Player 4', '', NOW(), '', '', '', 'das', 'UTC', NOW(), NOW());
 

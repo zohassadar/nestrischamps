@@ -1,15 +1,19 @@
+import { StatsD } from 'hot-shots';
+
 import middlewares from '../modules/middlewares.js';
 import layouts from '../modules/layouts.js';
 import UserDAO from '../daos/UserDAO.js';
 import Replay from '../domains/Replay.js';
 import Connection from '../modules/Connection.js';
 
+const statsdClient = new StatsD();
+
 export default function init(server, wss) {
 	server.on('upgrade', async function (request, socket, head) {
 		console.log(`WS: ${request.url}`);
 
 		// nestrischamps URL, parsed
-		request.nc_url = new URL(request.url, 'ws://nestrischamps');
+		request.nc_url = new URL(request.url, 'ws://nestrischamps.io');
 
 		let m = request.nc_url.pathname.match(
 			/^\/ws\/replay\/([a-z0-9_-]+)\/((\d+)(-(\d+)){0,7})/
@@ -206,6 +210,11 @@ export default function init(server, wss) {
 			return;
 		}
 
+		statsdClient.increment('ntc.websocket.connection', 1, 1, {
+			is_secret_view: request.is_secret_view ? 1 : 0,
+			is_secret_producer: request.is_secret_producer ? 1 : 0,
+		});
+
 		console.log(
 			'WS: Connection!',
 			request.url,
@@ -247,14 +256,20 @@ export default function init(server, wss) {
 					target_user,
 				});
 			} else {
-				user.setProducerConnection(connection, { match: false });
+				user.setProducerConnection(connection, {
+					match: false,
+					competition: request.nc_url.searchParams.get('competition') === '1',
+				});
 			}
 		} else if (pathname.startsWith('/ws/room/admin')) {
 			console.log(`MatchRoom: ${user.login}: Admin connected`);
 			user.getHostRoom().setAdmin(connection);
 		} else if (pathname.startsWith('/ws/room/producer')) {
 			console.log(`PrivateRoom: ${user.login}: Producer connected`);
-			user.setProducerConnection(connection, { match: false });
+			user.setProducerConnection(connection, {
+				match: false,
+				competition: request.nc_url.searchParams.get('competition') === '1',
+			});
 		} else if ((m = pathname.match(/^\/ws\/room\/u\/([a-z0-9_-]+)\//))) {
 			const target_user = await UserDAO.getUserByLogin(m[1]);
 
@@ -263,44 +278,53 @@ export default function init(server, wss) {
 			);
 
 			if (!target_user) {
+				// Should not happen since we check for the target user at the upgtrade step
 				// TODO: do at Page or Upgrade level, not at websocket level
 				// Although websocket is closest to resolution
 				// Page level *could* cause race conditions...
 				// Both Page level and Upgrade level could check for target User and throw 404s
 				connection.kick('invalid_target');
-			} else {
-				const connection_type = pathname.split('/')[5];
+				return;
+			}
 
-				console.log(`Switching on ${connection_type}`);
+			const connection_type = pathname.split('/')[5];
 
-				switch (connection_type) {
-					case 'admin': {
-						console.log(`MatchRoom: ${target_user.login}: Admin connected`);
-						target_user.getHostRoom().setAdmin(connection);
-						break;
-					}
-					case 'producer': {
-						console.log(
-							`MatchRoom: ${target_user.login}: Producer ${user.login} connected`
-						);
-						user.setProducerConnection(connection, {
-							match: true,
-							target_user,
-						});
-						break;
-					}
-					case 'view': {
-						console.log(
-							`MatchRoom: ${target_user.login}: View connected, owned by ${user.login}`
-						);
-						// TODO: this view should not take over video feed!
-						target_user.getHostRoom().addView(connection, false);
-						break;
-					}
-					default: {
-						console.log(`WS: Invalid URL`);
-						connection.kick('invalid_url');
-					}
+			console.log(`Switching on ${connection_type}`);
+
+			switch (connection_type) {
+				/*
+				// Ony allow access to admin page of target user's room when a permission system is implemented
+				// The target user must have authorized the current user
+				case 'admin': {
+					console.log(`MatchRoom: ${target_user.login}: Admin connected`);
+					target_user.getHostRoom().setAdmin(connection);
+					break;
+				}
+				/** */
+
+				case 'producer': {
+					console.log(
+						`MatchRoom: ${target_user.login}: Producer ${user.login} connected`
+					);
+					user.setProducerConnection(connection, {
+						match: true,
+						target_user,
+					});
+					break;
+				}
+
+				case 'view': {
+					console.log(
+						`MatchRoom: ${target_user.login}: View connected, owned by ${user.login}`
+					);
+					// TODO: this view should not take over video feed!
+					target_user.getHostRoom().addView(connection, false);
+					break;
+				}
+
+				default: {
+					console.log(`WS: Invalid URL`);
+					connection.kick('invalid_url');
 				}
 			}
 		} else {

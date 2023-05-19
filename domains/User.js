@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import { EventEmitter } from 'node:events';
 import PrivateRoom from './PrivateRoom.js';
 import MatchRoom from './MatchRoom.js';
 import Producer from './Producer.js';
@@ -8,12 +8,24 @@ import { RefreshingAuthProvider } from '@twurple/auth';
 import { ChatClient } from '@twurple/chat';
 
 const USER_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes before we destroy user! TODO: Make tunable
+const LEAVE_ROOM_TIMEOUT = 30 * 1000; // allow 30s to reconnect
 
 function is_spam(msg) {
 	if (/bigfollows\s*.\s*com/i.test(msg)) return true;
 
 	return /become famous/i.test(msg) && /buy/i.test(msg);
 }
+
+// Singleton Auth Provider for Twitch chats
+class TwitchRefreshEmitter extends EventEmitter {}
+const twitchRefreshEmitter = new TwitchRefreshEmitter();
+const authProvider = new RefreshingAuthProvider({
+	clientId: process.env.TWITCH_CLIENT_ID,
+	clientSecret: process.env.TWITCH_CLIENT_SECRET,
+	onRefresh: (userId, args) => {
+		twitchRefreshEmitter.emit(userId, args);
+	},
+});
 
 class User extends EventEmitter {
 	constructor(user_object) {
@@ -42,6 +54,8 @@ class User extends EventEmitter {
 
 		// match room links this user to the host room of another user
 		this.match_room = null;
+		this.match_room_join_ts = -1;
+		this.leave_room_to = null;
 
 		// keep track of all socket for the user
 		// dangerous, could lead to memory if not managed well
@@ -51,16 +65,20 @@ class User extends EventEmitter {
 		this._handleProducerMessage = this._handleProducerMessage.bind(this);
 		this._handleProducerClose = this._handleProducerClose.bind(this);
 		this._handleMatchRoomClose = this._handleMatchRoomClose.bind(this);
+		this._onTwitchTokenRefreshed = this._onTwitchTokenRefreshed.bind(this);
 
 		this.producer.on('message', this._handleProducerMessage);
-		this.producer.once('close', this._handleProducerClose);
+		this.producer.on('close', this._handleProducerClose);
 
 		this.checkScheduleDestroy();
 	}
 
-	setProducerConnection(conn, { match = false, target_user = null }) {
+	setProducerConnection(
+		conn,
+		{ match = false, competition = false, target_user = null }
+	) {
 		this.addConnection(conn);
-		this.producer.setConnection(conn, { match });
+		this.producer.setConnection(conn, { match, competition });
 
 		if (match) {
 			this.joinMatchRoom(target_user);
@@ -86,8 +104,8 @@ class User extends EventEmitter {
 		const new_room = host_user.getHostRoom();
 
 		if (new_room === this.match_room) {
-			// this forces a redispatch of the peer ids
-			this.match_room.addProducer(this);
+			this.leave_room_to = clearTimeout(this.leave_room_to); // just in case
+			new_room.addProducer(this); // this forces a redispatch of the peer ids
 			return;
 		}
 
@@ -95,23 +113,28 @@ class User extends EventEmitter {
 			this.leaveMatchRoom();
 		}
 
-		this.match_room = host_user.getHostRoom();
+		this.match_room_join_ts = Date.now();
+		this.match_room = new_room;
 		this.match_room.addProducer(this);
 		this.match_room.once('close', this._handleMatchRoomClose);
 	}
 
 	leaveMatchRoom() {
+		this.leave_room_to = clearTimeout(this.leave_room_to);
+
 		if (this.match_room) {
 			this.match_room.off('close', this._handleMatchRoomClose);
 			this.match_room.removeProducer(this);
 			this.match_room = null;
+			this.match_room_join_ts = -1;
 		}
 	}
 
 	_handleMatchRoomClose() {
-		this.match_room = null;
+		this.leaveMatchRoom();
 
 		if (this.producer.isMatchConnection()) {
+			this.match_room_join_ts = -1;
 			this.producer.kick('match_room_closed');
 		}
 	}
@@ -155,8 +178,6 @@ class User extends EventEmitter {
 			return;
 		}
 
-		console.log('isMatchConnection', this.getProducer().isMatchConnection());
-
 		if (!this.getProducer().isMatchConnection()) {
 			this.getProducer().send([
 				'setViewPeerId',
@@ -189,9 +210,16 @@ class User extends EventEmitter {
 
 	_handleProducerClose() {
 		if (this.match_room) {
-			this.match_room.removeProducer(this);
-			this.match_room = null;
+			this._scheduleLeaveRoom();
 		}
+	}
+
+	_scheduleLeaveRoom() {
+		this.leave_room_to = clearTimeout(this.leave_room_to);
+		this.leave_room_to = setTimeout(
+			() => this.leaveMatchRoom(),
+			LEAVE_ROOM_TIMEOUT
+		);
 	}
 
 	send(msg) {
@@ -211,7 +239,19 @@ class User extends EventEmitter {
 
 		if (this.chat_client) {
 			this.chat_client.quit();
+			delete this.chat_client;
+			twitchRefreshEmitter.removeListener(
+				this.id,
+				this._onTwitchTokenRefreshed
+			);
 		}
+	}
+
+	_onTwitchTokenRefreshed({ accessToken, refreshToken, expiresIn }) {
+		// How to update the session object(s) directly?
+		this.token.access_token = accessToken;
+		this.token.refresh_token = refreshToken;
+		this.token.expires_in = expiresIn;
 	}
 
 	async _connectToTwitchChat() {
@@ -226,24 +266,12 @@ class User extends EventEmitter {
 			obtainmentTimestamp: 0,
 		};
 
-		const authProvider = new RefreshingAuthProvider(
-			{
-				clientId: process.env.TWITCH_CLIENT_ID,
-				clientSecret: process.env.TWITCH_CLIENT_SECRET,
-				onRefresh: args => {
-					const { accessToken, refreshToken, expiresIn } = args;
-
-					// How to update the session object(s) directly?
-					this.token.access_token = accessToken;
-					this.token.refresh_token = refreshToken;
-					this.token.expires_in = expiresIn;
-				},
-			},
-			twurpleToken
-		);
+		twitchRefreshEmitter.addListener(this.id, this._onTwitchTokenRefreshed);
+		authProvider.addUser(this.id, twurpleToken, [`chat:${this.id}`]);
 
 		this.chat_client = new ChatClient({
 			authProvider,
+			authIntents: [`chat:${this.id}`],
 			channels: [this.login],
 			readOnly: true,
 			logger: {

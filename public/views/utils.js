@@ -1,4 +1,7 @@
-if (!CanvasRenderingContext2D.prototype.clear) {
+if (
+	typeof CanvasRenderingContext2D !== 'undefined' &&
+	!CanvasRenderingContext2D.prototype.clear
+) {
 	CanvasRenderingContext2D.prototype.clear = function (preserveTransform) {
 		if (preserveTransform) {
 			this.save();
@@ -47,4 +50,26 @@ export function translate(iRange, oRange, value) {
 	// not adding validation of ranges and value... Assume callers have done it
 	const ratio = (value - iRange[0]) / (iRange[1] - iRange[0]);
 	return oRange[0] + ratio * (oRange[1] - oRange[0]);
+}
+
+export function readableScoreFomatter(score, space_pad = 0, zero_pad = 0) {
+	if (isNaN(score)) score = 0;
+
+	const is_negative = score < 0;
+
+	score = `${Math.abs(score)}`.padStart(zero_pad, '0');
+
+	let len = score.length;
+	const parts = [];
+
+	while (len) {
+		const start = Math.max(0, len - 3);
+		parts.unshift(score.slice(start, len));
+		len = start;
+	}
+
+	return `${is_negative ? '-' : ''}${parts.join('\u202F')}`.padStart(
+		space_pad,
+		'\u00A0'
+	); // narrow non-breakable space
 }

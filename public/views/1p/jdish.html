@@ -27,8 +27,8 @@
 				left: 164px;
 			}
 
+			.right .pbs,
 			.right .score,
-			.right .runway,
 			.right .lines,
 			.right .level,
 			.right .efficiency,
@@ -53,8 +53,8 @@
 				right: 164px;
 			}
 
+			.left .pbs,
 			.left .score,
-			.left .runway,
 			.left .lines,
 			.left .level,
 			.left .efficiency,
@@ -64,11 +64,15 @@
 			}
 
 			.box {
-				font-size: 24px;
-				line-height: 24px;
-				width: 120px;
+				width: 178px;
 				height: 68px;
 				padding: 6px;
+				line-height: 20px;
+			}
+
+			.box .header {
+				font-size: 16px;
+				padding: 0 0 12px 0;
 			}
 
 			.box .content {
@@ -82,54 +86,78 @@
 				padding: 0;
 			}
 
+			.pbs,
+			.next_piece,
+			.drought {
+				top: 0;
+			}
+
+			.score {
+				top: 189px;
+				height: 246px;
+			}
+
 			.board {
 				--border-size: 12;
 				padding: 3px;
 				width: 395px;
 				height: 795px;
-				top: 90px;
+				top: 96px;
 			}
 
 			.next_piece {
-				width: 140px;
-				height: 66px;
-				top: 0;
-				padding-top: 3px;
-				padding-left: 3px;
+				width: 143px;
+				height: 75px;
+			}
+
+			.running_trt,
+			.tetris_rate {
+				top: 912px;
 			}
 
 			.running_trt {
 				--border-size: 15;
-				top: 906px;
 				width: 395px;
 				height: 114px;
 			}
 
-			.score,
+			.pbs,
 			.runway {
-				top: 90px;
+				color: #aaa;
+			}
+
+			.pbs,
+			.score {
 				width: 284px;
 			}
 
-			.score {
-				top: 0px;
-				height: 158px;
+			.runway {
+				width: unset;
 			}
 
-			.score .content.top {
+			.pbs {
+				top: 0px;
+				height: 156px;
+			}
+
+			.pbs .content,
+			.score .content {
 				padding-bottom: 0.75em;
 			}
 
 			.runway.transition {
-				top: 191px;
+				top: 278px;
 			}
 
 			.runway.game {
-				top: 292px;
+				top: 379px;
+			}
+
+			.box .runway .content {
+				font-size: 24px;
 			}
 
 			.tetris_rate {
-				top: 906px;
 				height: 102px;
 			}
 
@@ -138,26 +166,26 @@
 			}
 
 			.efficiency {
-				top: 805px;
+				top: 811px;
 			}
 
 			.lines {
-				top: 393px;
+				top: 468px;
 			}
 
 			.level {
-				top: 494px;
-				width: 80px;
+				top: 569px;
+				width: 120px;
 			}
 
 			.drought {
-				top: 0;
-				height: 66px;
-				padding: 15px 21px 18px 21px;
-				width: 92px;
+				padding-top: 5px;
+				height: 64px;
+				width: 120px;
 			}
 
 			.drought .header {
+				line-height: 23px;
 				padding-bottom: 0.5em;
 			}
 
@@ -185,30 +213,39 @@
 					<div class="content">000</div>
 				</div>
 
-				<div class="box runway game">
-					<div class="header">LV29 RUNWAY</div>
-					<div class="content">0</div>
-				</div>
-
-				<div class="box runway transition">
-					<div class="header">TRANSITION RUNWAY</div>
-					<div class="content">0</div>
+				<div class="box pbs">
+					<div class="pb">
+						<div class="header">PERSONAL BEST</div>
+						<div class="content">0&#x202F;000&#x202F;000</div>
+					</div>
+					<div class="top">
+						<div class="header">SESSION BEST</div>
+						<div class="content">0&#x202F;000&#x202F;000</div>
+					</div>
 				</div>
 
 				<div class="box score">
-					<div class="header">TOP</div>
-					<div class="content top">0</div>
-					<div class="header">SCORE</div>
-					<div class="content score">0</div>
+					<div class="current">
+						<div class="header">SCORE</div>
+						<div class="content">0&#x202F;000&#x202F;000</div>
+					</div>
+					<div class="runway transition">
+						<div class="header">TRANSITION RUNWAY</div>
+						<div class="content">0</div>
+					</div>
+					<div class="runway game">
+						<div class="header">LV29 RUNWAY</div>
+						<div class="content">0&#x202F;000&#x202F;000</div>
+					</div>
 				</div>
 
 				<div class="box tetris_rate">
-					<div class="header">TRT</div>
+					<div class="header">TETRIS RATE</div>
 					<div class="content">---</div>
 				</div>
 
 				<div class="box efficiency">
-					<div class="header">EFF</div>
+					<div class="header">EFFICIENCY</div>
 					<div class="content">---</div>
 				</div>
 
@@ -216,7 +253,7 @@
 				<div class="box next_piece"></div>
 
 				<div class="box drought">
-					<div class="header">DRT</div>
+					<div class="header">DROUGHT</div>
 					<div class="content">99</div>
 				</div>
 
@@ -238,6 +275,7 @@
 			import QueryString from '/js/QueryString.js';
 			import '/views/bg.js';
 			import Connection from '/js/connection.js';
+			import { readableScoreFomatter } from '/views/utils.js';
 			import Player from '/views/Player.js';
 			import { peerServerOptions } from '/views/constants.js';
 
@@ -247,15 +285,49 @@
 				document.querySelector('#playing_fields').classList.add('right');
 			}
 
-			const numberFormatter = new Intl.NumberFormat();
-
 			window.onload = function () {
+				let pb_score = 0;
+				let top_score = 0;
+
+				function getPB() {
+					let m;
+
+					if (
+						(m = location.pathname.match(
+							/^\/view\/[a-z0-9_-]+\/([a-zA-Z0-9]+)$/
+						))
+					) {
+						fetch(
+							`${location.protocol}//${location.host}/stats/get_stats/${m[1]}`,
+							{
+								cache: 'no-cache',
+								headers: {
+									'Cache-Control': 'no-cache',
+								},
+								// mode: 'no-cors'
+							}
+						)
+							.then(response => response.json())
+							.catch(err => 0)
+							.then(data => {
+								pb_score = data?.high_scores?.overall[0]?.score || 0;
+								top_score = data?.high_scores?.session[0]?.score || 0;
+
+								player.dom.pb.textContent = readableScoreFomatter(pb_score);
+								player.dom.top.textContent = readableScoreFomatter(top_score);
+							});
+					}
+				}
+
 				const player = new Player(
 					{
-						score: document.querySelector(`.score .content.score`),
-						top: document.querySelector(`.score .content.top`),
-						runway_tr: document.querySelector(`.runway.transition .content`),
-						runway_game: document.querySelector(`.runway.game .content`),
+						pb: document.querySelector(`.pbs .pb .content`),
+						top: document.querySelector(`.pbs .top .content`),
+						score: document.querySelector(`.score .current .content`),
+						runway_tr: document.querySelector(
+							`.score .runway.transition .content`
+						),
+						runway_game: document.querySelector(`.score .runway.game .content`),
 						level: document.querySelector(`.level .content`),
 						lines: document.querySelector(`.lines .content`),
 						trt: document.querySelector(`.tetris_rate .content`),
@@ -265,6 +337,14 @@
 						field: document.querySelector(`.board`),
 						drought: document.querySelector(`.drought .content`),
 						video: document.querySelector(`video`),
+
+						// extras
+						drought_box: document.querySelector(`.drought`),
+						runway_tr_header: document.querySelector(
+							`.runway.transition .header`
+						),
+						pb_wrapper: document.querySelector(`.pbs .pb`),
+						top_wrapper: document.querySelector(`.pbs .top`),
 					},
 					{
 						preview_pixel_size: 4,
@@ -272,40 +352,46 @@
 						running_trt_dot_size: 5,
 						tetris_sound: 0,
 						reliable_field: 0,
-						format_score: v => numberFormatter.format(v),
+						format_score: v => readableScoreFomatter(v), // need wrapper function to ignore the padding
 					}
 				);
 
-				let max_score = 0;
-
-				player.drought_box = document.querySelector(`.drought`);
-				player.runway_tr_box = document.querySelector(`.runway.transition`);
-
 				player.onDroughtStart = () => {
 					console.log('onDroughtStart');
-					player.drought_box.classList.add('active');
+					player.dom.drought_box.classList.add('active');
 				};
 
 				player.onDroughtEnd = count => {
 					console.log('onDroughtEnd', count);
-					player.drought_box.classList.remove('active');
+					player.dom.drought_box.classList.remove('active');
 				};
 
 				player.onTransition = () => {
-					player.runway_tr_box.querySelector('.header').textContent =
-						'TRANSITION';
+					player.dom.runway_tr_header.textContent = 'TRANSITION';
 				};
 
 				player.onScore = () => {
-					if (player.getScore() > max_score) {
-						max_score = player.getScore();
-						player.dom.top.textContent = numberFormatter.format(max_score);
+					if (player.getScore() >= top_score) {
+						top_score = player.getScore();
+						player.dom.top.textContent = readableScoreFomatter(top_score);
+						player.dom.top_wrapper.style.color = 'white';
+					} else {
+						player.dom.top_wrapper.style.color = '';
+					}
+
+					if (player.getScore() >= pb_score) {
+						pb_score = player.getScore();
+						player.dom.pb.textContent = readableScoreFomatter(pb_score);
+						player.dom.pb_wrapper.style.color = 'white';
+					} else {
+						player.dom.pb_wrapper.style.color = '';
 					}
 				};
 
 				player.onGameStart = () => {
-					player.runway_tr_box.querySelector('.header').textContent =
-						'TRANSITION RUNWAY';
+					player.dom.runway_tr_header.textContent = 'TRANSITION RUNWAY';
+					player.dom.pb_wrapper.style.color = '';
+					player.dom.top_wrapper.style.color = '';
 				};
 
 				const API = {
@@ -313,9 +399,11 @@
 						player.setFrame(data);
 					},
 
-					scoreRecorded() {}, // noop
+					scoreRecorded: getPB,
 					message() {}, // noop
 				};
+
+				getPB();
 
 				const connection = new Connection(null, view_meta);
 
@@ -326,6 +414,7 @@
 						API[method].apply(API, args);
 					} catch (e) {
 						console.error(e);
+						console.error(frame);
 					}
 				};
 
