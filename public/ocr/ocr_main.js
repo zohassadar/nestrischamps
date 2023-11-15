@@ -905,6 +905,8 @@ const EVERDRIVE_TAIL = [0x00, 0xa5];
 const GAME_FRAME_TAIL = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa];
 const ED_MAX_READ_ATTEMPTS = 10;
 
+const SERIAL_TIMEOUT = 500; // Testing at this value.  Should be 10.
+
 let data_frame_buffer = new Uint8Array(GAME_FRAME_SIZE);
 
 async function initCaptureFromEverdrive() {
@@ -939,7 +941,12 @@ async function readInto(reader, dataArray) {
 	let offset = 0;
 
 	while (offset < buffer.byteLength) {
-		const { value, done } = await reader.read(new Uint8Array(buffer, offset));
+		let { value, done } = await Promise.race([
+			reader.read(new Uint8Array(buffer, offset)),
+			new Promise((_, reject) =>
+				setTimeout(reject, SERIAL_TIMEOUT, new Error('read timeout'))
+			),
+		]);
 		if (done) {
 			break;
 		}
@@ -966,16 +973,18 @@ async function readUntilPattern(reader, dataArray, compare) {
 			let { value, done } = await Promise.race([
 				reader.read(new Uint8Array(GAME_FRAME_SIZE)),
 				new Promise((_, reject) =>
-					setTimeout(reject, 10, new Error('timeout'))
+					setTimeout(reject, SERIAL_TIMEOUT, new Error('flush timeout'))
 				),
 			]);
 
+			console.log(`Flushing ${value.byteLength} bytes`);
 			if (done) {
 				console.log('Flushed value', value);
 				break;
 			}
 		} catch (e) {
-			console.error('Flushed Buffer');
+			console.error(`Flush error: ${e}`);
+			throw e;
 		}
 	}
 }
@@ -1088,6 +1097,7 @@ async function requestFrameFromEverDrive() {
 		);
 	} catch (e) {
 		console.error(`Error reading from everdrive: ${e}`);
+		data_frame_buffer = new Uint8Array(GAME_FRAME_SIZE); // Does this belong?
 	}
 
 	performance.mark('edlink_read_end');
