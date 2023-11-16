@@ -54,8 +54,8 @@ def overlay_piece(
     playfield: bytearray,
     tetrimino_x: int,
     tetrimino_y: int,
-    orientation_id,
-):
+    orientation_id: int,
+) -> bytearray:
     if orientation_id > 0x12:
         # During the playstates 1 & 8 this should always be a valid orientation id.  This is a safeguard.
         return playfield
@@ -72,7 +72,7 @@ def overlay_lineclear(
     row_y: int,
     completed_rows: list[int],
     frame_counter: int,
-):
+) -> bytearray:
     """
     example:
 
