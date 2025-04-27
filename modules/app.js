@@ -13,6 +13,7 @@ process.on('uncaughtException', (error, origin) => {
 
 const app = express();
 
+app.disable('x-powered-by');
 app.set('view engine', 'ejs');
 app.set('trust proxy', 1); // trust first proxy (i.e. heroku) -- needed to get req.protocol correctly
 
@@ -37,6 +38,15 @@ app.use((req, res, next) => {
 		}
 	}
 
+	next();
+});
+
+// app-level middleware to block .php requests BEFORE static and session middlewares run
+// because I'm seeing lots of annoying kiddy-scans, which still hammer the DB with session checks -_-
+app.use((req, res, next) => {
+	if (req.path.endsWith('.php')) {
+		return res.status(404).send('Not Found');
+	}
 	next();
 });
 
