@@ -4,13 +4,22 @@
 		<link rel="stylesheet" type="text/css" href="/views/tetris.css" />
 		<style>
 			#stream_bg {
-				width: 1920px;
+				--width: 100vw;
+
+				container-type: inline-size;
+				container-name: stream_bg;
+				width: var(--width);
 				height: 1080px;
 			}
 
 			.match {
+				--scale: 1;
+				--board-offset: 357px;
+				--score-width: 333px;
+				--player-width: calc(var(--width) / 2 / var(--scale));
+
 				position: absolute;
-				left: 960px;
+				left: 50%; /* note that this will not be a whole number when available width is an odd number */
 				top: 0;
 			}
 
@@ -33,7 +42,7 @@
 			}
 
 			.score {
-				width: 333px;
+				width: var(--score-width);
 				padding-right: 0;
 				height: 112px;
 				top: 0;
@@ -124,6 +133,7 @@
 				padding: 3px 0;
 				height: 64px;
 				text-transform: uppercase;
+				white-space: nowrap;
 			}
 
 			.name .header {
@@ -159,7 +169,7 @@
 			.tetris_rate,
 			.drought,
 			.flag {
-				--offset: 357px;
+				--offset: var(--board-offset);
 			}
 
 			.hearts {
@@ -295,15 +305,16 @@
 			}
 
 			.player_vid {
+				--offset: 360px;
+
 				position: absolute;
 				top: 0;
-				width: 600px;
+				width: calc(var(--player-width) - var(--offset));
 				height: 1023px;
 				padding: 0;
 				object-fit: cover;
 				/* background: yellow; /**/
 
-				--offset: 360px;
 				right: var(--offset);
 			}
 
@@ -317,7 +328,13 @@
 			}
 
 			.match.small {
-				transform: scale(0.7245042492917847); /* (1080-57)/706/2 */
+				--scale: 0.7245042492917847; /* (1080-57)/706/2 */
+				--score-width: 326px;
+				--score-offset: calc(
+					var(--board-offset) + var(--score-width) + (var(--border-size) * 1px) +
+						9px
+				); /* why 9px??? */
+				transform: scale(var(--scale));
 			}
 			#match2.small {
 				top: 511px;
@@ -330,7 +347,7 @@
 			.match.small .score,
 			.match.small .lines,
 			.match.small .next_piece {
-				--offset: 357px;
+				--offset: var(--board-offset);
 			}
 
 			.match.small .next_piece {
@@ -361,7 +378,6 @@
 				z-index: 8;
 			}
 			.match.small .score {
-				width: 326px;
 				z-index: 7;
 			}
 			.match.small .hearts {
@@ -382,9 +398,10 @@
 			.heartpos3 .match.small .hearts,
 			.heartpos4 .match.small .hearts {
 				--border-size: 14;
+				--offset: var(--score-offset);
+
 				width: unset;
 				top: 91px;
-				--offset: 707px;
 				height: 29px;
 				padding: 0 6px 0 9px;
 				gap: 2px;
@@ -396,14 +413,17 @@
 				right: unset;
 			}
 
+			.match.small .flag,
 			.heartpos4 .match.small .hearts {
-				left: -1325px;
+				--offset: calc(-1 * var(--player-width));
+				left: var(--offset);
 				right: unset;
 			}
 
+			.match.small .p2 .flag,
 			.heartpos4 .match.small .p2 .hearts {
 				left: unset;
-				right: -1325px;
+				right: var(--offset);
 			}
 
 			.match.small .flag,
@@ -412,15 +432,11 @@
 				top: 0;
 			}
 			.match.small .name {
-				width: 462px;
-				--offset: 707px;
-			}
-			.match.small .flag {
-				--offset: 1190px;
+				--offset: var(--score-offset);
+				width: calc(var(--player-width) - var(--offset) - 51px - 105px);
 			}
 			.match.small .player_vid {
 				top: 96px;
-				width: 965px;
 				height: 609px;
 			}
 
@@ -431,6 +447,31 @@
 
 			.match.small .p2 > * {
 				left: var(--offset);
+			}
+
+			@container stream_bg (max-width: 1800px) {
+				.match.small .name {
+					z-index: 7;
+					width: calc(var(--player-width) - var(--offset) - 30px);
+				}
+				.match.small .flag {
+					--offset: var(--score-offset);
+					top: 91px;
+					width: 43px;
+					height: 27px;
+				}
+
+				.heartpos3 .match.small .hearts {
+					--offset: calc(
+						var(--score-offset) + 64px
+					); /* accounts for flag width */
+				}
+			}
+
+			@container stream_bg (max-width: 1580px) {
+				.match.small {
+					--score-width: 300px;
+				}
 			}
 		</style>
 	</head>
@@ -628,7 +669,25 @@
 				<!-- Player 2 -->
 			</div>
 			<!-- End Playing Fields -->
-		</div>
+			<!-- DOM Logger
+			<div
+				id="log"
+				style="
+					position: absolute;
+					bottom: 150px;
+					left: 0px;
+					width: 1000px;
+					height: 200px;
+					overflow-y: auto;
+					overflow-x: hidden;
+					white-space: pre-wrap;
+					border: 1px solid #ccc;
+					padding: 8px;
+					background: white;
+					color: black;
+				"
+			></div>
+			 --></div>
 		<!-- End Stream BG -->
 
 		<!-- Audio -->
@@ -642,6 +701,30 @@
 			});
 		</script>
 		<script src="/vendor/peerjs.1.5.4.min.js"></script>
+		<script type="module">
+			function addLogLine(text) {
+				const logDiv = document.getElementById('log');
+				const line = document.createElement('div');
+				line.textContent = text;
+				logDiv.appendChild(line);
+
+				// Auto-scroll to the bottom
+				logDiv.scrollTop = logDiv.scrollHeight;
+			}
+
+			/*
+			const width = window.innerWidth;
+			const height = window.innerHeight;
+			addLogLine(`Viewport size: ${width} x ${height}`);
+
+			window.addEventListener('resize', () => {
+				addLogLine(
+					`Resized viewport: ${window.innerWidth} x ${window.innerHeight}`
+				);
+				document.querySelector('.match');
+			});
+			/**/
+		</script>
 		<script type="module">
 			import '/views/bg.js';
 			import { peerServerOptions } from '/views/constants.js';
