@@ -334,6 +334,10 @@
 					var(--board-offset) + var(--score-width) + (var(--border-size) * 1px) +
 						9px
 				); /* why 9px??? */
+				--name-width: calc(
+					var(--player-width) - var(--score-offset) - 156px
+				); /* 156 represents the width of the flag box, minus the border overlap */
+				--name-offset: calc(var(--player-width) - 135px);
 				transform: scale(var(--scale));
 			}
 			#match2.small {
@@ -413,14 +417,12 @@
 				right: unset;
 			}
 
-			.match.small .flag,
 			.heartpos4 .match.small .hearts {
 				--offset: calc(-1 * var(--player-width));
 				left: var(--offset);
 				right: unset;
 			}
 
-			.match.small .p2 .flag,
 			.heartpos4 .match.small .p2 .hearts {
 				left: unset;
 				right: var(--offset);
@@ -433,7 +435,11 @@
 			}
 			.match.small .name {
 				--offset: var(--score-offset);
-				width: calc(var(--player-width) - var(--offset) - 51px - 105px);
+				width: var(--name-width);
+			}
+
+			.match.small .flag {
+				--offset: var(--name-offset);
 			}
 			.match.small .player_vid {
 				top: 96px;
