@@ -8,6 +8,10 @@
 	src: url('/fonts/prstartk_nes_tetris_8.ttf');
 }
 
+body {
+	--border-size: 15; /* should rename to box-border-size */
+}
+
 html,
 body,
 table,
@@ -21,8 +25,6 @@ td {
 }
 
 #stream_bg {
-	--border-size: 15; /* should rename to box-border-size */
-
 	position: absolute;
 	top: 0;
 	left: 0;
