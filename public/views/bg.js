@@ -115,8 +115,8 @@ if (QueryString.get('bg') === '0') {
 		bg.style.backgroundPositionX = `${pos}px`;
 	}, 1000 / 30);
 
-	const interpolateTop = getInterpolator(1920, -15, 4096, -32);
-	const interpolateHeight = getInterpolator(1920, 133, 4096, 172);
+	const interpolateTop = getInterpolator(568, -6, 4096, -32);
+	const interpolateHeight = getInterpolator(568, 110, 4096, 172);
 	const interpolateLeft = getInterpolator(568, -17, 4096, -13);
 	const interpolateWidth = getInterpolator(568, 135, 4096, 116);
 
