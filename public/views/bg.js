@@ -4,7 +4,14 @@ import { shuffle } from '/views/utils.js';
 
 const parent = document.querySelector('#stream_bg');
 
+function getInterpolator(x0, v0, x1, v1) {
+	return function (x) {
+		return v0 + ((x - x0) * (v1 - v0)) / (x1 - x0);
+	};
+}
+
 if (QueryString.get('bg') === '0') {
+	// do nothing
 } else if (QueryString.get('bg') === '5') {
 	const bg = document.createElement('div');
 	parent.style.backgroundColor = 'black';
@@ -97,8 +104,6 @@ if (QueryString.get('bg') === '0') {
 
 	Object.assign(bg.style, {
 		position: 'absolute',
-		width: '119%',
-		left: '-14%',
 		background: `url(/views/${bg_file}) 0 0 repeat`,
 		transform: 'rotate(-11deg)',
 	});
@@ -110,14 +115,10 @@ if (QueryString.get('bg') === '0') {
 		bg.style.backgroundPositionX = `${pos}px`;
 	}, 1000 / 30);
 
-	function interpolator(x0, v0, x1, v1) {
-		return function (x) {
-			return v0 + ((x - x0) * (v1 - v0)) / (x1 - x0);
-		};
-	}
-
-	const interpolateTop = interpolator(1920, -15, 4096, -32);
-	const interpolateHeight = interpolator(1920, 133, 4096, 171);
+	const interpolateTop = getInterpolator(1920, -15, 4096, -32);
+	const interpolateHeight = getInterpolator(1920, 133, 4096, 172);
+	const interpolateLeft = getInterpolator(568, -17, 4096, -13);
+	const interpolateWidth = getInterpolator(568, 135, 4096, 116);
 
 	const adjustSize = () => {
 		const bounds = parent.getBoundingClientRect();
@@ -126,6 +127,8 @@ if (QueryString.get('bg') === '0') {
 		Object.assign(bg.style, {
 			top: `${interpolateTop(width)}%`,
 			height: `${interpolateHeight(width)}%`,
+			left: `${interpolateLeft(width)}%`,
+			width: `${interpolateWidth(width)}%`,
 		});
 	};
 
