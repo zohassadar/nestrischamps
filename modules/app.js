@@ -41,10 +41,10 @@ app.use((req, res, next) => {
 	next();
 });
 
-// app-level middleware to block .php requests BEFORE static and session middlewares run
+// app-level middleware to block .php and wordpress requests BEFORE static and session middlewares run
 // because I'm seeing lots of annoying kiddy-scans, which still hammer the DB with session checks -_-
 app.use((req, res, next) => {
-	if (req.path.endsWith('.php')) {
+	if (/\/wp-|\.php7?$/i.test(req.path)) {
 		return res.status(404).send('Not Found');
 	}
 	next();
