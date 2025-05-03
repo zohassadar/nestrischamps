@@ -1914,6 +1914,13 @@ function trackAndSendFrames() {
 		} catch (err) {}
 
 		performance.getEntriesByType('measure').forEach(m => {
+			// discard browser performance measurements -_-
+			if (m.name.startsWith('browser::')) return;
+			if (m.name.startsWith('invoke-')) return;
+			if (m.name.startsWith('inline-')) return;
+			if (m.name.startsWith('DOM-')) return;
+			if (m.name.startsWith('ANALYZE_')) return;
+
 			perf[m.name] = m.duration.toFixed(3);
 		});
 
