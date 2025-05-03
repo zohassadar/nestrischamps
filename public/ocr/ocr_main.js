@@ -1110,6 +1110,8 @@ async function initCaptureFromEverdrive() {
 }
 
 async function playVideoFromDevice(device_id, fps) {
+	console.log('playVideoFromDevice()');
+
 	try {
 		const constraints = {
 			audio: false,
@@ -1123,10 +1125,14 @@ async function playVideoFromDevice(device_id, fps) {
 			constraints.video.deviceId = { exact: device_id };
 		}
 
+		console.log(`Capture Constraints: ${JSON.stringify(constraints, null, 2)}`);
+
 		const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
 		// we only prompt for permission with the first call
 		if (device_id === undefined) return;
+
+		logStreamDetails(stream);
 
 		// when an actual device id is supplied, we start everything
 		video.srcObject = stream;
@@ -1200,7 +1206,26 @@ function stopCapture() {
 	timer.clearInterval(capture_process);
 }
 
+function logStreamDetails(stream) {
+	const track = stream.getVideoTracks()[0];
+	const settings = track.getSettings();
+	const capabilities = track.getCapabilities?.() || null;
+
+	console.log(`Stream Details: ${JSON.stringify(settings, null, 2)}`);
+	console.log(`Stream Capabilities: ${JSON.stringify(capabilities, null, 2)}`);
+
+	/*
+	console.log(
+		`Video settings: ${settings.width}x${
+			settings.height
+		}@${settings.frameRate.toFixed(1)}fps`
+	);
+	/**/
+}
+
 async function startCapture(stream) {
+	console.log('startCapture()');
+
 	stopCapture();
 
 	if (!stream) {
@@ -1214,13 +1239,8 @@ async function startCapture(stream) {
 	stream.addEventListener('inactive', console.log('stream is inactive'));
 	stream.addEventListener('close', console.log('stream is closed'));
 
-	const settings = stream.getVideoTracks()[0].getSettings();
-
-	console.log(
-		`Video settings: ${settings.width}x${
-			settings.height
-		}@${settings.frameRate.toFixed(1)}fps`
-	);
+	const track = stream.getVideoTracks()[0];
+	const settings = track.getSettings();
 
 	if (show_parts.checked) {
 		adjustments.style.display = 'block';
