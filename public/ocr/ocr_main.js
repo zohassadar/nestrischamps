@@ -2248,6 +2248,7 @@ let timer = stdTimer;
 		use_worker_for_interval.checked = config.use_worker_for_interval != false;
 
 		if (use_worker_for_interval.checked) {
+			console.log('Utilizing Worker Timer');
 			timer = workerTimer;
 		}
 
