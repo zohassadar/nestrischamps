@@ -231,6 +231,15 @@ const DEFAULT_OPTIONS = {
 		return v.padStart(size, ' ');
 	},
 	format_drought: v => v,
+	flags: (() => {
+		const value = QueryString.get('flags');
+		return /^c?fi$/.test(value) ? value : 'cfi'; // cfi: country-flag-icons - fi: flag-icons
+	})(),
+};
+
+const flagUrisFn = {
+	fi: code => `/vendor/flag-icons/flags/4x3/${code?.toLowerCase()}.svg`,
+	cfi: code => `/vendor/country-flag-icons/3x2/${code?.toUpperCase()}.svg`,
 };
 
 const SOUNDS = {
@@ -974,9 +983,11 @@ export default class Player extends EventTarget {
 	setCountryCode(code) {
 		if (!this.dom.flag) return;
 
-		this.dom.flag.innerHTML = code
-			? `<img id="country_flag" src="/vendor/country-flag-icons/3x2/${code}.svg">`
-			: '';
+		// handle flag providers here
+		const flagURI = flagUrisFn[this.options.flags]?.(code);
+
+		this.dom.flag.innerHTML =
+			code && flagURI ? `<img id="country_flag" src="${flagURI}">` : '';
 	}
 
 	setId(id) {
