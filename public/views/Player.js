@@ -233,13 +233,15 @@ const DEFAULT_OPTIONS = {
 	format_drought: v => v,
 	flags: (() => {
 		const value = QueryString.get('flags');
-		return /^c?fi$/.test(value) ? value : 'cfi'; // cfi: country-flag-icons - fi: flag-icons
+		return /^(c?fi|fpw?)$/.test(value) ? value : 'cfi'; // cfi: country-flag-icons - fi: flag-icons
 	})(),
 };
 
 const flagUrisFn = {
 	fi: code => `/vendor/flag-icons/flags/4x3/${code?.toLowerCase()}.svg`,
 	cfi: code => `/vendor/country-flag-icons/3x2/${code?.toUpperCase()}.svg`,
+	fp: code => `/vendor/flagpedia/svg/${code?.toLowerCase()}.svg`, // flagpedia - aspect ratio changes
+	fpw: code => `/vendor/flagpedia/192x144-webp/${code?.toLowerCase()}.webp`, // flagpedia - wavy flags, all fit within 4:3
 };
 
 const SOUNDS = {
