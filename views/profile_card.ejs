@@ -79,14 +79,20 @@ p {
 	margin-block-end: 0;
 }
 
+p::first-letter {
+  text-transform: uppercase;
+}
+
 #twitch {
 	flex-grow: 0;
 	flex-shrink: 0;
-	position: relative;
+	position: absolute;
 	bottom: 0;
 	margin: 20px 0;
 	color: white;
 	width: 100%;
+	right: 0;
+	left: 0;
 }
 
 #twitch .envelop {
@@ -98,7 +104,7 @@ p {
 
 #twitch img.twitch {
 	position: absolute;
-	top: -5px;
+	top: -6px;
 	right: 15px;
 }
 
@@ -135,21 +141,33 @@ p {
 		<% if (user.description) { %>
 		<section id="bio">
 			<h1>Player bio</h1>
-			<p><%= user.description.replace(/\n+/g, ', ') %></p>
+			<% for (const item of user.description.split(/[\r\n]+/)) { %>
+				<p><%= item %></p>
+			<% } %>
 		</section>
 		<% } %>
 
 		<section id="play_style">
 			<h1>Play info</h1>
 			<p class="play_style">Style: <%= (user.style || '').toUpperCase() %></p>
-			<p class="pb">PB: <%= pb %></p>
-			<p class="pb">Elo: <%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></p>
+			<% for (const [level, pb] of Object.entries(pbs)) { %>
+				<% if (pb) { %>
+				<p class="pb">PB <%= level %>: <%= pb %></p>
+				<% } %>
+			<% } %>
+			<% if (user.elo_rating) { %>
+				<p class="pb">Elo: <%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></p>
+			<% } %>
 		</section>
 
+		<% if (user.interests) { %>
 		<section id="interests">
 			<h1>Interests</h1>
-			<p><%= user.interests.replace(/\n+/g, ', ') %></p>
+			<% for (const item of user.interests.split(/[\r\n]+/)) { %>
+				<p><%= item %></p>
+			<% } %>
 		</section>
+		<% } %>
 	</div>
 
 	<% if (!user.login.startsWith('__user')) { %>

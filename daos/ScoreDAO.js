@@ -116,6 +116,25 @@ class ScoreDAO {
 		}
 	}
 
+	async getPBs181929(user) {
+		const result = await dbPool.query(
+			`
+				SELECT start_level, MAX(score) as score
+				FROM scores
+				WHERE player_id = $1
+				AND start_level IN (18, 19, 29)
+				GROUP BY start_level
+				ORDER BY start_level ASC
+			`,
+			[user.id]
+		);
+
+		return result.rows.reduce((acc, { start_level, score }) => {
+			acc[start_level] = score;
+			return acc;
+		}, {});
+	}
+
 	async getTop3(user, since = 0) {
 		const result = await dbPool.query(
 			`
