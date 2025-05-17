@@ -10,6 +10,7 @@ DB_URL="postgres://nestrischamps:nestrischamps@localhost:5432/nestrischamps?sslm
 
 mkdir -p src
 cd src
+
 git clone https://github.com/nestrischamps/nestrischamps.git
 cd nestrischamps
 mkdir -p logs
@@ -17,15 +18,9 @@ git checkout main
 
 cat setup/db.sql | psql "${DB_URL}"
 
-sudo apt-get install -y ca-certificates curl gnupg
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-
-NODE_MAJOR=20
-
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-
-sudo apt-get update
+# install nodejs - see documentation https://github.com/nodesource/distributions#installation-instructions-deb
+NODE_MAJOR=22
+curl -fsSL https://deb.nodesource.com/setup_$NODE_MAJOR.x | sudo -E bash -
 sudo apt install -y nodejs
 
 npm install
