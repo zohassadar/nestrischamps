@@ -195,6 +195,9 @@ p::first-letter {
 		<section id="play_info">
 			<h1>Play info</h1>
 			<dl>
+				<% if (user.controller && user.controller != 'other') { %>
+					<dt class="controller">Controller: </dt><dd class="controller"><%= user.controller === 'nes' ? 'Original NES' : user.controller === 'goofy-foot' ? 'Goofy-Foot' : 'Hyperkin Cadet' %></dd>
+				<% } %>
 				<dt>Style:</dt><dd><%= (user.style || '').toUpperCase() %></dd>
 				<% for (const [level, pb] of Object.entries(pbs)) { %>
 					<% if (pb) { %>
@@ -203,9 +206,6 @@ p::first-letter {
 				<% } %>
 				<% if (user.elo_rating) { %>
 					<dt class="elo">Elo: </dt><dd><%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></dd>
-				<% } %>
-				<% if (user.controller && user.controller != 'other') { %>
-					<dt class="controller">Controller: </dt><dd class="controller"><%= user.controller === 'nes' ? 'Original NES' : user.controller === 'goofy-foot' ? 'Goofy-Foot' : 'Hyperkin Cadet' %></dd>
 				<% } %>
 				<% if (user.rival) { %>
 					<dt class="rival">Rival: </dt><dd><%= user.rival %></dd>
