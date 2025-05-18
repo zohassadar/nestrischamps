@@ -52,7 +52,7 @@ function getRivalAndReason(entry) {
 
 	if (!entry) return { rival: '', reason: '' };
 
-	const regex = /^(.+?)(?:\s*([,;(.!]|because|cause|but)\s*)(.+)$/i;
+	const regex = /^(.+?)(?:\s*([,;(.!]|because|cause|but)\s*)(.+)$/is;
 	const match = entry.match(regex);
 
 	if (!match) return { rival: entry, reason: '' };
