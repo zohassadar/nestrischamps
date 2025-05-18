@@ -81,6 +81,7 @@ class User extends EventEmitter {
 		this.style = user_object.style || this.style || 'das';
 		this.controller = user_object.controller || this.controller || 'nes';
 		this.rival = user_object.rival || this.rival || '';
+		this.rival_reason = user_object.rival_reason || this.rival_reason || '';
 		this.interests = user_object.interests || this.interests || '';
 	}
 

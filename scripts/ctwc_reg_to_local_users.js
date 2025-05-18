@@ -26,25 +26,46 @@ function getStyle(entry) {
 }
 
 function getCompetitonWins(entry) {
-	entry = entry.trim();
+	entry = entry?.trim();
 	if (!entry) return '';
 	if (/^(no|n\/?a)$/i.test(entry)) return '';
 	return entry;
 }
 
 function getUsefulEntry(entry) {
-	entry = entry.trim();
+	entry = entry?.trim();
 	if (!entry) return '';
 	if (/^(no|n\/?a)$/i.test(entry)) return '';
 	return entry;
 }
 
 function getMaxouts(num) {
-	num = num.trim();
+	num = num?.trim();
 	if (!num) return '';
 	if (num === '0') return '';
 	if (num === '1') return '1 maxout';
 	return `${num} maxouts`;
+}
+
+function getRivalAndReason(entry) {
+	entry = entry?.trim();
+
+	if (!entry) return { rival: '', reason: '' };
+
+	const regex = /^(.*?)(?:([,;(.!]|because|cause|but)\s*)(.*))?$/i;
+	const match = entry.match(regex);
+
+	if (!match) return { rival: entry, reason: '' };
+
+	const rival = match[1].trim();
+	const delimiter = match[2]; // optional, might be undefined
+	const reason = match[3]
+		? delimiter && /^[a-z]/i.test(delimiter)
+			? delimiter + ' ' + match[3]
+			: match[3]
+		: '';
+
+	return { rival, reason };
 }
 
 (async function () {
@@ -155,6 +176,7 @@ function getMaxouts(num) {
 		const { id, csv } = player;
 
 		// prep ntc mapped values
+		const { rival, reason: rival_reason } = getRivalAndReason(csv.rival);
 		const ntc = {
 			id,
 			login: /^\s*$/.test(csv.twitch) ? `__user${id}` : csv.twitch,
@@ -191,7 +213,8 @@ function getMaxouts(num) {
 				: /nes|original|standard|oem|stock/i.test(csv.controller)
 				? 'nes'
 				: 'other',
-			rival: getUsefulEntry(csv.rival),
+			rival,
+			rival_reason,
 			elo_rank: 0,
 			elo_rating: 0,
 		};
@@ -247,14 +270,15 @@ function getMaxouts(num) {
 			style,
 			controller,
 			rival,
+			rival_reason,
 			profile_image_url,
 		} = ntc;
 
 		await pool.query(
 			`INSERT INTO users
-			(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, elo_rank, elo_rating, created_at, last_login_at)
+			(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, rival_reason, elo_rank, elo_rating, created_at, last_login_at)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
 			`,
 			[
 				id,
@@ -271,6 +295,7 @@ function getMaxouts(num) {
 				style,
 				controller,
 				rival,
+				rival_reason,
 				elo_rank,
 				elo_rating,
 			]

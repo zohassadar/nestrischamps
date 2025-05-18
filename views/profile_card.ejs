@@ -104,11 +104,14 @@ dd {
 	margin: 0;
 }
 
+dd .small {
+	font-size: 0.5em;
+}
+
 #play_info dl {
   margin: 0 auto; /* ← centers the block horizontally */
   width: fit-content;
 }
-
 
 p {
 	margin-block-start: 0.15em;
@@ -210,7 +213,13 @@ dd.rival::first-letter {
 					<dt class="elo">Elo: </dt><dd><%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></dd>
 				<% } %>
 				<% if (user.rival) { %>
-					<dt class="rival">Rival: </dt><dd class="rival"><%= user.rival.split(/\s*([,;(.!-]|because|cause|but)\s*/)[0] %></dd>
+					<dt class="rival">Rival: </dt>
+					<dd class="rival">
+						<%= user.rival %>
+						<% if (user.rival_reason) { %>
+							<span class="small"><%= user.rival_reason %></span>
+						<% } %>
+					</dd>
 				<% } %>
 			</dl>
 		</section>

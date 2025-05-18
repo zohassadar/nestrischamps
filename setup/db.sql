@@ -21,7 +21,8 @@ CREATE TABLE users (
 
 	style play_style default 'das',
 	controller controller_type default 'nes',
-	rival VARCHAR ( 300 ) default '',
+	rival VARCHAR ( 128 ) default '',
+	rival_reason VARCHAR ( 300 ) default '',
 
 	elo_rank INTEGER NOT NULL DEFAULT 0,
 	elo_rating DOUBLE PRECISION NOT NULL DEFAULT 0,
