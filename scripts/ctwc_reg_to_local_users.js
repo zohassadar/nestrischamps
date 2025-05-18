@@ -52,18 +52,16 @@ function getRivalAndReason(entry) {
 
 	if (!entry) return { rival: '', reason: '' };
 
-	const regex = /^(.*?)(?:([,;(.!]|because|cause|but)\s*)(.*))?$/i;
+	const regex = /^(.+?)(?:\s*([,;(.!]|because|cause|but)\s*)(.+)$/i;
 	const match = entry.match(regex);
 
 	if (!match) return { rival: entry, reason: '' };
 
 	const rival = match[1].trim();
-	const delimiter = match[2]; // optional, might be undefined
-	const reason = match[3]
-		? delimiter && /^[a-z]/i.test(delimiter)
-			? delimiter + ' ' + match[3]
-			: match[3]
-		: '';
+	const delimiter = match[2];
+	const reason = /^[a-z]/i.test(delimiter)
+		? delimiter + ' ' + match[3].trim()
+		: match[3].trim();
 
 	return { rival, reason };
 }
