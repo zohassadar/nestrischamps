@@ -174,10 +174,11 @@ dd.rival::first-letter {
 
 <div class="frame">
 	<section id="name">
-		<h1><%= (user.display_name || '').replace(/^\d+\.\s+/, '') %></h1>
+		<h1><%= (user.display_name || '').replace(/^\d+\.\s+/, '') %>
 		<% if (user.pronouns) { %>
-			<div class="pronouns"><%= user.pronouns %></div>
+			<span class="pronouns"><%= user.pronouns %></span>
 		<% } %>
+		</h1>
 	</section>
 
 	<div class="container">
