@@ -79,6 +79,8 @@ class User extends EventEmitter {
 		this.city = user_object.city || this.city || '';
 		this.timezone = user_object.timezone || this.timezone || 'UTC';
 		this.style = user_object.style || this.style || 'das';
+		this.controller = user_object.controller || this.controller || 'nes';
+		this.rival = user_object.rival || this.rival || '';
 		this.interests = user_object.interests || this.interests || '';
 	}
 

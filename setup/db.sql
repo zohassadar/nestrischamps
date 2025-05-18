@@ -1,4 +1,5 @@
 CREATE TYPE play_style AS ENUM ('das', 'tap', 'roll', 'hybrid');
+CREATE TYPE controller_type AS ENUM ('nes', 'goofy-foot', 'hyperkin-cadet', 'keyboard', 'other');
 CREATE TYPE identity_provider AS ENUM ('google', 'twitch', 'github', 'discord', 'facebook', 'slack');
 
 CREATE TABLE users (
@@ -15,9 +16,12 @@ CREATE TABLE users (
 	dob date,
 	country_code VARCHAR( 2 ),
 	city VARCHAR( 100 ),
-	interests VARCHAR ( 300 ) default '',
-	style play_style default 'das',
 	timezone TEXT NOT NULL CHECK (now() AT TIME ZONE timezone IS NOT NULL) DEFAULT 'UTC',
+	interests VARCHAR ( 300 ) default '',
+
+	style play_style default 'das',
+	controller controller_type default 'nes',
+	rival VARCHAR ( 255 ) default '',
 
 	elo_rank INTEGER NOT NULL DEFAULT 0,
 	elo_rating DOUBLE PRECISION NOT NULL DEFAULT 0,
