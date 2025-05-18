@@ -115,7 +115,8 @@ p {
 	margin-block-end: 0;
 }
 
-p::first-letter {
+p::first-letter,
+dd.rival {
   text-transform: uppercase;
 }
 
@@ -209,7 +210,7 @@ p::first-letter {
 					<dt class="elo">Elo: </dt><dd><%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></dd>
 				<% } %>
 				<% if (user.rival) { %>
-					<dt class="rival">Rival: </dt><dd><%= user.rival.split(/\s*([,;(.!-]|because|cause|but)\s*/)[0] %></dd>
+					<dt class="rival">Rival: </dt><dd class="rival"><%= user.rival.split(/\s*([,;(.!-]|because|cause|but)\s*/)[0] %></dd>
 				<% } %>
 			</dl>
 		</section>
