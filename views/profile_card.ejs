@@ -66,13 +66,49 @@ h1 {
 }
 
 section {
-	margin-top: 1.25em;
+	margin-top: 0.75em;
 }
 
 section:first-of-type,
 section#flag {
+	margin-top: 0.25em;
+}
+
+#flag {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+#flag img {
+  height: auto;
+  flex-shrink: 0;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0;
+  margin: 0;
+}
+
+dt {
+	text-align: right;
+	color: #c9af55;
+}
+
+dd {
+	text-align: left;
 	margin: 0;
 }
+
+#play_info dl {
+  margin: 0 auto; /* ← centers the block horizontally */
+  width: fit-content;
+}
+
 
 p {
 	margin-block-start: 0.15em;
@@ -134,8 +170,17 @@ p::first-letter {
 
 	<div class="container">
 		<section id="flag">
-			<h1><%= [age, user.city].filter(v => v).join(' - ') %></h1>
-			<img src="/vendor/country-flag-icons/3x2/<%= user.country_code %>.svg" width="64">
+			<img
+				src="/vendor/flagpedia/svg/<%= user.country_code.toLowerCase() %>.svg"
+				width="64"
+				alt="Country flag"
+			>
+			<dl class="info">
+				<dt>Age:</dt><dd><%= age %></dd>
+				<% if (user.city) { %>
+					<dt>State:</dt><dd><%= user.city %></dd>
+				<% } %>
+			</dl>
 		</section>
 
 		<% if (user.description) { %>
@@ -147,17 +192,19 @@ p::first-letter {
 		</section>
 		<% } %>
 
-		<section id="play_style">
+		<section id="play_info">
 			<h1>Play info</h1>
-			<p class="play_style">Style: <%= (user.style || '').toUpperCase() %></p>
-			<% for (const [level, pb] of Object.entries(pbs)) { %>
-				<% if (pb) { %>
-				<p class="pb">PB <%= level %>: <%= pb %></p>
+			<dl>
+				<dt>Style:</dt><dd><%= (user.style || '').toUpperCase() %></dd>
+				<% for (const [level, pb] of Object.entries(pbs)) { %>
+					<% if (pb) { %>
+					<dt class="pb">PB <%= level %>:</dt><dd class="pb"><%= pb %></dd>
+					<% } %>
 				<% } %>
-			<% } %>
-			<% if (user.elo_rating) { %>
-				<p class="pb">Elo: <%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></p>
-			<% } %>
+				<% if (user.elo_rating) { %>
+					<dt class="pb">Elo: </dt><dd><%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></dd>
+				<% } %>
+			</dl>
 		</section>
 
 		<% if (user.interests) { %>
