@@ -174,7 +174,9 @@ function getRivalAndReason(entry) {
 		const { id, csv } = player;
 
 		// prep ntc mapped values
-		const { rival, reason: rival_reason } = getRivalAndReason(csv.rival);
+		const { rival, reason: rival_reason } = getRivalAndReason(
+			getUsefulEntry(csv.rival)
+		);
 		const ntc = {
 			id,
 			login: /^\s*$/.test(csv.twitch) ? `__user${id}` : csv.twitch,
@@ -272,32 +274,38 @@ function getRivalAndReason(entry) {
 			profile_image_url,
 		} = ntc;
 
-		await pool.query(
-			`INSERT INTO users
-			(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, rival_reason, elo_rank, elo_rating, created_at, last_login_at)
-			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
-			`,
-			[
-				id,
-				login,
-				secret,
-				description,
-				display_name,
-				pronouns,
-				profile_image_url,
-				dob,
-				country_code,
-				city,
-				interests,
-				style,
-				controller,
-				rival,
-				rival_reason,
-				elo_rank,
-				elo_rating,
-			]
-		);
+		try {
+			await pool.query(
+				`INSERT INTO users
+				(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, rival_reason, elo_rank, elo_rating, created_at, last_login_at)
+				VALUES
+				($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+				`,
+				[
+					id,
+					login,
+					secret,
+					description,
+					display_name,
+					pronouns,
+					profile_image_url,
+					dob,
+					country_code,
+					city,
+					interests,
+					style,
+					controller,
+					rival,
+					rival_reason,
+					elo_rank,
+					elo_rating,
+				]
+			);
+		} catch (err) {
+			console.error('Invalid Record');
+			console.error(ntc);
+			throw err;
+		}
 
 		const pbs = [
 			{
