@@ -8,6 +8,7 @@ echo "CREATE USER nestrischamps with encrypted password 'nestrischamps'; CREATE 
 
 DB_URL="postgres://nestrischamps:nestrischamps@localhost:5432/nestrischamps?sslmode=disable"
 
+cd ~ # go to home dir
 mkdir -p src
 cd src
 
