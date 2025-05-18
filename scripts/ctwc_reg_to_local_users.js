@@ -32,7 +32,7 @@ function getCompetitonWins(entry) {
 	return entry;
 }
 
-function getAchievements(entry) {
+function getUsefulEntry(entry) {
 	entry = entry.trim();
 	if (!entry) return '';
 	if (/^(no|n\/?a)$/i.test(entry)) return '';
@@ -165,7 +165,7 @@ function getMaxouts(num) {
 			description: [
 				csv.job.trim(),
 				getCompetitonWins(csv.competition_wins),
-				getAchievements(csv.achievements.trim()),
+				getUsefulEntry(csv.achievements),
 				getMaxouts(csv.num_maxouts),
 			]
 				.filter(identity)
@@ -190,7 +190,7 @@ function getMaxouts(num) {
 				: /nes|original|standard|oem|stock/i.test(csv.controller)
 				? 'nes'
 				: 'other',
-			rival: csv.rival || '',
+			rival: getUsefulEntry(csv.rival),
 			elo_rank: 0,
 			elo_rating: 0,
 		};
