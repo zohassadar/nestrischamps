@@ -202,7 +202,13 @@ p::first-letter {
 					<% } %>
 				<% } %>
 				<% if (user.elo_rating) { %>
-					<dt class="pb">Elo: </dt><dd><%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></dd>
+					<dt class="elo">Elo: </dt><dd><%= elo_rating %><% if (user.elo_rank) { %> ( <%= user.elo_rank %> )<% } %></dd>
+				<% } %>
+				<% if (user.controller && user.controller != 'other') { %>
+					<dt class="controller">Controller: </dt><dd class="controller"><%= user.controller === 'nes' ? 'Original NES' : user.controller === 'goofy-foot' ? 'Goofy-Foot' : 'Hyperkin Cadet' %></dd>
+				<% } %>
+				<% if (user.rival) { %>
+					<dt class="rival">Rival: </dt><dd><%= user.rival %></dd>
 				<% } %>
 			</dl>
 		</section>
