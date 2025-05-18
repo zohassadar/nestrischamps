@@ -199,9 +199,9 @@ function getRivalAndReason(entry) {
 			country_code: csv.country.trim(),
 			city: csv.state?.trim() || '',
 			interests: [
-				csv.hobbies.trim(),
-				csv.favourite_other_game.trim(),
-				csv.favourite_sport_team.trim(),
+				getUsefulEntry(csv.hobbies),
+				getUsefulEntry(csv.favourite_other_game),
+				getUsefulEntry(csv.favourite_sport_team),
 			]
 				.filter(identity)
 				.join('\n'),
