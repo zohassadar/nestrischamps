@@ -153,15 +153,6 @@ function getMaxouts(num) {
 	players.forEach(player => {
 		const { id, csv } = player;
 
-		const controller = (csv._controller = csv.controller);
-		csv.controller = /goof/i.test(controller)
-			? 'Goofy Foot'
-			: /hyperkin|cadet/i.test(controller)
-			? 'Hyperkin Cadet'
-			: /nes|original|standard|oem|stock/i.test(controller)
-			? 'Original NES'
-			: controller;
-
 		// prep ntc mapped values
 		const ntc = {
 			id,
@@ -192,6 +183,14 @@ function getMaxouts(num) {
 				.filter(identity)
 				.join('\n'),
 			style: getStyle(csv.style),
+			controller: /goof/i.test(csv.controller)
+				? 'goofy-foot'
+				: /hyperkin|cadet/i.test(csv.controller)
+				? 'hyperkin-cadet'
+				: /nes|original|standard|oem|stock/i.test(csv.controller)
+				? 'nes'
+				: 'other',
+			rival: csv.rival || '',
 			elo_rank: 0,
 			elo_rating: 0,
 		};
@@ -245,14 +244,16 @@ function getMaxouts(num) {
 			city,
 			interests,
 			style,
+			controller,
+			rival,
 			profile_image_url,
 		} = ntc;
 
 		await pool.query(
 			`INSERT INTO users
-			(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, elo_rank, elo_rating, created_at, last_login_at)
+			(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, elo_rank, elo_rating, created_at, last_login_at)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
 			`,
 			[
 				id,
@@ -267,6 +268,8 @@ function getMaxouts(num) {
 				city,
 				interests,
 				style,
+				controller,
+				rival,
 				elo_rank,
 				elo_rating,
 			]
