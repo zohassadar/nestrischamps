@@ -182,8 +182,8 @@ function getMaxouts(num) {
 			pronouns: csv.pronouns.trim(),
 			profile_image_url: '',
 			dob: new Date(),
-			country_code: 'US',
-			city: '',
+			country_code: csv.country.trim(),
+			city: csv.state?.trim() || '',
 			interests: [
 				csv.hobbies.trim(),
 				csv.favourite_other_game.trim(),
