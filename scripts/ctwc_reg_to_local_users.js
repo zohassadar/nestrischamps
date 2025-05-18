@@ -59,8 +59,9 @@ function getMaxouts(num) {
 	// BEWARE - Hardcoded order of fields from sheet
 	const CSV_FIELDS = [
 		'seed',
-		'country',
 		'display_name',
+		'country',
+		'state',
 		'pronouns',
 		'twitch',
 		'controller',
