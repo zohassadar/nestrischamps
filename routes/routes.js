@@ -173,6 +173,10 @@ function mapObject(obj, fn) {
 	return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]));
 }
 
+const usNumFormatter = new Intl.NumberFormat('en-US', {
+	maximumFractionDigits: 0,
+});
+
 router.get('/view/profile_card/:login', async (req, res) => {
 	const user = await UserDAO.getUserByLogin(req.params.login, true);
 
@@ -181,13 +185,15 @@ router.get('/view/profile_card/:login', async (req, res) => {
 		return;
 	}
 
+	console.log(user);
+
 	const pbs = await ScoreDAO.getPBs181929(user);
 
 	res.render('profile_card', {
 		user,
 		age: user.dob ? getAge(user.dob) : 9, // 😅
-		pbs: mapObject(pbs, v => (v ? readableScoreFomatter(v) : 0)),
-		elo_rating: readableScoreFomatter(Math.floor(user.elo_rating)),
+		pbs: mapObject(pbs, v => (v ? usNumFormatter.format(v) : 0)),
+		elo_rating: usNumFormatter.format(Math.floor(user.elo_rating)),
 	});
 });
 
