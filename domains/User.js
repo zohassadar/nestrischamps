@@ -7,6 +7,8 @@ import Producer from './Producer.js';
 import { RefreshingAuthProvider } from '@twurple/auth';
 import { ChatClient } from '@twurple/chat';
 
+const TWITCH_CHAT_ENABLED = /^(1|true)$/i.test(process.env.TWITCH_CHAT_ENABLED);
+
 const USER_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes before we destroy user! TODO: Make tunable
 const LEAVE_ROOM_TIMEOUT = 30 * 1000; // allow 30s to reconnect
 
@@ -295,6 +297,8 @@ class User extends EventEmitter {
 	}
 
 	_connectToTwitchChat() {
+		if (!TWITCH_CHAT_ENABLED) return;
+
 		if (this.chat_client || !this.twitch_token?.id) {
 			return;
 		}
