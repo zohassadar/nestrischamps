@@ -23,8 +23,8 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.354.0",
-		"@aws-sdk/lib-storage": "3.354.0",
+		"@aws-sdk/client-s3": "3.817.0",
+		"@aws-sdk/lib-storage": "3.817.0",
 		"@twurple/api": "6.2.1",
 		"@twurple/auth": "6.2.1",
 		"@twurple/chat": "6.2.1",
