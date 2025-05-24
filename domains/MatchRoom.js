@@ -602,7 +602,7 @@ class MatchRoom extends Room {
 						this.getProducer(dropped_player.id)
 							.getProducer()
 							.send(['dropPlayer']);
-					} catch (err) {
+					} catch (_err) {
 						// ignore errors
 					}
 

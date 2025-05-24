@@ -269,7 +269,7 @@ class UserDAO {
 			user.secret = new_secret;
 			this.users_by_secret.set(user.secret, user);
 		} catch (err) {
-			console.log(`Unable to update secret for user ${user.login}`);
+			console.log(`Unable to update secret for user ${user.login}: `, err);
 		}
 
 		return user;

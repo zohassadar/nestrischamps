@@ -7,8 +7,6 @@ import layouts from '../modules/layouts.js';
 import UserDAO from '../daos/UserDAO.js';
 import ScoreDAO from '../daos/ScoreDAO.js';
 
-import { readableScoreFomatter } from '../public/views/utils.js';
-
 const router = express.Router();
 
 router.get('/debug/session', (req, res) => {

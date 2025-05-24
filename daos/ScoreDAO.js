@@ -112,6 +112,7 @@ class ScoreDAO {
 		try {
 			return parseInt(result.rows[0].score, 10);
 		} catch (err) {
+			console.error(err);
 			return 0;
 		}
 	}
@@ -156,6 +157,7 @@ class ScoreDAO {
 				};
 			});
 		} catch (err) {
+			console.warn(err);
 			return [];
 		}
 	}

@@ -107,7 +107,7 @@ class Connection extends EventEmitter {
 		} else {
 			try {
 				message = JSON.parse(message);
-			} catch (err) {
+			} catch (_err) {
 				console.warn(
 					`Received non JSON message on connection ${this.id}: ${message
 						.toString()
