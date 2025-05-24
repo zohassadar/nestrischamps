@@ -22,9 +22,10 @@ const twitchRefreshEmitter = new TwitchRefreshEmitter();
 const authProvider = new RefreshingAuthProvider({
 	clientId: process.env.TWITCH_CLIENT_ID,
 	clientSecret: process.env.TWITCH_CLIENT_SECRET,
-	onRefresh: (userId, args) => {
-		twitchRefreshEmitter.emit(userId, args);
-	},
+});
+
+authProvider.onRefresh((userId, args) => {
+	twitchRefreshEmitter.emit(userId, args);
 });
 
 class User extends EventEmitter {
@@ -293,7 +294,7 @@ class User extends EventEmitter {
 		this.twitch_token.expires_in = expiresIn;
 	}
 
-	async _connectToTwitchChat() {
+	_connectToTwitchChat() {
 		if (this.chat_client || !this.twitch_token?.id) {
 			return;
 		}
@@ -364,7 +365,7 @@ class User extends EventEmitter {
 			]);
 		});
 
-		await this.chat_client.connect();
+		this.chat_client.connect();
 
 		console.log(
 			`TWITCH: chat_client connected for ${this.twitch_token.login} - ${this.twitch_token.id}`
