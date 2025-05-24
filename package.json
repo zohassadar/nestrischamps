@@ -44,7 +44,7 @@
 		"passport-google-oauth20": "^2.0.0",
 		"pg": "^8.12.0",
 		"timezones.json": "1.7.2",
-		"ulid": "2.3.0",
+		"ulid": "3.0.0",
 		"uuid": "9.0.0",
 		"ws": "8.18.2"
 	},

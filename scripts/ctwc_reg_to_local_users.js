@@ -6,7 +6,7 @@
 
 import pg from 'pg';
 import { parse } from 'csv-parse/sync';
-import ULID from 'ulid';
+import { ulid } from 'ulid';
 import got from 'got';
 
 // replace this URL by the sheet that contains your data
@@ -184,7 +184,7 @@ function getRivalAndReason(entry) {
 			display_name: csv.seed
 				? `${csv.seed}. ${csv.display_name}`
 				: csv.display_name,
-			secret: ULID.ulid(),
+			secret: ulid(),
 			description: [
 				csv.job.trim(),
 				getCompetitonWins(csv.competition_wins),

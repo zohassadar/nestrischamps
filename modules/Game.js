@@ -1,7 +1,7 @@
 // Minimum amount of game tracking to do server side to be able to report games
 import BinaryFrame from '../public/js/BinaryFrame.js';
 import ScoreDAO from '../daos/ScoreDAO.js';
-import ULID from 'ulid';
+import { ulid } from 'ulid';
 
 // The below is to upload game frames to S3
 // That should be refactored into another file
@@ -32,9 +32,9 @@ class Game {
 			// We use ulid ids for games, and games get binned into part of the 10 bits timestamp
 			// this means each folder represents about ~9h, which should be about one siting
 			// the extension ngf stands for "Nestrischamps Game Frames"
-			const ulid = ULID.ulid();
-			const dir = `games/${user.id}/${ulid.slice(0, 5)}`;
-			const file = `${ulid.slice(5)}.ngf`;
+			const gameid = ulid();
+			const dir = `games/${user.id}/${gameid.slice(0, 5)}`;
+			const file = `${gameid.slice(5)}.ngf`;
 
 			this.frame_file = `${dir}/${file}`;
 

@@ -1,5 +1,5 @@
 import express from 'express';
-import ULID from 'ulid';
+import { ulid } from 'ulid';
 import got from 'got';
 
 import middlewares from '../modules/middlewares.js';
@@ -183,7 +183,7 @@ router.get('/twitch/callback', async (req, res) => {
 		);
 
 		// augment use object with data we retrieve previously
-		user_object.secret = ULID.ulid();
+		user_object.secret = ulid();
 
 		// NEED more logic here to check BOTh the users and oauth users table sigh...
 		const user = await UserDAO.createUser(user_object, {
@@ -252,10 +252,10 @@ router.get('/google/callback', async (req, res) => {
 			const payload = ticket.getPayload();
 
 			// mimic twitch shape
-			const login = ULID.ulid().toLowerCase();
+			const login = ulid().toLowerCase();
 			const user_object = {
 				id: payload.sub,
-				secret: ULID.ulid(),
+				secret: ulid(),
 				type: '',
 				description: '',
 				login,
@@ -353,7 +353,7 @@ router.get('/discord/callback', async (req, res) => {
 		// transform discord response into twitch-like user object
 		user_object.profile_image_url = `https://cdn.discordapp.com/avatars/${user_object.id}/${user_object.avatar}?size=512`;
 		user_object.login = user_object.username;
-		user_object.secret = ULID.ulid();
+		user_object.secret = ulid();
 		user_object.type = '';
 		user_object.display_name = user_object.global_name;
 

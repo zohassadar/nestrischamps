@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import EventEmitter from 'events';
-import ULID from 'ulid';
+import { ulid } from 'ulid';
 
 import BinaryFrame from '../public/js/BinaryFrame.js';
 
@@ -17,7 +17,7 @@ class Connection extends EventEmitter {
 	constructor(user, socket, meta = new URLSearchParams()) {
 		super();
 
-		this.id = `NTC${ULID.ulid()}`; // NTC prefix for NesTrisChamps
+		this.id = `NTC${ulid()}`; // NTC prefix for NesTrisChamps
 		this.user = user;
 		this.socket = socket;
 

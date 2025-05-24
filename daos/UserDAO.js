@@ -1,6 +1,6 @@
 import User from '../domains/User.js';
 import dbPool from '../modules/db.js';
-import ULID from 'ulid';
+import { ulid } from 'ulid';
 
 class UserDAO {
 	constructor() {
@@ -169,7 +169,7 @@ class UserDAO {
 							RETURNING id
 							`,
 							[
-								ULID.ulid().toLowerCase(), // this means the user cannot share his room via his twitch login 🥲. User should go update his login later to something more easily usable
+								ulid().toLowerCase(), // this means the user cannot share his room via his twitch login 🥲. User should go update his login later to something more easily usable
 								user_data.secret,
 								user_data.type,
 								user_data.description,
