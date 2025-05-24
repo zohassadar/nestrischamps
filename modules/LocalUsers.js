@@ -4,6 +4,8 @@ import { parse } from 'csv-parse/sync';
 import { ulid } from 'ulid';
 import got from 'got';
 
+import ScoreDAO from '../daos/ScoreDAO.js';
+
 function identity(v) {
 	return v;
 }
@@ -253,6 +255,8 @@ const _importUsers = async (
 				(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, rival_reason, elo_rank, elo_rating, created_at, last_login_at)
 				VALUES
 				($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+				ON CONFLICT (id)
+				DO UPDATE SET login=$2, secret=$3, description=$4, display_name=$5, pronouns=$6, profile_image_url=$7, dob=$8, country_code=$9, city=$10, interests=$11, style=$12, controller=$13, rival=$14, rival_reason=$15, elo_rank=$16, elo_rating=$17, last_login_at=NOW()
 				`,
 				[
 					id,
@@ -298,41 +302,15 @@ const _importUsers = async (
 		for (const { start, pb } of pbs) {
 			if (!pb.trim()) continue;
 
-			const pb_score = parseInt(pb, 10);
+			const score = parseInt(pb, 10);
 
-			await dbClient.query(
-				`
-                INSERT INTO scores
-                (
-                    datetime,
-
-                    player_id,
-                    start_level,
-                    end_level,
-                    score,
-
-                    competition,
-                    manual,
-                    lines,
-                    tetris_rate,
-                    num_droughts,
-                    max_drought,
-                    das_avg,
-                    duration,
-                    clears,
-                    pieces,
-                    transition,
-                    num_frames,
-                    frame_file
-                )
-                VALUES
-                (
-                    NOW(),
-                    $1, $2, $3, $4,
-                    false, true, 0, 0, 0, 0, -1, 0, '', '', 0, 0, ''
-                )
-                `,
-				[id, start, start, pb_score]
+			await ScoreDAO.setPB(
+				{ id },
+				{
+					start_level: start,
+					end_level: start,
+					score,
+				}
 			);
 		}
 	}
