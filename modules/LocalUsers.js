@@ -10,6 +10,12 @@ function identity(v) {
 	return v;
 }
 
+function sleep(ms) {
+	return new Promise(resolve => {
+		setTimeout(resolve, ms);
+	});
+}
+
 // need to return values that match DB enum
 function getStyle(entry) {
 	if (/hybrid/i.test(entry)) return 'hybrid';
@@ -68,6 +74,8 @@ const _importUsers = async (
 	const records = parse(records_csv_content, {
 		skip_empty_lines: true,
 	});
+
+	await sleep(1);
 
 	const START_ID = 33;
 	const errors = [];
@@ -143,6 +151,8 @@ const _importUsers = async (
 		return { id, csv, errors: player_errors };
 	});
 
+	await sleep(1);
+
 	// show all errors by row for quick fixes
 	if (errors.length) {
 		errors.sort((e1, e2) => e1.index - e2.index);
@@ -158,6 +168,8 @@ const _importUsers = async (
 		);
 		// process.exit(1);
 	}
+
+	await sleep(1);
 
 	// 2. Transform data and Derive NTC values
 	players.forEach(player => {
