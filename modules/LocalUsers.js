@@ -117,35 +117,30 @@ const _importUsers = async (
 		const csv = Object.fromEntries(
 			CSV_FIELDS.map((key, i) => [key, record[i]])
 		);
+		const player_errors = [];
 
 		// verify numeric fields
 		for (const field of NUMERIC_FIELDS) {
 			if (!/^([1-9]\d*(\.\d*[1-9])?(E\+\d+)?|)$/.test(csv[field].trim())) {
-				errors.push({
-					index,
-					csv,
-					err: `${csv[field]} is not a valid value`,
-				});
+				player_errors.push(
+					`${field} is not a valid numerical value: [${csv[field]}]`
+				);
 			}
 		}
 
 		if (csv.display_name.length > 11) {
-			errors.push({
-				index,
-				csv,
-				err: `short name is longer than 10 characters (${csv.display_name.length} chars)`,
-			});
+			player_errors.push(
+				`short name is longer than 10 characters (${csv.display_name.length} chars): [${csv.display_name}]`
+			);
 		}
 
 		if (Math.trunc(Number(csv.num_maxouts)) > 10000) {
-			errors.push({
-				index,
-				csv,
-				err: `Number of maxout > 10,000 (${csv.num_maxouts})`,
-			});
+			player_errors.push(`Number of maxout > 10,000:[${csv.num_maxouts}]`);
 		}
 
-		return { id, csv };
+		errors.push(...player_errors.map(err => ({ index, csv, err })));
+
+		return { id, csv, errors: player_errors };
 	});
 
 	// show all errors by row for quick fixes
@@ -317,10 +312,12 @@ const _importUsers = async (
 
 	console.log(`DONE - Inserted ${players.length} players`);
 
-	return { players, errors };
+	return { players };
 };
 
 export const importUsers = async options => {
+	if (process.env.LOCAL_USERS_ALLOW_IMPORT !== '1') return;
+
 	// verify we are with a local DB
 	const dbURL = new URL(dbPool.options.connectionString);
 
@@ -335,7 +332,7 @@ export const importUsers = async options => {
 		throw new Error(`Operation importUsers() is not allowed to run`);
 	}
 
-	const csvURL = process.env.CSV_URL;
+	const csvURL = process.env.LOCAL_USERS_CSV_URL;
 
 	if (!csvURL) {
 		console.error(`User CSV URL is not provided - ABORTING`);
@@ -353,3 +350,10 @@ export const importUsers = async options => {
 		dbClient.release();
 	}
 };
+
+if (
+	process.env.IN_SCRIPT !== '1' &&
+	/^[1-9]\d+$/.test(process.env.LOCAL_USERS_REFRESH)
+) {
+	setInterval(importUsers, parseInt(process.env.LOCAL_USERS_REFRESH) * 1000);
+}
