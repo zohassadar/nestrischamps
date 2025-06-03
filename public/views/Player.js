@@ -1008,9 +1008,9 @@ export default class Player extends EventTarget {
 	_refreshProfileCard() {
 		if (this.login) {
 			const rand = `${Math.random()}`.slice(2);
-			this.profile_card.src = `/view/profile_card/${
+			this.profile_card.src = `/view/profile_card/${encodeURIComponent(
 				this.login
-			}?r=${Date.now()}-${rand}`; // always refresh with cachebuster
+			)}?r=${Date.now()}-${rand}`; // always refresh with cache buster
 		} else {
 			this.profile_card.src = `/view/profile_card/NONE`; // allows caching
 		}
