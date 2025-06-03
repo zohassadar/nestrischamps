@@ -337,6 +337,8 @@ class UserDAO {
 
 				if (!user) {
 					user = this.addUserFromData(result.rows[0]);
+				} else {
+					user.updateUserFields(result.rows[0]);
 				}
 			}
 		}

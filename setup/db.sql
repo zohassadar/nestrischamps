@@ -10,6 +10,7 @@ CREATE TABLE users (
 	type VARCHAR ( 128 ),
 	description TEXT,
 	display_name VARCHAR ( 255 ),
+	full_name VARCHAR ( 255 ),
 	pronouns VARCHAR ( 128 ),
 	profile_image_url VARCHAR ( 255 ),
 

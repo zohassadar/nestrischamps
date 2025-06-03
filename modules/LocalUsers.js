@@ -86,6 +86,7 @@ const _importUsers = async (
 		'display_name',
 		'country',
 		'state',
+		'full_name',
 		'pronouns',
 		'twitch',
 		'controller',
@@ -183,9 +184,8 @@ const _importUsers = async (
 			id,
 			login: /^\s*$/.test(csv.twitch) ? `__user${id}` : csv.twitch,
 			email: `__user${id}@nestrischamps.io`,
-			display_name: csv.seed
-				? `${csv.seed}. ${csv.display_name}`
-				: csv.display_name,
+			display_name: `${csv.seed ? `${csv.seed}. ` : ''}${csv.display_name}`,
+			full_name: csv.full_name,
 			secret: ulid(),
 			description: [
 				csv.job.trim(),
@@ -241,6 +241,7 @@ const _importUsers = async (
 			// email,
 			secret,
 			display_name,
+			full_name,
 			pronouns,
 			elo_rank,
 			elo_rating,
@@ -259,11 +260,11 @@ const _importUsers = async (
 		try {
 			await dbClient.query(
 				`INSERT INTO users
-				(id, login, secret, description, display_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, rival_reason, elo_rank, elo_rating, created_at, last_login_at)
+				(id, login, secret, description, display_name, full_name, pronouns, profile_image_url, dob, country_code, city, interests, style, controller, rival, rival_reason, elo_rank, elo_rating, created_at, last_login_at)
 				VALUES
-				($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW())
+				($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
 				ON CONFLICT (id)
-				DO UPDATE SET login=$2, secret=$3, description=$4, display_name=$5, pronouns=$6, profile_image_url=$7, dob=$8, country_code=$9, city=$10, interests=$11, style=$12, controller=$13, rival=$14, rival_reason=$15, elo_rank=$16, elo_rating=$17, last_login_at=NOW()
+				DO UPDATE SET login=$2, secret=$3, description=$4, display_name=$5, full_name=$6, pronouns=$7, profile_image_url=$8, dob=$9, country_code=$10, city=$11, interests=$12, style=$13, controller=$14, rival=$15, rival_reason=$16, elo_rank=$17, elo_rating=$18, last_login_at=NOW()
 				`,
 				[
 					id,
@@ -271,6 +272,7 @@ const _importUsers = async (
 					secret,
 					description,
 					display_name,
+					full_name,
 					pronouns,
 					profile_image_url,
 					dob,
