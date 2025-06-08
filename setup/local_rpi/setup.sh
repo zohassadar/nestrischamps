@@ -5,12 +5,10 @@ sudo apt upgrade -y
 sudo apt install -y git build-essential vim zsh gawk postgresql iptables coturn
 
 # Install oh-my-zsh without user interaction
+sudo chsh -s $(which zsh) "$(whoami)"
 export RUNZSH=no
-export CHSH=yes
 export KEEP_ZSHRC=yes
-
-# Run install script with curl silently
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
 
 echo "CREATE USER nestrischamps with encrypted password 'nestrischamps'; CREATE DATABASE nestrischamps with owner=nestrischamps;" | sudo -u postgres psql
 
