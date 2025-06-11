@@ -24,13 +24,6 @@ function getStyle(entry) {
 	if (/roll/i.test(entry)) return 'roll';
 }
 
-function getCompetitonWins(entry) {
-	entry = entry?.trim();
-	if (!entry) return '';
-	if (/^(no|n\/?a)$/i.test(entry)) return '';
-	return entry;
-}
-
 function getUsefulEntry(entry) {
 	entry = entry?.trim();
 	if (!entry) return '';
@@ -105,14 +98,7 @@ const _importUsers = async (
 		'controller',
 	];
 
-	const NUMERIC_FIELDS = [
-		'seed',
-		'pb18',
-		'pb19',
-		'pb29',
-		'num_maxouts',
-		'age',
-	];
+	const NUMERIC_FIELDS = ['seed', 'pb18', 'pb19', 'pb29', 'num_maxouts', 'age'];
 
 	// 1. we extract all records from the sheet and convert that in NTC-compatible player data
 	const players = records.slice(1).map((record, index) => {
