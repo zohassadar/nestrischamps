@@ -120,7 +120,7 @@
 
 			.name,
 			.flag {
-				top: 910px;
+				top: 909px;
 			}
 
 			.name {
@@ -166,12 +166,14 @@
 			.flag,
 			.burn,
 			.efficiency,
+			.new_efficiency,
+			.piece_counts,
 			.runways {
 				--offset: 337px;
 			}
 
 			.hearts {
-				bottom: -919px;
+				bottom: -918px;
 				width: 24px;
 				padding-right: 0;
 				height: unset;
@@ -341,6 +343,67 @@
 				color: #880005;
 			}
 
+			.new_efficiency {
+				--offset: 504px;
+				height: unset;
+				width: 400px;
+				color: #888;
+				top: 449px;
+				padding-top: 5px;
+				line-height: 28px;
+			}
+			.new_efficiency > .value {
+				display: flex;
+				justify-content: space-between;
+			}
+			.new_efficiency > .value .label {
+				text-align: left;
+			}
+			.new_efficiency > .value .value,
+			.new_efficiency > .value .percent {
+				color: white;
+			}
+
+			.tetris_streaks {
+				--offset: 504px;
+				height: unset;
+				width: 256px;
+				color: #888;
+				top: 595px;
+				padding-top: 5px;
+				line-height: 28px;
+			}
+			.tetris_streaks > .value {
+				display: flex;
+				justify-content: space-between;
+			}
+			.tetris_streaks > .value .label {
+				text-align: left;
+			}
+			.tetris_streaks > .value .value,
+			.tetris_streaks > .value .percent {
+				color: white;
+			}
+
+			.piece_counts {
+				height: unset;
+				width: 140px;
+				color: #888;
+				top: 449px;
+				padding-top: 5px;
+				line-height: 28px;
+			}
+			.piece_counts > .value {
+				display: flex;
+				justify-content: space-between;
+			}
+			.piece_counts > .value .label {
+				text-align: left;
+			}
+			.piece_counts > .value .value {
+				color: white;
+			}
+
 			.simul-tetris {
 				display: none;
 				position: absolute;
@@ -388,6 +451,12 @@
 			}
 			#match2.small {
 				top: 511px;
+			}
+
+			.match.small .new_efficiency,
+			.match.small .tetris_streak,
+			.match.small .piece_counts {
+				display: none;
 			}
 
 			.match.small .score,
@@ -619,6 +688,65 @@
 						<div class="lv19"><span>+0.00</span>T</div>
 						<div class="lv29"><span>+0.00</span>T</div>
 						<div class="lv39"><span>+0.00</span>T</div>
+					</div>
+				</div>
+
+				<div class="box piece_counts">
+					<div class="header">PIECES</div>
+					<div class="value">
+						<div class="label">
+							<div class="t">T</div>
+							<div class="j">J</div>
+							<div class="z">Z</div>
+							<div class="o">O</div>
+							<div class="s">S</div>
+							<div class="l">L</div>
+							<div class="i">I</div>
+						</div>
+						<div class="value">
+							<div class="t">000</div>
+							<div class="j">000</div>
+							<div class="z">000</div>
+							<div class="o">000</div>
+							<div class="s">000</div>
+							<div class="l">000</div>
+							<div class="i">000</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="box new_efficiency">
+					<div class="header">EFFICIENCY</div>
+					<div class="value">
+						<div class="label">
+							<div class="eff_all">ALL</div>
+							<div class="eff_50">LAST 50</div>
+							<div class="eff_20">LAST 20</div>
+						</div>
+						<div class="value">
+							<div class="eff_all">0</div>
+							<div class="eff_50">0</div>
+							<div class="eff_20">0</div>
+						</div>
+						<div class="percent">
+							<div class="eff_all_pc">0</div>
+							<div class="eff_50_pc">0</div>
+							<div class="eff_20_pc">0</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="box tetris_streaks">
+					<div class="header">TR STREAKS</div>
+					<div class="value">
+						<div class="label">
+							<div class="cur">CUR</div>
+							<div class="max">MAX</div>
+						</div>
+						<div class="value">
+							<div class="cur">0</div>
+							<div class="max">0</div>
+						</div>
 					</div>
 				</div>
 
@@ -923,6 +1051,10 @@
 						} else {
 							player.dom.drought_max.closest('.box').classList.remove('active');
 						}
+
+						document.querySelector(
+							`.piece_counts .value .${piece_evt.piece}`
+						).textContent = piece_evt.pieces[piece_evt.piece].count;
 					};
 
 					let max_burn = 0;
