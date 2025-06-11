@@ -1057,7 +1057,7 @@
 							player.dom.drought_max.closest('.box').classList.remove('active');
 						}
 
-						document.querySelector(
+						player_node.querySelector(
 							`.piece_counts .value .value .${piece_evt.piece}`
 						).textContent =
 							`${piece_evt.pieces[piece_evt.piece].count}`.padStart(3, '0');
