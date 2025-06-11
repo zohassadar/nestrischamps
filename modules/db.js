@@ -11,7 +11,7 @@ console.log(`DB initialization`, {
 pool = new pg.Pool({
 	connectionString: process.env.DATABASE_URL,
 	ssl: {
-		rejectUnauthorized: isPublicServer,
+		rejectUnauthorized: false, // isPublicServer,
 	},
 });
 
