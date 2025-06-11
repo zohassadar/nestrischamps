@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 	<head>
 		<link rel="stylesheet" type="text/css" href="/views/tetris.css" />
@@ -1061,6 +1061,7 @@
 				competition.API.setMatch(
 					match_value == 'both' ? null : parseInt(match_value, 10)
 				);
+				competition.API.setMatch = () => {};
 			} else {
 				// Layout starts 1 match view
 				competition.API.setMatch(0);
