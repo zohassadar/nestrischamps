@@ -14,11 +14,6 @@
 				top: 0;
 			}
 
-			.new_efficiency,
-			.tetris_streaks {
-				display: none;
-			}
-
 			.box {
 				padding: 3px;
 				font-size: 24.01px;
@@ -357,15 +352,16 @@
 				padding-top: 5px;
 				line-height: 28px;
 			}
-			.new_efficiency > .value {
+			.new_efficiency .content {
 				display: flex;
 				justify-content: space-between;
 			}
-			.new_efficiency > .value .label {
+			.new_efficiency .label {
 				text-align: left;
 			}
-			.new_efficiency > .value .value,
-			.new_efficiency > .value .percent {
+			.new_efficiency .value,
+			.new_efficiency .percent {
+				text-align: right;
 				color: white;
 			}
 
@@ -378,34 +374,34 @@
 				padding-top: 5px;
 				line-height: 28px;
 			}
-			.tetris_streaks > .value {
+			.tetris_streaks .content {
 				display: flex;
 				justify-content: space-between;
 			}
-			.tetris_streaks > .value .label {
+			.tetris_streaks .label {
 				text-align: left;
 			}
-			.tetris_streaks > .value .value,
-			.tetris_streaks > .value .percent {
+			.tetris_streaks .value {
+				text-align: right;
 				color: white;
 			}
 
 			.piece_counts {
-				height: unset;
+				height: 236px;
 				width: 140px;
 				color: #888;
 				top: 449px;
 				padding-top: 5px;
 				line-height: 28px;
 			}
-			.piece_counts > .value {
+			.piece_counts .content {
 				display: flex;
 				justify-content: space-between;
 			}
-			.piece_counts > .value .label {
+			.piece_counts .label {
 				text-align: left;
 			}
-			.piece_counts > .value .value {
+			.piece_counts .value {
 				color: white;
 			}
 
@@ -698,7 +694,7 @@
 
 				<div class="box piece_counts">
 					<div class="header">PIECES</div>
-					<div class="value">
+					<div class="content">
 						<div class="label">
 							<div class="T">T</div>
 							<div class="J">J</div>
@@ -722,28 +718,28 @@
 
 				<div class="box new_efficiency">
 					<div class="header">EFFICIENCY</div>
-					<div class="value">
+					<div class="content">
 						<div class="label">
 							<div class="eff_all">ALL</div>
 							<div class="eff_50">LAST 50</div>
 							<div class="eff_20">LAST 20</div>
 						</div>
 						<div class="value">
-							<div class="eff_all">0</div>
-							<div class="eff_50">0</div>
-							<div class="eff_20">0</div>
+							<div class="eff_all">-</div>
+							<div class="eff_50">-</div>
+							<div class="eff_20">-</div>
 						</div>
 						<div class="percent">
-							<div class="eff_all_pc">0</div>
-							<div class="eff_50_pc">0</div>
-							<div class="eff_20_pc">0</div>
+							<div class="eff_all">-</div>
+							<div class="eff_50">-</div>
+							<div class="eff_20">-</div>
 						</div>
 					</div>
 				</div>
 
 				<div class="box tetris_streaks">
 					<div class="header">TR STREAKS</div>
-					<div class="value">
+					<div class="content">
 						<div class="label">
 							<div class="cur">CUR</div>
 							<div class="max">MAX</div>
@@ -790,7 +786,11 @@
 		<script src="/vendor/peerjs.1.5.4.min.js"></script>
 		<script type="module">
 			import '/views/bg.js';
-			import { peerServerOptions, TRANSITIONS } from '/views/constants.js';
+			import {
+				peerServerOptions,
+				TRANSITIONS,
+				EFF_LINE_VALUES,
+			} from '/views/constants.js';
 			import {
 				peek,
 				noop,
@@ -901,6 +901,13 @@
 				for (const level of levels) {
 					computeRunwayDiff(players, level);
 				}
+			}
+
+			function getEffPercent(eff) {
+				const ratio =
+					(eff - EFF_LINE_VALUES[1]) /
+					(EFF_LINE_VALUES[4] - EFF_LINE_VALUES[1]);
+				return Math.floor(ratio * 100) + '%';
 			}
 
 			[1, 2].forEach(match_num => {
@@ -1058,22 +1065,86 @@
 						}
 
 						player_node.querySelector(
-							`.piece_counts .value .value .${piece_evt.piece}`
+							`.piece_counts .value .${piece_evt.piece}`
 						).textContent =
 							`${piece_evt.pieces[piece_evt.piece].count}`.padStart(3, '0');
 					};
 
 					let max_burn = 0;
+					let max_streak = 0;
+					let cur_streak = 0;
+					const line_values_50 = [];
 
 					player.onLines = frame => {
+						if (!frame?.clears) return;
+
+						const clear_evt = peek(frame.clears);
+						const cleared = clear_evt?.cleared || 0;
+
+						if (cleared === 0) return;
+
 						if (player.game?.data.running_stats.burn >= max_burn) {
 							player.dom.burn_max.textContent = max_burn =
 								player.game.data.running_stats.burn;
 						}
+
+						const eff_node = player_node.querySelector(
+							`.new_efficiency .content`
+						);
+
+						line_values_50.push(
+							...Array(cleared).fill(EFF_LINE_VALUES[cleared])
+						);
+
+						if (line_values_50.length > 50) {
+							line_values_50.splice(0, line_values_50.length - 50);
+						}
+
+						const eff_50 =
+							line_values_50.reduce((acc, v) => acc + v, 0) /
+							line_values_50.length;
+
+						const lines_values_20 = line_values_50.slice(-20);
+						const eff_20 =
+							lines_values_20.reduce((acc, v) => acc + v, 0) /
+							lines_values_20.length;
+
+						eff_node.querySelector(`.value .eff_all`).textContent = Math.floor(
+							clear_evt.efficiency
+						);
+						eff_node.querySelector(`.value .eff_50`).textContent =
+							Math.floor(eff_50);
+						eff_node.querySelector(`.value .eff_20`).textContent =
+							Math.floor(eff_20);
+
+						eff_node.querySelector(`.percent .eff_all`).textContent =
+							getEffPercent(clear_evt.efficiency);
+						eff_node.querySelector(`.percent .eff_50`).textContent =
+							getEffPercent(eff_50);
+						eff_node.querySelector(`.percent .eff_20`).textContent =
+							getEffPercent(eff_20);
+
+						if (cleared === 4) {
+							cur_streak += 1;
+							if (cur_streak > max_streak) {
+								max_streak = cur_streak;
+								player_node.querySelector(
+									`.tetris_streaks .value .max`
+								).textContent = max_streak;
+							}
+						} else {
+							cur_streak = 0;
+						}
+
+						player_node.querySelector(
+							`.tetris_streaks .value .cur`
+						).textContent = cur_streak;
 					};
 
 					player.onGameStart = () => {
 						player.is_chasing_down = false;
+
+						line_values_50.length = 0;
 
 						player.dom.burn.textContent =
 							player.dom.burn_max.textContent =
@@ -1110,6 +1181,28 @@
 						]('hide19');
 
 						computeRunwayDiffs(match_players);
+
+						const eff_node = player_node.querySelector(
+							`.new_efficiency .content`
+						);
+
+						eff_node.querySelector(`.value .eff_all`).textContent =
+							eff_node.querySelector(`.value .eff_50`).textContent =
+							eff_node.querySelector(`.value .eff_20`).textContent =
+							eff_node.querySelector(`.percent .eff_all`).textContent =
+							eff_node.querySelector(`.percent .eff_50`).textContent =
+							eff_node.querySelector(`.percent .eff_20`).textContent =
+								'-';
+
+						player_node.querySelector(
+							`.tetris_streaks .value .cur`
+						).textContent =
+							player_node.querySelector(
+								`.tetris_streaks .value .max`
+							).textContent =
+							cur_streak =
+							max_streak =
+								0;
 					};
 
 					player.onGameOver = () => {
