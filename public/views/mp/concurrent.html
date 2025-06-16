@@ -1,9 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 	<head>
 		<link rel="stylesheet" type="text/css" href="/views/tetris.css" />
 		<link rel="stylesheet" type="text/css" href="/views/mmp.css" />
 		<style>
+			#stream_bg {
+				--width: 100vw;
+
+				container-type: inline-size;
+				container-name: stream_bg;
+				width: var(--width);
+				height: 1080px;
+			}
+
 			.player {
 				top: 341px;
 			}
@@ -105,10 +114,16 @@
 
 			const players = [];
 
-			let num_players = 6; // TODO: accomodate 8
+			let num_players = 6; // TODO: accommodate 8
 
-			const hspacer = (1920 - player_width * 3) / 4;
-			const vspacer = (1080 - 48 - player_height * 2) / 3; // 48 for bottom banner
+			const bg_width = Math.round(
+				parseFloat(getComputedStyle(document.getElementById('stream_bg')).width)
+			);
+
+			const hspacer = (bg_width - player_width * 3) / 4;
+			const vspacer = (1080 - 57 - player_height * 2) / 3; // 57 for bottom banner (standard ctwc)
+
+			console.log({ hspacer, vspacer });
 
 			window.onload = () => {
 				// wait for css
