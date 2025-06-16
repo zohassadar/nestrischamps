@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 	<head>
 		<link rel="stylesheet" type="text/css" href="/views/tetris.css" />
@@ -315,7 +315,7 @@
 				position: absolute;
 				transform-origin: 50% 50%;
 				top: 150px;
-				--offset: 341px;
+				--offset: 351px;
 				right: var(--offset);
 			}
 
@@ -358,8 +358,8 @@
 				--scale: 0.7245042492917847; /* (1080-57)/706/2 */
 				--score-width: 326px;
 				--score-offset: calc(
-					var(--board-offset) + var(--score-width) + (var(--border-size) * 1px) +
-						9px
+					var(--board-offset) + var(--score-width) +
+						(var(--border-size) * 1px) + 9px
 				); /* why 9px??? */
 				--name-width: calc(
 					var(--player-width) - var(--score-offset) - 156px
@@ -475,7 +475,7 @@
 
 			.match.small .simul-tetris {
 				top: 250px;
-				--offset: 574px;
+				--offset: 620px;
 			}
 
 			.match.small .p2 > * {
@@ -878,7 +878,7 @@
 								showRunways,
 								show_runways[1] * 1000
 							);
-					  }
+						}
 					: noop;
 
 				[1, 2].forEach((player_num, player_idx) => {
@@ -1172,6 +1172,7 @@
 						player.last_tetris_time = now;
 
 						if (
+							QueryString.get('qual') !== '1' &&
 							match_players.every(
 								player => player.last_tetris_time >= now - SIMUL_TETRIS_DELAY
 							)
