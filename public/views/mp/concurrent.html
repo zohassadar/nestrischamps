@@ -21,7 +21,7 @@
 					right 0.3s ease,
 					top 0.3s ease;
 				--focus-top: 125px;
-				--focus-left: 80px;
+				--focus-left: calc(var(--bgwidth) - 360px);
 				--focus-scale: 1.2;
 			}
 
@@ -86,21 +86,25 @@
 				left: var(--focus-left);
 				top: var(--focus-top);
 				width: 266px;
+				z-index: 3;
 			}
 			.player.focus .board {
 				transform: scale(var(--focus-scale));
 				left: calc(var(--focus-left) + 32px);
 				top: calc(var(--focus-top) + 221px);
+				z-index: 2;
 			}
 			.player.focus .score {
 				transform: scale(var(--focus-scale));
 				left: var(--focus-left);
 				top: calc(var(--focus-top) + 77px);
+				z-index: 3;
 			}
 			.player.focus .running_trt {
 				transform: scale(var(--focus-scale));
 				left: var(--focus-left);
 				top: calc(var(--focus-top) + 692px);
+				z-index: 3;
 			}
 
 			.banner {
@@ -281,10 +285,10 @@
 					const top = 8;
 
 					const baseStyles = {
-						left: `${bg_width - 250 - 118}px`, // 118px for right 🤷
+						left: `10px`, // 118px for right 🤷
 						zIndex: 1,
 						transform: `scale(${scale})`,
-						transformOrigin: 'top right',
+						transformOrigin: 'top left',
 					};
 
 					players_copy.forEach(player => {
