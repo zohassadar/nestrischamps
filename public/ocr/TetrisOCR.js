@@ -209,7 +209,7 @@ export default class TetrisOCR extends EventTarget {
 						pixel_data[offset_idx],
 						pixel_data[offset_idx + 1],
 						pixel_data[offset_idx + 2]
-				  );
+					);
 
 			for (let t_idx = max_check_index; t_idx--; ) {
 				const diff = pixel_luma - this.templates[t_idx][p_idx];
@@ -349,10 +349,14 @@ export default class TetrisOCR extends EventTarget {
 
 		const colors = [res.color1, res.color2, res.color3];
 
-		if (level_units != 6 && level_units != 7) {
+		if (this.config.handle_retron_levels_6_7 === false) {
+			// undefined defaults to true; only explicit false is considered
+			colors.unshift(DEFAULT_COLOR_0); // always add black as a color to compare to
+		} else if (level_units != 6 && level_units != 7) {
 			// INFO: colors for level X6 and X7 are terrible on Retron, so we don't add black to ensure they don't get mixed up
 			// When we use a palette
 			// TOCHECK: is this still needed now that we work in lab color space?
+			// NOTE: this conditional branch could be merged into the one above with an OR check, but it would make the code less readable
 			colors.unshift(DEFAULT_COLOR_0); // add black
 		}
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<title>NestrisChamps OCR Producer</title>
@@ -71,7 +71,8 @@
 			fieldset {
 				background-color: #fff;
 				border-radius: 6px;
-				box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1),
+				box-shadow:
+					0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1),
 					0 0 0 1px rgba(10, 10, 10, 0.02);
 				color: #4a4a4a;
 				display: block;
@@ -344,7 +345,7 @@
 					<div
 						title="Use only half the height of the input video stream (1 line in 2), to help remove interlacing artefacts"
 					>
-						<label for="use_half_height">Use half capture-height</label>
+						<label for="use_half_height">Use half capture-height ⓘ</label>
 						<input type="checkbox" id="use_half_height" />
 					</div>
 
@@ -354,10 +355,24 @@
 					</div>
 
 					<div
+						title="If you are not using a Retron, and if you are using an active splitter, you can disable this"
+					>
+						<label for="handle_retron_levels_6_7"
+							>Handle Retron levels X6 and X7 ⓘ</label
+						>
+						<input
+							type="checkbox"
+							id="handle_retron_levels_6_7"
+							checked
+							autocomplete="off"
+						/>
+					</div>
+
+					<div
 						title="Use Web Worker to provide stable interval even when the tab is unfocused"
 					>
 						<label for="use_worker_for_interval"
-							>Use Web Worker for interval</label
+							>Use Web Worker for interval ⓘ</label
 						>
 						<input
 							type="checkbox"

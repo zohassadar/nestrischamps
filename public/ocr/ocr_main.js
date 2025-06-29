@@ -117,6 +117,9 @@ const tabsContainer = document.querySelector('#tabs'),
 	score7 = document.querySelector('#score7'),
 	use_half_height = document.querySelector('#use_half_height'),
 	use_worker_for_interval = document.querySelector('#use_worker_for_interval'),
+	handle_retron_levels_6_7 = document.querySelector(
+		'#handle_retron_levels_6_7'
+	),
 	focus_alarm = document.querySelector('#focus_alarm'),
 	clear_config = document.querySelector('#clear_config'),
 	save_game_palette = document.querySelector('#save_game_palette'),
@@ -736,6 +739,19 @@ function onUseWorkerIntervalChanged() {
 
 use_worker_for_interval.addEventListener('change', onUseWorkerIntervalChanged);
 
+function onHandleRetronLevels67Changed() {
+	config.handle_retron_levels_6_7 = !!handle_retron_levels_6_7.checked;
+	saveConfig(config);
+	// config is accessed by reference in TetrisOCR
+	// That's a bit dirty, but for now that means no need to do anything beyond saving, because nothing changes from this setting
+	// dirty, because this file shouldn't know if anything changes or not
+}
+
+handle_retron_levels_6_7.addEventListener(
+	'change',
+	onHandleRetronLevels67Changed
+);
+
 function onPrivacyChanged() {
 	config.allow_video_feed = !!allow_video_feed.checked;
 
@@ -785,9 +801,8 @@ function onVdoNinjaChange() {
 
 		connection.send(['setVdoNinjaURL', viewURL]);
 		navigator.clipboard.writeText(viewURL);
-		document.querySelector(
-			'#vdo_ninja_url'
-		).textContent = `${viewURL} (URL has been copied to clipboard)`;
+		document.querySelector('#vdo_ninja_url').textContent =
+			`${viewURL} (URL has been copied to clipboard)`;
 
 		// 2. cancel peerjs video
 		allow_video_feed.checked = false;
@@ -1737,6 +1752,7 @@ function saveConfig(config) {
 		score7: config.score7,
 		use_half_height: config.use_half_height,
 		use_worker_for_interval: config.use_worker_for_interval,
+		handle_retron_levels_6_7: config.handle_retron_levels_6_7,
 		tasks: {},
 	};
 
@@ -1782,8 +1798,8 @@ function getGameTypeFromTasks(tasks) {
 	return tasks.T
 		? BinaryFrame.GAME_TYPE.CLASSIC
 		: tasks.cur_piece_das
-		? BinaryFrame.GAME_TYPE.DAS_TRAINER
-		: BinaryFrame.GAME_TYPE.MINIMAL;
+			? BinaryFrame.GAME_TYPE.DAS_TRAINER
+			: BinaryFrame.GAME_TYPE.MINIMAL;
 }
 
 function loadConfig() {
@@ -2085,8 +2101,8 @@ function resizeRoomIFrame() {
 		view_meta?._size === '720'
 			? 1280
 			: view_meta?._size === '750'
-			? 1334
-			: 1920;
+				? 1334
+				: 1920;
 
 	if (room.clientWidth >= size) {
 		if (!roomIFrame.style.transform) return;
@@ -2253,6 +2269,7 @@ let timer = stdTimer;
 		allow_video_feed.checked = config.allow_video_feed != false;
 		focus_alarm.checked = config.focus_alarm != false;
 		use_worker_for_interval.checked = config.use_worker_for_interval != false;
+		handle_retron_levels_6_7.checked = config.handle_retron_levels_6_7 != false;
 
 		if (use_worker_for_interval.checked) {
 			console.log('Utilizing Worker Timer');
