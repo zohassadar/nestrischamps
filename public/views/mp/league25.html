@@ -577,6 +577,12 @@
 				document.querySelector('#overlay').style.display = 'block';
 			}
 
+			if (/^0\.[1-9]\d*$/.test(QueryString.get('overlay_opacity'))) {
+				document.querySelector('#overlay').style.opacity = parseFloat(
+					QueryString.get('overlay_opacity')
+				);
+			}
+
 			const isDAS = QueryString.get('style') === 'das';
 
 			const SHOW_SIMUL_TETRIS = QueryString.get('simultris') !== '0';
