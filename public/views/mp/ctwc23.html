@@ -29,6 +29,19 @@
 				line-height: 24px;
 				height: 51px;
 				right: var(--offset);
+				z-index: 0;
+			}
+
+			.box-container {
+				position: absolute;
+			}
+
+			.box-container::before {
+				content: '';
+				position: absolute;
+				background: black;
+				inset: 6px;
+				z-index: -2;
 			}
 
 			.box .header {
@@ -1340,6 +1353,35 @@
 					player.dom.runways_box.classList.remove('visible');
 				});
 			};
+
+			// custom -- temporary
+			setTimeout(() => {
+				document.querySelectorAll('.box').forEach(box => {
+					const boxStyle = getComputedStyle(box);
+
+					const wrapper = document.createElement('div');
+					wrapper.classList.add('box-container');
+
+					Object.assign(wrapper.style, {
+						width: box.offsetWidth + 'px',
+						height: box.offsetHeight + 'px',
+						top: boxStyle.top,
+						left: boxStyle.left,
+						right: boxStyle.right,
+						bottom: boxStyle.bottom,
+					});
+
+					Object.assign(box.style, {
+						top: 0,
+						left: 0,
+						right: 'unset',
+						bottom: 'unset',
+					});
+
+					box.parentNode.insertBefore(wrapper, box);
+					wrapper.appendChild(box);
+				});
+			}, 0);
 		</script>
 	</body>
 </html>
