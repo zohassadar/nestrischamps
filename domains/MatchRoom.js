@@ -49,7 +49,7 @@ class MatchRoom extends Room {
 			],
 		};
 
-		this.onAdminMessage = this.onAdminMessage.bind(this);
+		this.handleAdminMessage = this.handleAdminMessage.bind(this);
 	}
 
 	setAdmin(connection) {
@@ -64,7 +64,7 @@ class MatchRoom extends Room {
 		}
 		this.admin = connection;
 
-		connection.on('message', this.onAdminMessage);
+		connection.on('message', this.handleAdminMessage);
 		connection.once('close', () => {
 			if (this.admin == connection) {
 				// only overwrite self (for potential race conditions)
@@ -451,7 +451,7 @@ class MatchRoom extends Room {
 		this.sendToViews(['setVdoNinjaURL', pidx, player.vdo_ninja_url]);
 	}
 
-	async onAdminMessage(message) {
+	async handleAdminMessage(message) {
 		const [command, ...args] = message;
 		let forward_to_views = true;
 		let update_admin = true;

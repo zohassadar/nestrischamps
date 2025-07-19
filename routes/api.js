@@ -4,6 +4,7 @@ import _ from 'lodash';
 import express from 'express';
 import got from 'got';
 import ScoreDAO from '../daos/ScoreDAO.js';
+import UserDAO from '../daos/UserDAO.js';
 
 const STACKRABBIT_URL = 'https://stackrabbit.herokuapp.com/get-move';
 
@@ -101,6 +102,92 @@ router.get('/games/:id', async (req, res) => {
 	}
 
 	res.json(game);
+});
+
+const SECRET_REGEX = /^([0-9A-Z]{26}|PLAYER[1-9]\d*)$/i; // ulid or hardcoded player secret
+
+function extractSecret(req, res, next) {
+	const secretHeader = req.headers['x-ntc-secret'];
+	const isValid = SECRET_REGEX.test(secretHeader);
+
+	if (!isValid) {
+		return res.status(401).json({ error: 'Invalid or missing Bearer token' });
+	}
+
+	req.secret = secretHeader;
+
+	next();
+}
+
+async function checkUser(req, res, next) {
+	const user = await UserDAO.getUserBySecret(req.secret);
+
+	if (!user) {
+		return res.status(401).json({ error: 'User not found' });
+	}
+
+	req.user = user;
+
+	next();
+}
+
+router.post(
+	'/host/rpc/:command',
+	extractSecret,
+	checkUser,
+	express.json(),
+	async (req, res) => {
+		// verify the body is a message
+		// TODO: use zod to specify the message format
+		if (!Array.isArray(req.body))
+			return res.status(400).json({ error: 'Invalid payload' });
+
+		const [player_idx, value] = req.body;
+
+		if (typeof player_idx !== 'number')
+			return res.status(400).json({ error: 'Invalid player' });
+
+		switch (req.params.command) {
+			case 'setCountryCode':
+				if (typeof value !== 'string' || value.length !== 2) {
+					return res.status(400).json({ error: 'Invalid country code' });
+				}
+				break;
+			case 'setVictories':
+				if (typeof value !== 'number') {
+					return res.status(400).json({ error: 'Invalid victories count' });
+				}
+				break;
+			case 'setDisplayName':
+				if (typeof value !== 'string' || value.length > 16) {
+					return res.status(400).json({ error: 'Invalid display name' });
+				}
+				break;
+			default:
+				return res.status(404).json({ error: 'Unknown command' });
+		}
+
+		const command = [
+			req.params.command,
+			parseInt(player_idx, 10), // just in case
+			value,
+		];
+
+		req.user.getHostRoom().handleAdminMessage(command);
+
+		res.json({ success: true, command });
+	}
+);
+
+// global 404 handler for API
+router.use((req, res) => {
+	res.status(404).json({ error: 'Invalid api route' });
+});
+
+// Optional: error handler
+router.use((err, req, res, next) => {
+	console.error('Unhandled error:', err);
+	res.status(500).json({ error: 'Server error' });
 });
 
 export default router;
