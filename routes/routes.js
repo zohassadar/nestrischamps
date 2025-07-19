@@ -111,6 +111,35 @@ router.get(
 	}
 );
 
+// access producer by url secret
+router.get(
+	/^\/room\/u\/([^/]+)\/(producer|emu)\/([a-zA-Z0-9-]+)/,
+	async (req, res) => {
+		const host_user = await UserDAO.getUserByLogin(req.params[0]);
+
+		if (!host_user) {
+			res.status(404).send('Target User Not found');
+			return;
+		}
+
+		const player = await UserDAO.getUserBySecret(req.params[2]);
+
+		if (!player) {
+			res.status(400).send('Player Not found');
+			return;
+		}
+
+		res.sendFile(
+			path.join(
+				path.resolve(),
+				`public${
+					/producer/.test(req.path) ? '/ocr/ocr.html' : '/emu/index.html'
+				}`
+			)
+		);
+	}
+);
+
 // This route should only be allowed by admin for non-owner
 router.get(
 	'/room/u/:login/view/:layout',
