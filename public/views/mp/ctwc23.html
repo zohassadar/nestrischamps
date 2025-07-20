@@ -679,7 +679,7 @@
 					<div class="content">---</div>
 				</div>
 
-				<div class="box drought">
+				<div class="box drought active">
 					<div class="header"><img src="/views/red_bar.png" /></div>
 					<div class="value">99</div>
 				</div>
@@ -1380,6 +1380,10 @@
 
 					box.parentNode.insertBefore(wrapper, box);
 					wrapper.appendChild(box);
+				});
+
+				document.querySelectorAll('.drought.active').forEach(box => {
+					box.classList.remove('active');
 				});
 			}, 0);
 		</script>
