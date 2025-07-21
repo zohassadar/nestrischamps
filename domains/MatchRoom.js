@@ -553,11 +553,11 @@ class MatchRoom extends Room {
 				}
 
 				case 'setVictories': {
-					const [p_num, url] = args;
+					const [p_num, num_victories] = args;
 
 					this.assertValidPlayer(p_num);
 
-					this.state.players[p_num].victories = url;
+					this.state.players[p_num].victories = num_victories;
 
 					break;
 				}
