@@ -62,7 +62,7 @@ app.use((req, res, next) => {
 		// We prep for when user might login
 
 		if (req.originalUrl) {
-			if (!/^\/(auth|favicon|android|apple|site)/.test(req.originalUrl)) {
+			if (!/^\/(api|auth|favicon|android|apple|site)/.test(req.originalUrl)) {
 				console.log('Storing auth_success_redirect', req.originalUrl);
 				req.session.auth_success_redirect = req.originalUrl;
 			}

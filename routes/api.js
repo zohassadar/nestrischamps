@@ -131,51 +131,37 @@ async function checkUser(req, res, next) {
 	next();
 }
 
+function validateRpcBody(req, res, next) {
+	// We validate against the exact same message format for rpc commands as the websocket
+	// i.e. array of format [command, ...args]
+	// TODO: could consider accepting more expressive json payloads instead
+	// TODO: use zod to specify the message commands and their args types explicitly
+	do {
+		if (!Array.isArray(req.body)) break;
+
+		switch (req.body[0]) {
+			case 'setDisplayName':
+			case 'setCountryCode':
+			case 'setVictories':
+			case 'resetVictories':
+			case 'setBestOf':
+			case 'setMatch':
+				return next();
+		}
+	} while (false);
+
+	return res.status(400).json({ error: 'Invalid RPC command' });
+}
+
 router.post(
-	'/host/rpc/:command',
+	'/host/rpc',
 	extractSecret,
 	checkUser,
 	express.json(),
+	validateRpcBody,
 	async (req, res) => {
-		// verify the body is a message
-		// TODO: use zod to specify the message format
-		if (!Array.isArray(req.body))
-			return res.status(400).json({ error: 'Invalid payload' });
-
-		const [player_idx, value] = req.body;
-
-		if (typeof player_idx !== 'number')
-			return res.status(400).json({ error: 'Invalid player' });
-
-		switch (req.params.command) {
-			case 'setCountryCode':
-				if (typeof value !== 'string' || value.length !== 2) {
-					return res.status(400).json({ error: 'Invalid country code' });
-				}
-				break;
-			case 'setVictories':
-				if (typeof value !== 'number') {
-					return res.status(400).json({ error: 'Invalid victories count' });
-				}
-				break;
-			case 'setDisplayName':
-				if (typeof value !== 'string' || value.length > 16) {
-					return res.status(400).json({ error: 'Invalid display name' });
-				}
-				break;
-			default:
-				return res.status(404).json({ error: 'Unknown command' });
-		}
-
-		const command = [
-			req.params.command,
-			parseInt(player_idx, 10), // just in case
-			value,
-		];
-
-		req.user.getHostRoom().handleAdminMessage(command);
-
-		res.json({ success: true, command });
+		req.user.getHostRoom().handleAdminMessage(req.body);
+		res.json({ success: true, command: req.body });
 	}
 );
 
