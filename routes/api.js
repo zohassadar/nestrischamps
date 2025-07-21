@@ -171,7 +171,7 @@ router.use((req, res) => {
 });
 
 // Optional: error handler
-router.use((err, req, res, next) => {
+router.use((err, req, res) => {
 	console.error('Unhandled error:', err);
 	res.status(500).json({ error: 'Server error' });
 });
