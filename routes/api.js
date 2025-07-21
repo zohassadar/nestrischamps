@@ -148,6 +148,8 @@ function validateRpcBody(req, res, next) {
 			case 'setMatch':
 				return next();
 		}
+
+		// eslint-disable-next-line no-constant-condition
 	} while (false);
 
 	return res.status(400).json({ error: 'Invalid RPC command' });
