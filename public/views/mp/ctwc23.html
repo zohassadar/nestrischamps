@@ -15,7 +15,7 @@
 			.match {
 				--scale: 1;
 				--board-offset: 357px;
-				--score-width: 333px;
+				--score-width: 366px;
 				--player-width: calc(var(--width) / 2 / var(--scale));
 
 				position: absolute;
@@ -34,6 +34,7 @@
 
 			.box-container {
 				position: absolute;
+				right: var(--offset);
 			}
 
 			.box-container::before {
@@ -56,9 +57,17 @@
 
 			.score {
 				width: var(--score-width);
-				padding-right: 0;
-				height: 112px;
+				height: 148px;
 				top: 0;
+			}
+
+			.score .box {
+				box-sizing: border-box;
+				width: 100%;
+				height: 100%;
+				padding-right: 0;
+				right: unset;
+				left: unset;
 			}
 
 			.score .header {
@@ -369,11 +378,10 @@
 
 			.match.small {
 				--scale: 0.7245042492917847; /* (1080-57)/706/2 */
-				--score-width: 326px;
+				--score-width: 359px;
 				--score-offset: calc(
-					var(--board-offset) + var(--score-width) +
-						(var(--border-size) * 1px) + 9px
-				); /* why 9px??? */
+					var(--board-offset) + var(--score-width) - 9px
+				); /* 9px accounts for the border overlap */
 				--name-width: calc(
 					var(--player-width) - var(--score-offset) - 156px
 				); /* 156 represents the width of the flag box, minus the border overlap */
@@ -516,7 +524,7 @@
 
 			@container stream_bg (max-width: 1580px) {
 				.match.small {
-					--score-width: 300px;
+					--score-width: 333px;
 				}
 			}
 		</style>
@@ -658,14 +666,16 @@
 
 				<div class="box next_piece"></div>
 
-				<div class="box score">
-					<div class="header">SCORE</div>
-					<div class="aligner">
-						<div class="value">0&#x202F;000&#x202F;000</div>
-						<div class="diff winning">0&#x202F;000&#x202F;000</div>
-					</div>
-					<div class="tetris_diff">
-						<span class="value">0.00</span>&#x202F;TETRIS
+				<div class="box-container score">
+					<div class="box">
+						<div class="header">SCORE</div>
+						<div class="aligner">
+							<div class="value">0&#x202F;000&#x202F;000</div>
+							<div class="diff winning">0&#x202F;000&#x202F;000</div>
+						</div>
+						<div class="tetris_diff">
+							<span class="value">0.00</span>&#x202F;TETRIS
+						</div>
 					</div>
 				</div>
 
@@ -679,7 +689,7 @@
 					<div class="content">---</div>
 				</div>
 
-				<div class="box drought active">
+				<div class="box drought">
 					<div class="header"><img src="/views/red_bar.png" /></div>
 					<div class="value">99</div>
 				</div>
@@ -1353,39 +1363,6 @@
 					player.dom.runways_box.classList.remove('visible');
 				});
 			};
-
-			// custom -- temporary
-			setTimeout(() => {
-				document.querySelectorAll('.box').forEach(box => {
-					const boxStyle = getComputedStyle(box);
-
-					const wrapper = document.createElement('div');
-					wrapper.classList.add('box-container');
-
-					Object.assign(wrapper.style, {
-						width: box.offsetWidth + 'px',
-						height: box.offsetHeight + 'px',
-						top: boxStyle.top,
-						left: boxStyle.left,
-						right: boxStyle.right,
-						bottom: boxStyle.bottom,
-					});
-
-					Object.assign(box.style, {
-						top: 0,
-						left: 0,
-						right: 'unset',
-						bottom: 'unset',
-					});
-
-					box.parentNode.insertBefore(wrapper, box);
-					wrapper.appendChild(box);
-				});
-
-				document.querySelectorAll('.drought.active').forEach(box => {
-					box.classList.remove('active');
-				});
-			}, 0);
 		</script>
 	</body>
 </html>
