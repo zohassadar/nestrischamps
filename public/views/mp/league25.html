@@ -19,8 +19,8 @@
 
 			.match {
 				--scale: 1;
-				--board-offset: 392px;
-				--score-width: 369px;
+				--board-offset: 393px;
+				--score-width: 377px;
 				--player-width: calc(var(--width) / 2 / var(--scale));
 
 				position: absolute;
@@ -35,18 +35,7 @@
 				line-height: 32px;
 				height: 98px;
 				right: var(--offset);
-			}
-
-			.p1 .box {
-				border-image-source: url(/images/league/border_red.png);
-			}
-
-			.p2 .box {
-				border-image-source: url(/images/league/border_blue.png);
-			}
-
-			.no_border .box {
-				border-image-source: url(/images/league/border_transparent.png) !important;
+				border-image-source: url(/images/league/border_transparent.png);
 			}
 
 			.box .header {
@@ -61,11 +50,11 @@
 			}
 
 			.score {
-				--offset: 6px;
+				--offset: 0;
 				width: var(--score-width);
 				padding-right: 0;
-				height: 92px;
-				top: 15px;
+				height: 98px;
+				top: 13px;
 				overflow: hidden;
 				font-size: 40px;
 				line-height: 46px;
@@ -111,7 +100,7 @@
 			.lines,
 			.next_piece {
 				width: 110px;
-				height: 82px;
+				height: 94px;
 				--offset: var(--board-offset);
 			}
 
@@ -119,23 +108,25 @@
 				padding-top: 6px;
 				width: 165px;
 				padding-right: 0;
-				top: unset;
-				bottom: -988px;
+				top: 13px;
+			}
+
+			.lines .content {
+				line-height: 44px;
 			}
 
 			.next_piece {
-				top: unset;
-				bottom: -780px;
+				top: 129px;
 				height: 86px;
 			}
 
 			.board {
-				--offset: 6px;
+				--offset: 0;
 				--border-size: 10;
 				padding: 6px 0 0;
-				width: 372px;
-				height: 751px;
-				top: 137px;
+				width: 380px;
+				height: 756px;
+				top: 129px;
 			}
 
 			.name,
@@ -146,12 +137,9 @@
 			}
 
 			.name {
-				top: 908px;
-			}
-
-			.name {
+				top: 904px;
 				--offset: 0;
-				width: 378px;
+				width: 381px;
 				padding: 3px 0;
 				height: 54px;
 				white-space: nowrap;
@@ -218,12 +206,14 @@
 			.hearts,
 			.level,
 			.tetris_rate,
-			.drought {
+			.drought,
+			.lines,
+			.next_piece {
 				--offset: var(--board-offset);
 			}
 
 			.hearts {
-				bottom: -674px;
+				bottom: -774px;
 				padding: 0 6px;
 				height: unset;
 				font-size: 0px;
@@ -244,6 +234,11 @@
 				display: inline-block;
 			}
 
+			.bo7 .hearts {
+				padding-top: 5px;
+				padding-bottom: 5px;
+			}
+
 			.hearts span.win {
 				background-image: url(/views/heart_red.png);
 			}
@@ -252,21 +247,18 @@
 			.tetris_rate,
 			.drought {
 				padding-top: 5px;
-				width: 78px;
+				width: 113px;
+				height: 84px;
 			}
 
 			.tetris_rate,
 			.drought {
-				top: 19px;
-				width: 115px;
-				height: 84px;
+				bottom: -984px;
 			}
 
 			.level {
 				top: unset;
-				bottom: -883px;
-				width: 113px;
-				height: 81px;
+				bottom: -879px;
 			}
 
 			.drought {
@@ -337,7 +329,7 @@
 				display: none;
 				position: absolute;
 				transform-origin: 50% 50%;
-				top: 200px;
+				top: 300px;
 				--offset: 370px;
 				right: var(--offset);
 			}
@@ -378,10 +370,6 @@
 				left: 0;
 				overflow: hidden;
 				z-index: 2000;
-				display: none;
-			}
-
-			.bo5 #overlay {
 				background: url(/images/league/Bo5NTC.png) no-repeat top left;
 			}
 
@@ -560,23 +548,6 @@
 					.classList.add(QueryString.get('bracket'));
 			}
 
-			if (QueryString.get('border') === '0') {
-				document.querySelector('#stream_bg').classList.add(`no_border`);
-			}
-
-			if (/^[57]$/.test(QueryString.get('overlay'))) {
-				document
-					.querySelector('#stream_bg')
-					.classList.add(`bo${QueryString.get('overlay')}`);
-				document.querySelector('#overlay').style.display = 'block';
-			}
-
-			if (/^0\.[1-9]\d*$/.test(QueryString.get('overlay_opacity'))) {
-				document.querySelector('#overlay').style.opacity = parseFloat(
-					QueryString.get('overlay_opacity')
-				);
-			}
-
 			const isDAS = QueryString.get('style') === 'das';
 
 			const SHOW_SIMUL_TETRIS = QueryString.get('simultris') !== '0';
@@ -695,7 +666,7 @@
 						{
 							biglogo: true,
 							bigntc: true,
-							field_pixel_size: 4.691358024691358,
+							field_pixel_size: 4.75,
 							running_trt_dot_size: 5,
 							preview_pixel_size: 3.5,
 							format_score: v => readableScoreFomatter(v),
@@ -905,6 +876,19 @@
 			}
 
 			const competition = new Competition(players);
+
+			competition.API._setBestOf = competition.API.setBestOf;
+			competition.API.setBestOf = function (num) {
+				document.querySelector('#stream_bg').classList.remove('bo7');
+
+				if (num === 7) {
+					document.querySelector('#stream_bg').classList.add(`bo${num}`);
+				}
+
+				this._setBestOf(num);
+			};
+
+			competition.API.setBestOf(5); // default to Bo5
 
 			competition.API.showProfileCard = function (visible, match_idx) {
 				const match_players = players.slice(2 * match_idx, 2 * match_idx + 2);
