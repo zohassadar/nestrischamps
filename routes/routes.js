@@ -88,29 +88,6 @@ router.get(
 	}
 );
 
-router.get(
-	/^\/room\/u\/([^/]+)\/(producer|emu)/,
-	middlewares.assertSession,
-	middlewares.checkToken,
-	async (req, res) => {
-		const target_user = await UserDAO.getUserByLogin(req.params[0]);
-
-		if (!target_user) {
-			res.status(404).send('Target User Not found');
-			return;
-		}
-
-		res.sendFile(
-			path.join(
-				path.resolve(),
-				`public${
-					/producer/.test(req.path) ? '/ocr/ocr.html' : '/emu/index.html'
-				}`
-			)
-		);
-	}
-);
-
 // access producer by url secret
 router.get(
 	/^\/room\/u\/([^/]+)\/(producer|emu)\/([a-zA-Z0-9-]+)/,
@@ -126,6 +103,29 @@ router.get(
 
 		if (!player) {
 			res.status(400).send('Player Not found');
+			return;
+		}
+
+		res.sendFile(
+			path.join(
+				path.resolve(),
+				`public${
+					/producer/.test(req.path) ? '/ocr/ocr.html' : '/emu/index.html'
+				}`
+			)
+		);
+	}
+);
+
+router.get(
+	/^\/room\/u\/([^/]+)\/(producer|emu)/,
+	middlewares.assertSession,
+	middlewares.checkToken,
+	async (req, res) => {
+		const target_user = await UserDAO.getUserByLogin(req.params[0]);
+
+		if (!target_user) {
+			res.status(404).send('Target User Not found');
 			return;
 		}
 
@@ -211,8 +211,6 @@ router.get('/view/profile_card/:login', async (req, res) => {
 		res.status(404).send('Not found');
 		return;
 	}
-
-	console.log(user);
 
 	const pbs = await ScoreDAO.getPBs181929(user);
 

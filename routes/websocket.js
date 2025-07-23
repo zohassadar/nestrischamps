@@ -110,7 +110,7 @@ export default function init(server, wss) {
 		}
 
 		m = request.nc_url.pathname.match(
-			/^\/ws\/room\/(u\/([a-z0-9_-]+)\/)?producer\/([a-zA-Z0-9-]+)/
+			/^\/ws\/room\/(u\/([a-z0-9_-]+)\/)?(producer|emu)\/([a-zA-Z0-9-]+)/
 		);
 
 		request.is_secret_producer = !!m;
@@ -122,7 +122,7 @@ export default function init(server, wss) {
 
 			request.tetris.producer = {
 				target_user_login: m[2],
-				connecting_user_secret: m[3],
+				connecting_user_secret: m[4],
 			};
 
 			const connecting_user = await UserDAO.getUserBySecret(
