@@ -102,6 +102,22 @@ export default class ScoreFixer {
 			) {
 				digits[0] = 0x0;
 			}
+		} else if (digits[0] === 0xe) {
+			// E, should it have been a 6?
+			if (
+				this.last_good_digits[0] === 0x5 ||
+				this.last_good_digits[0] === 0x6
+			) {
+				digits[0] = 0x6;
+			}
+		} else if (digits[0] === 0x6) {
+			// 6, should it have been a E?
+			if (
+				this.last_good_digits[0] === 0xd ||
+				this.last_good_digits[0] === 0xe
+			) {
+				digits[0] = 0xe;
+			}
 		}
 
 		this.last_good_digits = digits;
