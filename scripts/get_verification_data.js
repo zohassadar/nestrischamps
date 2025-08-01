@@ -126,7 +126,7 @@ function getSrtTimestamp(elapsed) {
 	console.log(`Writing report into file ${file_name}.csv`);
 	const csv_data = report.points.map(data => {
 		const row = Object.values(data);
-		row[1] = `"${row[1]}"`; // SRT timestamps contain a comma, so we wrap the entry for CSV safety
+		row[2] = `"${row[2]}"`; // SRT timestamps contain a comma, so we wrap the entry for CSV safety
 		return row;
 	});
 	csv_data.unshift(Object.keys(report.points[0])); // prepend headers
