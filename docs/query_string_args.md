@@ -47,6 +47,7 @@ Caveat: global args apply to **MOST** layouts, but some layouts may not understa
 | Argument  | Possible values | Default | Notes |
 | --- | --- | --- | --- |
 | `cycle_tdiff` | An integer value representing the time in second before the score differential changes from score diff to tetris diff. E.g. `5` | `5` | To disable cycling, set to `0` |
+| `match` | `{not set}`: show match 1 and wait for admin command to switch view<br>`0`: always show first match<br>`1`: always show second match<br>`both`: always show both matches | `{not set}` | Warning: Setting to `0`, `1`, `both` ignores admin commands to switch view!|
 | `qual` | `0`: Show score/tetris diff and runways<br>`1`: DON'T show score/tetris diff and runways | `0` | `qual=1` activates "qual mode". Not showing the score/tetris diff helps indicate the players are NOT competing, they are just playing their games independently |
 | `runway` | `0`: DON'T show runways<br>`1`: Always show runways| `1` ||
 
@@ -63,7 +64,7 @@ Caveat: global args apply to **MOST** layouts, but some layouts may not understa
 | `style` | `roll`: Show runways for level `19`, `29`, `39`<br>`das`: show runways for level `19`, `29` | `roll` | |
 | `qual` | `0`: Show score/tetris diff and runways<br>`1`: DON'T show score/tetris diff and runways | `0` | `qual=1` activates "qual mode". Not showing the score/tetris diff helps indicate the players are NOT competing, they are just playing their games independently |
 | `seed` | `0`: Don't show the seed underneath the player name<br>`1`: Show the seed underneath the player name | `1` | Players' seeds can be set by convention by prepending number-dot-space to the player name. E.g. `1. Dog` or `22. Yobi` |
-| `match` | `{not set}`: show match 1 and wait for admin command to switch view<br>`0`: always show match 1<br>`1`: always show match 2<br>`both`: always show both matches | `{not set}` | Warning: Setting to `0`, `1`, `both` ignores admin commands to switch view!|
+| `match` | `{not set}`: show match 1 and wait for admin command to switch view<br>`0`: always show first match<br>`1`: always show second match<br>`both`: always show both matches | `{not set}` | Warning: Setting to `0`, `1`, `both` ignores admin commands to switch view!|
 | `simultris` | An integer value representing the time difference in milliseconds where 2 tetrises are considered "simulatenous" | `0` | Shows an animated graphic "Simul-Tetris!" above the player cams. If the argument is omitted, or set to `0`, the graphic will not be displayed. Recommended value is `120` milliseconds. |
 | `invisible` | `0`: Don't draw invisible ghost blocks as ghost blocks <br>`1`: With invisible tetris, draw the invisible blocks as ghost blocks | `0` | This setting is only useful if the game is played in Invisible Tetris mode |
 | `heartpos` | `0`: bottom, vertical<br>`1`: next to LV/TRT, vertical<br>`2`: next to Lines/next, vertical<br>`3`: next to score, horizontal<br>`4`: under flag, horizontal | `0` | This setting affect the position of hearts in the 2-match view |
