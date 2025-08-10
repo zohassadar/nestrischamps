@@ -358,9 +358,11 @@ export default class Player extends EventTarget {
 			const styles = getComputedStyle(this.dom[name]);
 			const canvas = document.createElement('canvas');
 
-			canvas.style.position = 'absolute';
-			canvas.style.top = styles.paddingTop;
-			canvas.style.left = styles.paddingLeft;
+			if (name !== 'preview') {
+				canvas.style.position = 'absolute';
+				canvas.style.top = styles.paddingTop;
+				canvas.style.left = styles.paddingLeft;
+			}
 
 			canvas.setAttribute('width', css_size(styles.width));
 			canvas.setAttribute('height', css_size(styles.height));

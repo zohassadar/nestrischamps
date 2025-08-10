@@ -42,6 +42,16 @@ Caveat: global args apply to **MOST** layouts, but some layouts may not understa
 
 ## Layout-specific arguments
 
+### CTWC1080_2matches
+
+| Argument  | Possible values | Default | Notes |
+| --- | --- | --- | --- |
+| `cycle_tdiff` | An integer value representing the time in second before the score differential changes from score diff to tetris diff. E.g. `5` | `5` | To disable cycling, set to `0` |
+| `qual` | `0`: Show score/tetris diff and runways<br>`1`: DON'T show score/tetris diff and runways | `0` | `qual=1` activates "qual mode". Not showing the score/tetris diff helps indicate the players are NOT competing, they are just playing their games independently |
+| `runway` | `0`: DON'T show runways<br>`1`: Always show runways| `1` ||
+
+
+
 ### CTWC23
 
 | Argument  | Possible values | Default | Notes |
