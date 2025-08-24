@@ -84,6 +84,9 @@ export class CpuTetrisOCR extends TetrisOCR {
 
 		// extract the regions of interest
 		this.capture_ctx.filter = 'none';
+
+		this.output_ctx.clear();
+
 		this.configData.fields.forEach(name => {
 			const task = this.config.tasks[name];
 
