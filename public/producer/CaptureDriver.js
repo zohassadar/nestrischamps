@@ -69,9 +69,6 @@ export class CaptureDriver extends EventTarget {
 		try {
 			const track = this.#video.srcObject?.getVideoTracks()[0];
 			trackFps = track.getSettings().frameRate;
-			if (trackFps) {
-				console.log(`Track's frameRate: ${trackFps}fps`);
-			}
 		} catch (err) {
 			// ignore 🤷
 		}
