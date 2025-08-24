@@ -441,6 +441,8 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		scoreControls.setCoordinates(task.crop);
 		scoreControls.setCaptureCanvas(task.canvas);
 
+		this.ocr.updateScore67Config();
+
 		config.save();
 	};
 

@@ -84,6 +84,10 @@ export class WGpuTetrisOCR extends TetrisOCR {
 		super.setConfig(config);
 	}
 
+	updateScore67Config() {
+		this.#prepGpuComputeDigitAssets();
+	}
+
 	#initGpuRenderAssets() {
 		const { device, canvasFormat } = this.#gpu;
 

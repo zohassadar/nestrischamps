@@ -58,6 +58,15 @@ export class CpuTetrisOCR extends TetrisOCR {
 		}
 	}
 
+	updateScore67Config() {
+		// expectation: the score task (including pattern and canvas) has been updated before this method was called
+		// now we just need to udpate the task specifically to this class.
+
+		const task = this.config.tasks.score;
+
+		task.img = new ImageData(task.canvas.width, task.canvas.height);
+	}
+
 	async processVideoFrame(frame) {
 		if (!this.#ready) return;
 
