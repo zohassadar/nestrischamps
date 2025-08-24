@@ -32,7 +32,8 @@ export class WGpuTetrisOCR extends TetrisOCR {
 			'extractAndHighlightRegions',
 			'processVideoFrame',
 			'renderExtractedRegions',
-			'doDigitOCR'
+			'doDigitOCR',
+			'doNonDigitOCR'
 		);
 
 		Promise.all([
