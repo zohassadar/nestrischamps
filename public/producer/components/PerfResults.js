@@ -4,8 +4,8 @@ import { html } from '../StringUtils.js';
 const MARKUP = html`<dl id="perf_data"></dl>`;
 
 function sortByDriverAndPlayerReverse(k1, k2) {
-	const isDriver1 = k1.includes('driver');
-	const isDriver2 = k2.includes('driver');
+	const isDriver1 = !k1.includes('player');
+	const isDriver2 = !k2.includes('player');
 
 	if (isDriver1 && !isDriver2) return 1;
 	if (!isDriver1 && isDriver2) return -1;

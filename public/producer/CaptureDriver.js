@@ -135,7 +135,7 @@ export class CaptureDriver extends EventTarget {
 		performance.clearMarks();
 		performance.clearMeasures();
 
-		performance.mark(`player-driver-start-${this.driverSuffix}`);
+		performance.mark(`start-driver-${this.driverSuffix}`);
 
 		const frame = {
 			videoFrame,
@@ -147,7 +147,7 @@ export class CaptureDriver extends EventTarget {
 		for (const player of this.players) {
 			playerIdx += 1;
 
-			performance.mark(`player-start-${this.driverSuffix}-${playerIdx}`);
+			performance.mark(`start-driver-${this.driverSuffix}-player-${playerIdx}`);
 
 			try {
 				await player.processVideoFrame(frame);
@@ -155,21 +155,21 @@ export class CaptureDriver extends EventTarget {
 				console.warn(err);
 			}
 
-			performance.mark(`player-end-${this.driverSuffix}-${playerIdx}`);
+			performance.mark(`end-driver-${this.driverSuffix}-player-${playerIdx}`);
 			performance.measure(
-				`player-${this.driverSuffix}-${playerIdx}`,
-				`player-start-${this.driverSuffix}-${playerIdx}`,
-				`player-end-${this.driverSuffix}-${playerIdx}`
+				`driver-${this.driverSuffix}-player-${playerIdx}`,
+				`start-driver-${this.driverSuffix}-player-${playerIdx}`,
+				`end-driver-${this.driverSuffix}-player-${playerIdx}`
 			);
 
 			await sleep(0);
 		}
 
-		performance.mark(`player-driver-end-${this.driverSuffix}`);
+		performance.mark(`end-driver-${this.driverSuffix}`);
 		performance.measure(
-			`player-driver-${this.driverSuffix}`,
-			`player-driver-start-${this.driverSuffix}`,
-			`player-driver-end-${this.driverSuffix}`
+			`driver-${this.driverSuffix}`,
+			`start-driver-${this.driverSuffix}`,
+			`end-driver-${this.driverSuffix}`
 		);
 
 		// console.log('work', Date.now() - now);
