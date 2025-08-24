@@ -18,7 +18,7 @@ const MARKUP = html`
 
 			<div class="field">
 				<button id="clear_config" class="button is-light">
-					Clear config and Restart
+					Clear Config and Restart
 				</button>
 			</div>
 
