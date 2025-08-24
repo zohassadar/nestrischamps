@@ -4,15 +4,13 @@
 
 export class OcrCompute {
 	device;
-	shaderModule;
 
 	// Pipelines
 	matchPipeline;
 	boardPipeline;
 
-	constructor(device, shaderCode) {
+	constructor(device, computeShaderModule) {
 		this.device = device;
-		this.shaderModule = device.createShaderModule({ code: shaderCode });
 
 		// Pipeline 1: match_digits
 		const matchLayout = device.createBindGroupLayout({
@@ -47,7 +45,7 @@ export class OcrCompute {
 
 		this.matchPipeline = device.createComputePipeline({
 			layout: device.createPipelineLayout({ bindGroupLayouts: [matchLayout] }),
-			compute: { module: this.shaderModule, entryPoint: 'match_digits' },
+			compute: { module: computeShaderModule, entryPoint: 'match_digits' },
 		});
 
 		// Pipeline 2: analyze_everything
@@ -93,7 +91,10 @@ export class OcrCompute {
 
 		this.boardPipeline = device.createComputePipeline({
 			layout: device.createPipelineLayout({ bindGroupLayouts: [boardLayout] }),
-			compute: { module: this.shaderModule, entryPoint: 'analyze_everything' },
+			compute: {
+				module: computeShaderModule,
+				entryPoint: 'analyze_everything',
+			},
 		});
 	}
 

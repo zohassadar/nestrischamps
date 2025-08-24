@@ -13,6 +13,38 @@ async function loadShaderSource(url) {
 	return await fetch(url).then(res => res.text());
 }
 
+async function getGPU() {
+	const adapter = await navigator.gpu.requestAdapter();
+	const device = await adapter.requestDevice();
+	const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+
+	const [vertex, fragment, compute] = await Promise.all([
+		loadShaderSource('/producer/shaders/vertex.wgsl'),
+		loadShaderSource('/producer/shaders/fragment.wgsl'),
+		loadShaderSource('/producer/shaders/compute.wgsl'),
+	]);
+
+	return {
+		adapter,
+		device,
+		canvasFormat,
+
+		shaders: {
+			vertex: device.createShaderModule({
+				code: vertex,
+			}),
+			fragment: device.createShaderModule({
+				code: fragment,
+			}),
+			compute: device.createShaderModule({
+				code: compute,
+			}),
+		},
+	};
+}
+
+const getGpuPromise = getGPU(); // no await!
+
 export class WGpuTetrisOCR extends TetrisOCR {
 	#gpu = null;
 	#ready = false;
@@ -26,8 +58,6 @@ export class WGpuTetrisOCR extends TetrisOCR {
 	constructor(config) {
 		super(config);
 
-		this.#gpu = this.#getGPU();
-
 		this.instrument(
 			'extractAndHighlightRegions',
 			'processVideoFrame',
@@ -36,11 +66,7 @@ export class WGpuTetrisOCR extends TetrisOCR {
 			'doNonDigitOCR'
 		);
 
-		Promise.all([
-			this.#getGPU(),
-			this.#loadShaders(),
-			this.loadDigitTemplates(),
-		]).then(() => {
+		Promise.all([this.#getGPU(), this.loadDigitTemplates()]).then(() => {
 			this.#initGpuAssets();
 			this.#ready = true;
 		});
@@ -54,30 +80,10 @@ export class WGpuTetrisOCR extends TetrisOCR {
 		);
 	}
 
+	// TODO: share the GPU and shader modules across all instances!
+	// There's no need to create one per instance
 	async #getGPU() {
-		const adapter = await navigator.gpu.requestAdapter();
-		const device = await adapter.requestDevice();
-		const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-
-		this.#gpu = {
-			adapter,
-			device,
-			canvasFormat,
-		};
-	}
-
-	async #loadShaders() {
-		const [vertex, fragment, compute] = await Promise.all([
-			loadShaderSource('/producer/shaders/vertex.wgsl'),
-			loadShaderSource('/producer/shaders/fragment.wgsl'),
-			loadShaderSource('/producer/shaders/compute.wgsl'),
-		]);
-
-		this.#shaders = {
-			vertex,
-			fragment,
-			compute,
-		};
+		this.#gpu = await getGpuPromise;
 	}
 
 	setConfig(config) {
@@ -89,7 +95,7 @@ export class WGpuTetrisOCR extends TetrisOCR {
 	}
 
 	#initGpuRenderAssets() {
-		const { device, canvasFormat } = this.#gpu;
+		const { device, canvasFormat, shaders } = this.#gpu;
 
 		this.output_ctx = this.output_canvas.getContext('webgpu');
 		this.output_ctx.configure({
@@ -109,13 +115,6 @@ export class WGpuTetrisOCR extends TetrisOCR {
 				GPUTextureUsage.COPY_DST,
 		});
 		this.temp_output_txt_view = this.temp_output_txt.createView();
-
-		const vertexModule = device.createShaderModule({
-			code: this.#shaders.vertex,
-		});
-		const fragmentModule = device.createShaderModule({
-			code: this.#shaders.fragment,
-		});
 
 		// Layout for Globals (Group 0) - used in both vertex and fragment shaders
 		// It has a uniform buffer at binding 0, a sampler at binding 1, and a texture at binding 2.
@@ -161,12 +160,12 @@ export class WGpuTetrisOCR extends TetrisOCR {
 				],
 			}),
 			vertex: {
-				module: vertexModule,
+				module: shaders.vertex,
 				entryPoint: 'main',
 				buffers: [], // No vertex buffers are needed as positions are hardcoded in the shader
 			},
 			fragment: {
-				module: fragmentModule,
+				module: shaders.fragment,
 				entryPoint: 'main',
 				targets: [{ format: canvasFormat }],
 			},
@@ -350,8 +349,8 @@ export class WGpuTetrisOCR extends TetrisOCR {
 	}
 
 	#initGpuComputeAssets() {
-		const { device } = this.#gpu;
-		this.ocrCompute = new OcrCompute(device, this.#shaders.compute);
+		const { device, shaders } = this.#gpu;
+		this.ocrCompute = new OcrCompute(device, shaders.compute);
 
 		this.#prepGpuComputeDigitAssets();
 		this.#prepGpuComputeNonDigitAssets();
