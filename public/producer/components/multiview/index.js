@@ -34,6 +34,7 @@ const MARKUP = html`
 			<div class="columns">
 				<fieldset id="source" class="column">
 					<legend>Source</legend>
+					<div id="video_container"></div>
 				</fieldset>
 
 				<fieldset class="column">
@@ -59,12 +60,13 @@ cssOverride.replaceSync(`
         display: block;
     }
 
-	#source {
+	#video_container {
 		text-align: center;
 	}
 
 	video {
-		width: 500px;
+		width: 100%;
+		max-width: 1920px;
 	}
 `);
 
@@ -88,6 +90,7 @@ export class NTC_MultiView extends NtcComponent {
 			tabs: this.shadow.getElementById('tabs'),
 			content: this.shadow.getElementById('content'),
 			source: this.shadow.getElementById('source'),
+			video_container: this.shadow.getElementById('video_container'),
 			clear_config: this.shadow.getElementById('clear_config'),
 			perf_data: this.shadow.getElementById('perf_data'),
 		};
@@ -114,14 +117,14 @@ export class NTC_MultiView extends NtcComponent {
 	};
 
 	setDriver(driver) {
-		const { source } = this.#domrefs;
+		const { video_container } = this.#domrefs;
 		this.#driver = driver;
 
 		for (const player of this.#driver.players) {
 			this.addPlayer(player);
 		}
 
-		source.appendChild(this.#driver.getVideo());
+		video_container.appendChild(this.#driver.getVideo());
 
 		this.#driver.addEventListener('frame', this.#handleFrame);
 	}
