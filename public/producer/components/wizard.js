@@ -239,6 +239,12 @@ export class NTC_Producer_Wizard extends NtcComponent {
 		this.#domrefs.video.addEventListener('click', this.#videoClick);
 
 		this.#updatePaletteList();
+
+		// we only show 4xMultiviewer when in a match room
+		const is_match_room = new URL(location).pathname.startsWith('/room/u/');
+		if (!is_match_room) {
+			this.#domrefs.single.click(); // simulate selection of single player mode to move on
+		}
 	}
 
 	#showStep2() {
