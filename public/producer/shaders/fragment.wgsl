@@ -60,7 +60,7 @@ fn main(@location(0) uvOutput: vec2<f32>) -> @location(0) vec4<f32> {
     color = vec4<f32>(luma_value, luma_value, luma_value, color.a);
   }
   else if (transformType == TRANSFORM_RED_LUMA) {
-    let constrastHigh = 0.65;
+    let constrastHigh = 0.55;
     let constrastLow = 0.08;
     let r = clamp((color.r - constrastLow) / (constrastHigh - constrastLow), 0.0, 1.0);
 
