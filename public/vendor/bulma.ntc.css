@@ -15,7 +15,6 @@ legend {
     padding: 0 0.5rem; /* Space around the text within the border */
     background-color: transparent; /* Ensures no background behind the text */
     transition: color 0.3s ease; /* Smooth transition for text color */
-    text-transform: capitalize;
 }
 
 dl {
