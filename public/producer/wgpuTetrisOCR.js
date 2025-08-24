@@ -271,7 +271,9 @@ export class WGpuTetrisOCR extends TetrisOCR {
 
 		// Provide 14 shine-only top-left positions
 		const previewPos = this.config.tasks.preview.packing_pos;
-		const previewBlockPositionOffsets = [
+
+		// TODO: move these offsets to constants and reuse in both cpu and gpu OCR classes
+		const previewBlockPositions = [
 			// I
 			[0, 4],
 			[8, 4],
@@ -297,18 +299,19 @@ export class WGpuTetrisOCR extends TetrisOCR {
 
 		const pieceBlockPositions = [
 			// preview
-			...previewBlockPositionOffsets.map(xy => ({
+			...previewBlockPositions.map(xy => ({
 				x: xy[0] + previewPos.x,
 				y: xy[1] + previewPos.y,
 			})),
 			// TODO: current piece goes here (das trainer)
-			...previewBlockPositionOffsets.map(xy => ({
+			...previewBlockPositions.map(xy => ({
 				x: xy[0] + previewPos.x,
 				y: xy[1] + previewPos.y,
 			})),
 		];
 
 		// Shared offsets for sampling, relative to each block top-left
+		// TODO: move these offsets to constants and reuse in both cpu and gpu OCR classes
 		const offsets = {
 			boardColorOffsets: [
 				{ x: 2, y: 4 },
