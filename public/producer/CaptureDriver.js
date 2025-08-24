@@ -142,12 +142,10 @@ export class CaptureDriver extends EventTarget {
 			video: this.#video,
 		};
 
-		let playerIdx = 0;
-
 		for (const player of this.players) {
-			playerIdx += 1;
-
-			performance.mark(`start-driver-${this.driverSuffix}-player-${playerIdx}`);
+			performance.mark(
+				`start-driver-${this.driverSuffix}-player-${player.num}`
+			);
 
 			try {
 				await player.processVideoFrame(frame);
@@ -155,11 +153,11 @@ export class CaptureDriver extends EventTarget {
 				console.warn(err);
 			}
 
-			performance.mark(`end-driver-${this.driverSuffix}-player-${playerIdx}`);
+			performance.mark(`end-driver-${this.driverSuffix}-player-${player.num}`);
 			performance.measure(
-				`driver-${this.driverSuffix}-player-${playerIdx}`,
-				`start-driver-${this.driverSuffix}-player-${playerIdx}`,
-				`end-driver-${this.driverSuffix}-player-${playerIdx}`
+				`driver-${this.driverSuffix}-player-${player.num}`,
+				`start-driver-${this.driverSuffix}-player-${player.num}`,
+				`end-driver-${this.driverSuffix}-player-${player.num}`
 			);
 
 			await sleep(0);
