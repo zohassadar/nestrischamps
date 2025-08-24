@@ -12,6 +12,46 @@ export function timingDecorator(name, func) {
 	};
 }
 
+export function clamp(value, low, high) {
+	if (value < low) return low;
+	if (value > high) return high;
+	return value;
+}
+
+export function findMinIndex(arr) {
+	if (arr.length === 0) {
+		return -1;
+	}
+
+	let minIndex = 0;
+
+	for (let i = 1; i < arr.length; i++) {
+		if (arr[i] < arr[minIndex]) {
+			minIndex = i;
+		}
+	}
+
+	return minIndex;
+}
+
+export function u32ToRgba(u) {
+	return [
+		(u >>> 0) & 0xff, // R
+		(u >>> 8) & 0xff, // G
+		(u >>> 16) & 0xff, // B
+		(u >>> 24) & 0xff, // A (or shine ho ho ho!)
+	];
+}
+
+export function rgbaToU32(r, g, b, a) {
+	return (
+		((r & 0xff) << 0) |
+		((g & 0xff) << 8) |
+		((b & 0xff) << 16) |
+		((a & 0xff) << 24)
+	);
+}
+
 export function rgb2lab_normalizeRgbChannel(channel) {
 	channel /= 255;
 

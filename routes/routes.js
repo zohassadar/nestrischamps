@@ -72,25 +72,24 @@ router.get(
 /**/
 
 router.get(
-	/^\/room\/(producer|emu)/,
+	/^\/room\/(producer2?|emu)/,
 	middlewares.assertSession,
 	middlewares.checkToken,
 	(req, res) => {
-		req.originalUrl;
-		res.sendFile(
-			path.join(
-				path.resolve(),
-				`public${
-					/producer/.test(req.path) ? '/ocr/ocr.html' : '/emu/index.html'
-				}`
-			)
-		);
+		console.log('/room/producer');
+		const tplPath = /producer2/.test(req.path)
+			? '/producer/index.html'
+			: /producer/.test(req.path)
+				? '/ocr/ocr.html'
+				: '/emu/index.html';
+
+		res.sendFile(path.join(path.resolve(), `public${tplPath}`));
 	}
 );
 
 // access producer by url secret
 router.get(
-	/^\/room\/u\/([^/]+)\/(producer|emu)\/([a-zA-Z0-9-]+)/,
+	/^\/room\/u\/([^/]+)\/(producer2?|emu)\/([a-zA-Z0-9-]+)/,
 	async (req, res) => {
 		const host_user = await UserDAO.getUserByLogin(req.params[0]);
 
@@ -106,19 +105,20 @@ router.get(
 			return;
 		}
 
-		res.sendFile(
-			path.join(
-				path.resolve(),
-				`public${
-					/producer/.test(req.path) ? '/ocr/ocr.html' : '/emu/index.html'
-				}`
-			)
-		);
+		const tplPath = /producer2/.test(req.path)
+			? '/producer/index.html'
+			: /producer/.test(req.path)
+				? '/ocr/ocr.html'
+				: '/emu/index.html';
+
+		console.log([req.path, tplPath]);
+
+		res.sendFile(path.join(path.resolve(), `public${tplPath}`));
 	}
 );
 
 router.get(
-	/^\/room\/u\/([^/]+)\/(producer|emu)/,
+	/^\/room\/u\/([^/]+)\/(producer2?|emu)/,
 	middlewares.assertSession,
 	middlewares.checkToken,
 	async (req, res) => {
@@ -129,18 +129,16 @@ router.get(
 			return;
 		}
 
-		res.sendFile(
-			path.join(
-				path.resolve(),
-				`public${
-					/producer/.test(req.path) ? '/ocr/ocr.html' : '/emu/index.html'
-				}`
-			)
-		);
+		const tplPath = /producer2/.test(req.path)
+			? '/producer/index.html'
+			: /producer/.test(req.path)
+				? '/ocr/ocr.html'
+				: '/emu/index.html';
+
+		res.sendFile(path.join(path.resolve(), `public${tplPath}`));
 	}
 );
 
-// This route should only be allowed by admin for non-owner
 router.get(
 	'/room/u/:login/view/:layout',
 	middlewares.assertSession,
@@ -153,6 +151,27 @@ router.get(
 			return;
 		}
 
+		const layout = layouts[req.params.layout];
+
+		if (!layout) {
+			res.status(404).send('Layout Not found');
+			return;
+		}
+
+		res.sendFile(
+			path.join(
+				path.resolve(),
+				`public/views/${layout.type}/${layout.file}.html`
+			)
+		);
+	}
+);
+
+router.get(
+	'/room/view/:layout',
+	middlewares.assertSession,
+	middlewares.checkToken,
+	async (req, res) => {
 		const layout = layouts[req.params.layout];
 
 		if (!layout) {
