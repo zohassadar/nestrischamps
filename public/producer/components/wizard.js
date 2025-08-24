@@ -665,8 +665,8 @@ export class NTC_Producer_Wizard extends NtcComponent {
 			}
 		} else if (this.#mode === 'multiviewer') {
 			const retronCaptureSize = { w: 1280, h: 720 }; // TODO move to constants
-			const scaleX = video.videoWidth / retronCaptureSize.w;
-			const scaleY = video.videoHeight / retronCaptureSize.h;
+			const scaleX = video.videoWidth / 2 / retronCaptureSize.w;
+			const scaleY = video.videoHeight / 2 / retronCaptureSize.h;
 
 			config.frame_rate = getDefaultOcrConfig().frame_rate;
 			config.players = this.#getMultiviewerOffsets().map(({ x, y }) => {
