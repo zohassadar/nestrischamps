@@ -88,10 +88,8 @@ export class WGpuTetrisOCR extends TetrisOCR {
 		);
 	}
 
-	// TODO: share the GPU and shader modules across all instances
-	// There's no need to create one per instance
 	async #getGPU() {
-		this.#gpu = await lazyGetGPU();
+		this.#gpu = await lazyGetGPU(); // shares the gpu and shaders across all instances
 	}
 
 	setConfig(config) {
