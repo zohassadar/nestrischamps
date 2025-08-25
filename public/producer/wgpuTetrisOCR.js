@@ -43,7 +43,15 @@ async function getGPU() {
 	};
 }
 
-const getGpuPromise = getGPU(); // no await!
+let getGpuPromise;
+
+function lazyGetGPU() {
+	if (!getGpuPromise) {
+		getGpuPromise = getGPU(); // no await!
+	}
+
+	return getGpuPromise;
+}
 
 export class WGpuTetrisOCR extends TetrisOCR {
 	#gpu = null;
@@ -80,10 +88,10 @@ export class WGpuTetrisOCR extends TetrisOCR {
 		);
 	}
 
-	// TODO: share the GPU and shader modules across all instances!
+	// TODO: share the GPU and shader modules across all instances
 	// There's no need to create one per instance
 	async #getGPU() {
-		this.#gpu = await getGpuPromise;
+		this.#gpu = await lazyGetGPU();
 	}
 
 	setConfig(config) {
