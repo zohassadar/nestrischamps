@@ -292,7 +292,8 @@ export class OcrCompute {
 				(offsets.boardColorOffsets.length +
 					offsets.boardShineOffsets.length +
 					offsets.refColorOffsets.length +
-					offsets.pieceBlockShineOffsets.length)
+					offsets.pieceBlockShineOffsets.length +
+					offsets.gymPauseOffsets.length)
 		);
 		let k = 0;
 		for (const v of offsets.boardColorOffsets) {
@@ -311,13 +312,19 @@ export class OcrCompute {
 			offs[k++] = v.x | 0;
 			offs[k++] = v.y | 0;
 		}
+		for (const v of offsets.gymPauseOffsets) {
+			offs[k++] = v.x | 0;
+			offs[k++] = v.y | 0;
+		}
 		const offsBuf = this.makeBuffer(offs, GPUBufferUsage.STORAGE);
 
 		// Output buffer sizes
 		const boardColorsAndShinesBytes = 200 * 4; // 200 u32
 		const refColorsBytes = 3 * 4; // 3 u32
 		const shineBytes = 28 * 4; // 28 u32
-		const totalBytes = boardColorsAndShinesBytes + refColorsBytes + shineBytes;
+		const gymPauseBytes = 1 * 4; // 1 u32
+		const totalBytes =
+			boardColorsAndShinesBytes + refColorsBytes + shineBytes + gymPauseBytes;
 
 		// We will write into a single slab that matches WGSL layout. The layout there is sequential.
 		const outBuf = this.makeEmptyBuffer(
@@ -399,6 +406,7 @@ export class OcrCompute {
 		// Read back once, then slice views according to the fixed layout
 		const raw = await this.readBuffer(outBuf, totalBytes);
 		const u32 = new Uint32Array(raw);
+		const f32 = new Float32Array(raw);
 
 		// TODO: get rid of hardcoded values
 		let offU = 0;
@@ -406,13 +414,16 @@ export class OcrCompute {
 		offU += 200;
 		const refColors = u32.subarray(offU, offU + 3);
 		offU += 3;
-		const shines = u32.subarray(offU);
+		const shines = u32.subarray(offU, offU + 28);
+		offU += 28;
+		const gymPauseF32 = f32[offU];
 
 		// Return slices as copies to avoid holding the large buffer. Copy by new typed arrays.
 		return {
 			boardColors: new Uint32Array(boardColors),
 			refColors: new Uint32Array(refColors),
 			shines: new Uint32Array(shines),
+			gymPauseF32,
 		};
 	}
 }

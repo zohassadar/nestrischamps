@@ -124,6 +124,7 @@ struct Offsets {
   boardShineOffsets:      array<IVec2, 3>,
   refColorOffsets:        array<IVec2, 3>,   // relative to a ref block top-left
   pieceBlockShineOffsets: array<IVec2, 3>,   // relative to a shine-spot top-left
+  gymPauseOffsets:        array<IVec2, 4>,   // relative to a shine-spot top-left
 };
 @group(0) @binding(3) var<storage, read> offs: Offsets;
 
@@ -131,7 +132,8 @@ struct Offsets {
 struct BoardOutputs {
   boardColors: array<u32, 200>, // RGBS, S is the shine (hijacking alpha!)
   refColors:   array<u32, 3>,
-  shine:       array<u32, 28>,  // 0 or 1
+  shines:      array<u32, 28>,  // 0 or 1
+  gymPause:    array<f32, 1>,   // 0 or 1
 };
 @group(0) @binding(4) var<storage, read_write> outBuf: BoardOutputs;
 
@@ -223,6 +225,21 @@ fn analyze_everything(@builtin(global_invocation_id) gid: vec3<u32>) {
         break;
       }
     }
-    outBuf.shine[sIdx] = s;
+    outBuf.shines[sIdx] = s;
+  }
+
+
+  // 4) gym Pause luma average
+  let pIdx = id - B.numBlocks - B.numRefBlocks - B.numShineSpots;
+  if (pIdx == 0) {
+    let p = boardPos[0]; // first block of board is top-left of board
+    var sum: f32 = 0.0;
+    for (var j: u32 = 0u; j < 4u; j = j + 1u) {
+      let o = offs.gymPauseOffsets[j];
+      let L = luma(loadTexelClampedB(p.x + o.x, p.y + o.y).rgb);
+      sum = sum + L;
+    }
+    let avgLuma = sum / 4.0;
+    outBuf.gymPause[pIdx] = avgLuma;
   }
 }

@@ -1,5 +1,9 @@
 import { TetrisOCR } from './TetrisOCR.js';
-import { PATTERN_MAX_INDEXES } from './constants.js';
+import {
+	PATTERN_MAX_INDEXES,
+	GYM_PAUSE_CROP_RELATIVE_TO_FIELD,
+	GYM_PAUSE_LUMA_THRESHOLD,
+} from './constants.js';
 import { findMinIndex, u32ToRgba } from '/ocr/utils.js';
 import { OcrCompute } from './ocrCompute.js';
 
@@ -317,6 +321,7 @@ export class WGpuTetrisOCR extends TetrisOCR {
 
 		// Shared offsets for sampling, relative to each block top-left
 		// TODO: move these offsets to constants and reuse in both cpu and gpu OCR classes
+		const boardPos = this.config.tasks.field.packing_pos;
 		const offsets = {
 			boardColorOffsets: [
 				{ x: 2, y: 4 },
@@ -338,6 +343,24 @@ export class WGpuTetrisOCR extends TetrisOCR {
 				{ x: 0, y: 0 },
 				{ x: 1, y: 1 },
 				{ x: 1, y: 2 },
+			],
+			gymPauseOffsets: [
+				{
+					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 2,
+					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
+				},
+				{
+					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 10,
+					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
+				},
+				{
+					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 17,
+					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
+				},
+				{
+					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 18,
+					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
+				},
 			],
 		};
 
@@ -577,7 +600,7 @@ export class WGpuTetrisOCR extends TetrisOCR {
 
 	async doNonDigitOCR() {
 		// run on gpu
-		const { boardColors, boardShines, refColors, shines } =
+		const { boardColors, refColors, shines, gymPauseF32 } =
 			await this.ocrCompute.analyzeBoard({
 				inputTexture: this.temp_output_txt,
 			});
@@ -590,10 +613,16 @@ export class WGpuTetrisOCR extends TetrisOCR {
 			res.color3 = u32ToRgba(refColors[2]);
 		}
 
+		const gymPauseLuma255 = gymPauseF32 * 255;
+
 		return {
 			...res,
 			preview: this.#getPreviewFromShines(shines.subarray(0, 14)),
 			field: boardColors, // includes shine in alpha channel
+			gym_pause: [
+				Math.round(gymPauseLuma255),
+				gymPauseLuma255 > GYM_PAUSE_LUMA_THRESHOLD,
+			],
 		};
 	}
 
