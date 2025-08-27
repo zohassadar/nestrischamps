@@ -93,9 +93,7 @@ const MARKUP = html`
 
 		<div id="extraction" class="columns">
 			<div id="capture-container" class="column is-5">
-				<div id="capture">
-					<video id="device_video" playsinline controls="false"></video>
-				</div>
+				<div id="capture"></div>
 			</div>
 			<div id="adjustments" class="column is-7" data-crop-scope></div>
 		</div>
@@ -155,7 +153,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 	constructor() {
 		super();
 
-		window.BULMA_STYLESHEETS.then(() => {
+		this._bulmaSheets.then(() => {
 			this.shadow.adoptedStyleSheets.push(cssOverride);
 		});
 
@@ -236,7 +234,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		if (!this.ocr?.config?.tasks?.[name]) return;
 
 		this.ocr.config.tasks[name].crop[key] = value;
-		this.ocr.config.save();
+		this.ocr.config.save([name]);
 
 		this.#restartHidePartsTimeout();
 	};
@@ -248,15 +246,15 @@ export class NTC_Producer_Calibration extends NtcComponent {
 			detail: { group, key, value },
 		} = event;
 
-		[...group]
+		const names = [...group]
 			.map(element => element.id)
-			.forEach(name => {
-				if (!this.ocr?.config?.tasks?.[name]) return;
+			.filter(name => this.ocr?.config?.tasks?.[name]);
 
-				this.ocr.config.tasks[name].crop[key] = value;
-			});
+		names.forEach(name => {
+			this.ocr.config.tasks[name].crop[key] = value;
+		});
 
-		this.ocr.config.save();
+		this.ocr.config.save(names);
 	};
 
 	connectedCallback() {
@@ -502,22 +500,28 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		capture.replaceChildren(ocr.capture_canvas, ocr.output_canvas);
 
 		adjustments.replaceChildren(
-			...Object.entries(ocr.config.tasks).map(([name, task]) => {
-				const control = document.createElement('ntc-cropcontrol');
+			...Object.keys(TASK_RESIZE) // ensures consistent order
+				.map(name => {
+					const task = ocr.config.tasks[name];
 
-				control.id = name;
+					if (!task) return null;
 
-				if (/^color/.test(name)) {
-					control.setAttribute('bind', 'colors-xw');
-				} else if (name.length === 1) {
-					control.setAttribute('bind', 'stats-xw');
-				}
+					const control = document.createElement('ntc-cropcontrol');
 
-				control.setCoordinates(task.crop);
-				control.setCaptureCanvas(task.canvas);
+					control.id = name;
 
-				return control;
-			})
+					if (/^color/.test(name)) {
+						control.setAttribute('bind', 'colors-xw');
+					} else if (name.length === 1) {
+						control.setAttribute('bind', 'stats-xw');
+					}
+
+					control.setCoordinates(task.crop);
+					control.setCaptureCanvas(task.canvas);
+
+					return control;
+				})
+				.filter(v => v)
 		);
 
 		capture_rate.value = this.ocr.config.frame_rate || 60;

@@ -2,6 +2,10 @@ import QueryString from '/js/QueryString.js';
 import BinaryFrame from '/js/BinaryFrame.js';
 import Connection from '/js/connection.js';
 
+import { peerServerOptions } from '/views/constants.js';
+
+import { getSerializableConfigCopy } from './ConfigUtils.js';
+
 import GameTracker from './GameTracker.js';
 import { CpuTetrisOCR } from './cpuTetrisOCR.js';
 import { WGpuTetrisOCR } from './wgpuTetrisOCR.js';
@@ -15,6 +19,7 @@ export class Player extends EventTarget {
 	#startTime;
 	#lastFrame;
 	#connection = null;
+	#peer;
 
 	constructor(config, num = null) {
 		super();
@@ -48,15 +53,103 @@ export class Player extends EventTarget {
 			makePlayer: (player_index, _view_meta) => {
 				this.is_player = true;
 				this.view_meta = _view_meta;
+				// startSharingVideoFeed();
 			},
 
 			dropPlayer() {
 				this.is_player = false;
 				this.view_meta = null;
+				// stopSharingVideoFeed();
 			},
+
+			requestRemoteCalibration: async admin_peer_id => {
+				console.log('requestRemoteCalibration', admin_peer_id);
+
+				if (this.conn) {
+					clearInterval(this.conn.sendWebpIntervalId);
+					this.conn.close();
+				}
+
+				const video = this._driver.getVideo();
+
+				this.conn = this.#peer.connect(admin_peer_id, {
+					metadata: {
+						video: {
+							width: video.videoWidth,
+							height: video.videoHeight,
+						},
+						config: getSerializableConfigCopy(this.config),
+					},
+				});
+
+				const sendWebp = async () => {
+					const webp = await this.#getVideoFrameAsWebpBlob();
+					this.conn.send({ webp });
+				};
+
+				this.conn.on('open', () => {
+					clearInterval(this.conn.sendWebpIntervalId);
+					this.conn.sendWebpIntervalId = setInterval(sendWebp, 10000);
+					sendWebp();
+				});
+
+				this.conn.on('data', ({ config }) => {
+					for (const [name, task] of Object.entries(config.tasks)) {
+						Object.assign(this.config.tasks[name].crop, task.crop);
+					}
+
+					// TODO: how to update the controls?
+					['brightness', 'contrast'].forEach(prop => {
+						if (prop in config) this.config[prop] = config[prop];
+					});
+
+					// TODO: carry score7 and reset entire config
+
+					this.config.save();
+				});
+
+				this.conn.on('close', () => {
+					clearInterval(this.conn.sendWebpIntervalId);
+				});
+			},
+
+			setVdoNinjaURL: () => {},
 		};
 
 		this.connect();
+	}
+
+	// manua async
+	#getVideoFrameAsWebpBlob() {
+		const video = this._driver.getVideo();
+
+		if (!this.remote_calibration_canvas) {
+			// lazy initialization of the remote calibration canvas
+			this.remote_calibration_canvas = document.createElement('canvas');
+			this.remote_calibration_canvas.width = video.videoWidth;
+			this.remote_calibration_canvas.height = video.videoHeight;
+			this.remote_calibration_canvas_ctx =
+				this.remote_calibration_canvas.getContext('2d', { alpha: false });
+			this.remote_calibration_canvas_ctx.imageSmoothingEnabled = false;
+		}
+
+		// Draw the current video frame into the canvas
+		this.remote_calibration_canvas_ctx.drawImage(
+			video,
+			0,
+			0,
+			this.remote_calibration_canvas.width,
+			this.remote_calibration_canvas.height
+		);
+
+		// Convert to JPEG Blob at 85% quality
+		return new Promise(resolve => {
+			this.remote_calibration_canvas.toBlob(
+				blob => resolve(blob),
+				'image/webp',
+				0.5 // quality 0..1
+			);
+		});
 	}
 
 	processVideoFrame(frame) {
@@ -162,21 +255,21 @@ export class Player extends EventTarget {
 		this.#connection.onResume = this.resetNotice;
 
 		this.#connection.onInit = () => {
-			// if (peer) {
-			// 	peer.removeAllListeners();
-			// 	peer.destroy();
-			// 	peer = null;
-			// }
-			// peer = new Peer(this.#connection.id, peerServerOptions);
-			// peer.on('open', err => {
-			// 	console.log(Date.now(), 'peer opened', peer.id);
-			// 	//startSharingVideoFeed();
-			// });
-			// peer.on('error', err => {
-			// 	console.log(`Peer error: ${err.message}`);
-			// 	peer.retryTO = clearTimeout(peer.retryTO); // there should only be one retry scheduled
-			// 	// peer.retryTO = setTimeout(startSharingVideoFeed, 1500); // we assume this will succeed at some point?? 😰😅
-			// });
+			if (this.#peer) {
+				this.#peer.removeAllListeners();
+				this.#peer.destroy();
+				this.#peer = null;
+			}
+			this.#peer = new Peer(this.#connection.id, peerServerOptions);
+			this.#peer.on('open', err => {
+				console.log(Date.now(), 'peer opened', this.#peer.id);
+				//startSharingVideoFeed();
+			});
+			this.#peer.on('error', err => {
+				console.log(`Peer error: ${err.message}`);
+				this.#peer.retryTO = clearTimeout(this.#peer.retryTO); // there should only be one retry scheduled
+				// this.#peer.retryTO = setTimeout(startSharingVideoFeed, 1500); // we assume this will succeed at some point?? 😰😅
+			});
 		};
 
 		return this.#connection;

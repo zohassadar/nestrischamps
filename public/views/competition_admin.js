@@ -1,4 +1,12 @@
 import Connection from '/js/connection.js';
+import QueryString from '/js/QueryString.js';
+
+import { peerServerOptions } from '/views/constants.js';
+
+import { getSerializableConfigCopy } from '/producer/ConfigUtils.js';
+import { sleep } from '/producer/timer.js';
+import { CaptureDriver } from '/producer/CaptureDriver.js';
+import { CpuTetrisOCR } from '/producer/cpuTetrisOCR.js';
 
 const dom = {
 	roomid: document.querySelector('#roomid'),
@@ -48,6 +56,9 @@ class Player {
 		this.dom = dom;
 
 		this.setIndex(idx);
+
+		if (QueryString.get('rcal') !== '1')
+			this.dom.remote_calibration_btn.remove();
 
 		this.victories = 0;
 		this.bestof = -1;
@@ -176,6 +187,141 @@ class Player {
 
 		this.dom.focus_player_btn.onclick = () => {
 			remoteAPI.focusPlayer(this.idx);
+		};
+
+		this.dom.remote_calibration_btn.onclick = async () => {
+			let overlay = document.createElement('iframe');
+
+			// Style it to cover 100% of the viewport
+			Object.assign(overlay.style, {
+				position: 'fixed',
+				top: '0',
+				left: '0',
+				width: '100vw',
+				height: '100vh',
+				backgroundColor: 'rgba(0, 0, 0, 0.8)', // example semi-transparent background
+				zIndex: '9999', // make sure it's on top
+				overflowY: 'auto', // adds scroll only when needed
+				overflowX: 'hidden', // optional: prevent horizontal scroll
+				margin: 0,
+				padding: 0,
+				border: 0,
+			});
+
+			overlay.src = '/remote_calibration';
+			document.body.appendChild(overlay);
+
+			overlay.addEventListener('load', () => {
+				const clearPeer = () => {
+					if (!this.peer) return;
+					// this.peer.removeAllListeners();
+					this.peer.destroy();
+					this.peer = null;
+				};
+
+				const clearAll = () => {
+					// TODO destroy processingpipeline (driver + ocr + calibration_ui)
+					// overlay.removeAllListeners();
+					// closeOnly.removeAllListeners();
+					// saveAndClose.removeAllListeners();
+					overlay.remove();
+					overlay = null;
+					this.dataConnection = null;
+					if (driver) driver.destroy();
+					clearPeer();
+				};
+
+				const doc = overlay.contentDocument || overlay.contentWindow.document;
+				const closeOnly = doc.getElementById('close_only');
+				const saveAndClose = doc.getElementById('save_and_close');
+
+				// set up ui
+				doc.getElementById('name').innerText = this.dom.name.value;
+
+				const saveConfig = names => {
+					let config = getSerializableConfigCopy(
+						this.dataConnection.metadata.config
+					);
+
+					// cleanup to send just the crop
+					for (const [name, task] of Object.entries(config.tasks)) {
+						config.tasks[name] = { crop: task.crop };
+					}
+
+					if (names) {
+						// only send the config being changed
+						config = {
+							tasks: names.reduce((acc, name) => {
+								acc[name] = { crop: config.tasks[name].crop };
+								return acc;
+							}, {}),
+						};
+					}
+
+					this.dataConnection.send({ config });
+				};
+
+				closeOnly.addEventListener('click', clearAll);
+				saveAndClose.addEventListener('click', async () => {
+					saveConfig();
+					clearAll();
+				});
+
+				const calibration = doc.getElementById('calibration');
+
+				if (this.peer) {
+					clearPeer();
+				}
+
+				const peerid = `${connection.id}-${this.idx}`;
+				const peer = (this.peer = new Peer(peerid, peerServerOptions));
+
+				let driver;
+				let ocr;
+				let srcCanvas;
+				let srcCtx;
+
+				peer.on('connection', async dataConnection => {
+					this.dataConnection = dataConnection;
+
+					const { config, video } = dataConnection.metadata;
+					config.save = function (name) {
+						saveConfig(name);
+					};
+
+					ocr = new CpuTetrisOCR(config);
+
+					calibration.setOCR(ocr);
+
+					srcCanvas = document.createElement('canvas');
+					srcCanvas.width = video.width;
+					srcCanvas.height = video.height;
+
+					srcCtx = srcCanvas.getContext('2d');
+
+					// receive new frames (VERY low frame rate)
+					dataConnection.on('data', async data => {
+						if (!data.webp) return;
+
+						const blob = new Blob([data.webp], { type: 'image/webp' });
+						const bitmap = await createImageBitmap(blob);
+						srcCtx.drawImage(bitmap, 0, 0);
+					});
+
+					const stream = srcCanvas.captureStream(10);
+
+					driver = new CaptureDriver(config, stream);
+					driver.addPlayer({
+						processVideoFrame(frame) {
+							ocr.processVideoFrame(frame);
+						},
+					});
+				});
+
+				peer.on('open', id => {
+					remoteAPI.requestRemoteCalibration(this.idx, peerid);
+				});
+			});
 		};
 	}
 
@@ -406,6 +552,7 @@ function addPlayer() {
 		camera_restart_btn: player_node.querySelector('.camera_restart'),
 		camera_mirror_btn: player_node.querySelector('.camera_mirror'),
 		focus_player_btn: player_node.querySelector('.focus_player'),
+		remote_calibration_btn: player_node.querySelector('.remote_calibration'),
 		vdo_ninja_url: player_node.querySelector('.vdo_ninja_url'),
 	});
 
