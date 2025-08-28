@@ -25,6 +25,7 @@ function getBasePlayerData() {
 			mirror: 0, // horizontal mirror only (for now)
 			// can potentially add more here in term of xshift, yshift, zoomin, zoomout, etc...
 		},
+		remote_calibration: false,
 	};
 }
 
@@ -83,7 +84,9 @@ class MatchRoom extends Room {
 	}
 
 	getProducerFields(user) {
-		return _.pick(user, PRODUCER_FIELDS);
+		const fields = _.pick(user, PRODUCER_FIELDS);
+		fields.remote_calibration = !!user.getProducer()?.remote_calibration;
+		return fields;
 	}
 
 	hasProducer(user) {
@@ -452,8 +455,6 @@ class MatchRoom extends Room {
 	}
 
 	async handleAdminMessage(message) {
-		console.log(message);
-
 		const [command, ...args] = message;
 		let forward_to_views = true;
 		let update_admin = true;

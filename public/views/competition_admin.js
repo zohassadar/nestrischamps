@@ -1,10 +1,8 @@
 import Connection from '/js/connection.js';
-import QueryString from '/js/QueryString.js';
 
 import { peerServerOptions } from '/views/constants.js';
 
 import { getSerializableConfigCopy } from '/producer/ConfigUtils.js';
-import { sleep } from '/producer/timer.js';
 import { CaptureDriver } from '/producer/CaptureDriver.js';
 import { CpuTetrisOCR } from '/producer/cpuTetrisOCR.js';
 
@@ -57,8 +55,7 @@ class Player {
 
 		this.setIndex(idx);
 
-		if (QueryString.get('rcal') !== '1')
-			this.dom.remote_calibration_btn.remove();
+		this.dom.remote_calibration_btn.style.display = 'none';
 
 		this.victories = 0;
 		this.bestof = -1;
@@ -457,6 +454,10 @@ class Player {
 
 		this.dom.country_code_select.value = state.country_code;
 		this.setFlag(state.country_code);
+
+		this.dom.remote_calibration_btn.style.display = state.remote_calibration
+			? 'inline-block'
+			: 'none';
 	}
 }
 

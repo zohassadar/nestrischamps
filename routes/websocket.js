@@ -294,11 +294,13 @@ export default function init(server, wss) {
 				user.setProducerConnection(connection, {
 					match: true,
 					target_user,
+					remote_calibration: /\/producer2($|\/)/.test(pathname),
 				});
 			} else {
 				user.setProducerConnection(connection, {
 					match: false,
 					competition: request.nc_url.searchParams.get('competition') === '1',
+					remote_calibration: /\/producer2($|\/)/.test(pathname),
 				});
 			}
 		} else if (pathname.startsWith('/ws/room/admin')) {
@@ -309,6 +311,7 @@ export default function init(server, wss) {
 			user.setProducerConnection(connection, {
 				match: false,
 				competition: request.nc_url.searchParams.get('competition') === '1',
+				remote_calibration: /\/producer2($|\/)/.test(pathname),
 			});
 		} else if ((m = pathname.match(/^\/ws\/room\/u\/([a-z0-9_-]+)\//))) {
 			const target_user = await UserDAO.getUserByLogin(m[1]);
@@ -351,6 +354,7 @@ export default function init(server, wss) {
 					user.setProducerConnection(connection, {
 						match: true,
 						target_user,
+						remote_calibration: connection_type === 'producer2',
 					});
 					break;
 				}

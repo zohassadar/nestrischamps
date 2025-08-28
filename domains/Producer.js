@@ -14,11 +14,15 @@ class Producer extends EventEmitter {
 		this._handleMessage = this._handleMessage.bind(this);
 	}
 
-	setConnection(connection, { match = false, competition = false }) {
+	setConnection(
+		connection,
+		{ match = false, competition = false, remote_calibration = false }
+	) {
 		this.kick('concurrency_limit');
 
 		this.is_match_connection = !!match;
 		this.is_competition = !!competition;
+		this.remote_calibration = !!remote_calibration;
 
 		connection.on('message', this._handleMessage);
 

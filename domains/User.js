@@ -91,10 +91,19 @@ class User extends EventEmitter {
 
 	setProducerConnection(
 		conn,
-		{ match = false, competition = false, target_user = null }
+		{
+			match = false,
+			competition = false,
+			target_user = null,
+			remote_calibration = false,
+		}
 	) {
 		this.addConnection(conn);
-		this.producer.setConnection(conn, { match, competition });
+		this.producer.setConnection(conn, {
+			match,
+			competition,
+			remote_calibration,
+		});
 
 		if (match) {
 			this.joinMatchRoom(target_user);
