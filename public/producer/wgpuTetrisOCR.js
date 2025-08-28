@@ -13,6 +13,64 @@ const TRANSFORM_TYPES = {
 	RED_LUMA: 2,
 };
 
+const previewBlockPositions = [
+	// I
+	[0, 4],
+	[8, 4],
+	[16, 4],
+	[28, 4], // not top-left corner, but since I block are white, should work
+
+	// Top Row - 3 blocks
+	[4, 0],
+	[12, 0],
+	[20, 0],
+
+	// Bottom Row - 3 blocks
+	[4, 8],
+	[12, 8],
+	[20, 8],
+
+	// O
+	[8, 0],
+	[16, 0],
+	[8, 8],
+	[16, 8],
+];
+
+const curPieceBlockPositions = [
+	// I
+	[0, 4],
+	[6, 4],
+	[12, 4],
+	[20, 4], // not top-left corner, but since I block are white, should work
+
+	// Top Row 1 - 3 blocks
+	[2, 0],
+	[8, 0],
+	[14, 0],
+
+	// Bottom Row 1 - 3 blocks
+	[2, 6],
+	[8, 6],
+	[14, 6],
+
+	// Top Row 2 - 3 blocks
+	[2, 1],
+	[8, 1],
+	[14, 1],
+
+	// Bottom Row 2 - 3 blocks
+	[2, 7],
+	[8, 7],
+	[14, 7],
+
+	// O
+	[5, 1],
+	[11, 1],
+	[5, 7],
+	[11, 7],
+];
+
 async function loadShaderSource(url) {
 	return await fetch(url).then(res => res.text());
 }
@@ -258,7 +316,7 @@ export class WGpuTetrisOCR extends TetrisOCR {
 
 		const boardPackingPos = this.config.tasks.field.packing_pos;
 		const blockSize = 8;
-		const boardPositions = new Array(200).fill(0).map((_, idx) => {
+		const boardBlockPositions = new Array(200).fill(0).map((_, idx) => {
 			const col = idx % 10;
 			const row = Math.floor(idx / 10);
 			return {
@@ -268,7 +326,7 @@ export class WGpuTetrisOCR extends TetrisOCR {
 		});
 
 		// Provide 3 reference block top-left positions
-		const refBlockPositions = this.config.tasks.color1
+		const refColorPositions = this.config.tasks.color1
 			? [
 					this.config.tasks.color1.packing_pos,
 					this.config.tasks.color2.packing_pos,
@@ -280,91 +338,27 @@ export class WGpuTetrisOCR extends TetrisOCR {
 					{ x: 0, y: 0 },
 				];
 
-		// Provide 14 shine-only top-left positions
+		// Provide shine-only top-left positions for preview blocks
 		const previewPos = this.config.tasks.preview.packing_pos;
 
 		// TODO: move these offsets to constants and reuse in both cpu and gpu OCR classes
-		const previewBlockPositions = [
-			// I
-			[0, 4],
-			[8, 4],
-			[16, 4],
-			[28, 4], // not top-left corner, but since I block are white, should work
 
-			// Top Row - 3 blocks
-			[4, 0],
-			[12, 0],
-			[20, 0],
-
-			// Bottom Row - 3 blocks
-			[4, 8],
-			[12, 8],
-			[20, 8],
-
-			// O
-			[8, 0],
-			[16, 0],
-			[8, 8],
-			[16, 8],
-		];
-
-		const pieceBlockPositions = [
-			// preview
-			...previewBlockPositions.map(xy => ({
-				x: xy[0] + previewPos.x,
-				y: xy[1] + previewPos.y,
-			})),
-			// TODO: current piece goes here (das trainer)
+		const shinePositions = [
 			...previewBlockPositions.map(xy => ({
 				x: xy[0] + previewPos.x,
 				y: xy[1] + previewPos.y,
 			})),
 		];
 
-		// Shared offsets for sampling, relative to each block top-left
-		// TODO: move these offsets to constants and reuse in both cpu and gpu OCR classes
-		const boardPos = this.config.tasks.field.packing_pos;
-		const offsets = {
-			boardColorOffsets: [
-				{ x: 2, y: 4 },
-				{ x: 3, y: 3 },
-				{ x: 4, y: 4 },
-				{ x: 4, y: 2 },
-			],
-			boardShineOffsets: [
-				{ x: 1, y: 1 },
-				{ x: 1, y: 2 },
-				{ x: 2, y: 1 },
-			],
-			refColorOffsets: [
-				{ x: 3, y: 2 },
-				{ x: 3, y: 3 },
-				{ x: 2, y: 3 },
-			],
-			pieceBlockShineOffsets: [
-				{ x: 0, y: 0 },
-				{ x: 1, y: 1 },
-				{ x: 1, y: 2 },
-			],
-			gymPauseOffsets: [
-				{
-					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 2,
-					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
-				},
-				{
-					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 10,
-					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
-				},
-				{
-					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 17,
-					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
-				},
-				{
-					x: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 18,
-					y: GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y,
-				},
-			],
-		};
+		if (this.config.tasks.cur_piece) {
+			const curPiecePos = this.config.tasks.cur_piece.packing_pos;
+			shinePositions.push(
+				...curPieceBlockPositions.map(xy => ({
+					x: xy[0] + curPiecePos.x,
+					y: xy[1] + curPiecePos.y,
+				}))
+			);
+		}
 
 		const threshold255 = 100;
 
@@ -372,10 +366,9 @@ export class WGpuTetrisOCR extends TetrisOCR {
 			texWidth: this.output_canvas.width,
 			texHeight: this.output_canvas.height,
 			threshold255,
-			boardPositions,
-			refBlockPositions,
-			pieceBlockPositions,
-			offsets,
+			boardBlockPositions,
+			refColorPositions,
+			shinePositions,
 		});
 	}
 
@@ -615,6 +608,10 @@ export class WGpuTetrisOCR extends TetrisOCR {
 			res.color3 = u32ToRgba(refColors[2]);
 		}
 
+		if (this.config.tasks.cur_piece) {
+			res.cur_piece = this.#getCurPieceFromShines(shines.subarray(14));
+		}
+
 		const gymPauseLuma255 = gymPauseF32 * 255;
 
 		return {
@@ -670,6 +667,62 @@ export class WGpuTetrisOCR extends TetrisOCR {
 
 		// lastly check for O
 		const O = shines.subarray(10, 14);
+		if (O[0] && O[1] && O[2] && O[3]) {
+			return 'O';
+		}
+
+		return null;
+	}
+
+	#getCurPieceFromShines(shines) {
+		// 20 shines represent possible block placements in the cur_piece area
+		// this replicates the logic from cpuTetrisOCR
+		// Trying side i blocks
+		const I = shines.subarray(0, 4);
+		if (I[0] && I[3]) {
+			return 'I';
+		}
+
+		// now trying the 3x2 matrix for L, J
+		const top_row_1 = shines.subarray(4, 7);
+		const bottom_row_1 = shines.subarray(7, 10);
+
+		if (top_row_1[0] && top_row_1[1] && top_row_1[2]) {
+			// J, L
+			if (bottom_row_1[0]) {
+				return 'L';
+			}
+			if (bottom_row_1[2]) {
+				return 'J';
+			}
+		}
+
+		// now trying the 3x2 matrix for T, S, Z
+		const top_row_2 = shines.subarray(10, 13);
+		const bottom_row_2 = shines.subarray(13, 16);
+
+		if (top_row_2[0] && top_row_2[1] && top_row_2[2]) {
+			if (bottom_row_2[1]) {
+				return 'T';
+			}
+
+			return null;
+		}
+
+		if (top_row_2[1] && top_row_2[2]) {
+			if (bottom_row_2[0] && bottom_row_2[1]) {
+				return 'S';
+			}
+		}
+
+		if (top_row_2[0] && top_row_2[1]) {
+			if (bottom_row_2[1] && bottom_row_2[2]) {
+				return 'Z';
+			}
+		}
+
+		// lastly check for O
+		const O = shines.subarray(16, 20);
 		if (O[0] && O[1] && O[2] && O[3]) {
 			return 'O';
 		}

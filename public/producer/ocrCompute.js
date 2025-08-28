@@ -57,32 +57,27 @@ export class OcrCompute {
 					texture: { sampleType: 'unfilterable-float' },
 				},
 				{
-					binding: 1,
+					binding: 1, // globals
 					visibility: GPUShaderStage.COMPUTE,
 					buffer: { type: 'uniform' },
 				},
 				{
-					binding: 2,
-					visibility: GPUShaderStage.COMPUTE,
-					buffer: { type: 'read-only-storage' },
-				},
-				{
-					binding: 3,
-					visibility: GPUShaderStage.COMPUTE,
-					buffer: { type: 'read-only-storage' },
-				},
-				{
-					binding: 4,
+					binding: 2, // outputs
 					visibility: GPUShaderStage.COMPUTE,
 					buffer: { type: 'storage' },
 				},
 				{
-					binding: 5,
+					binding: 3, // board block positions
 					visibility: GPUShaderStage.COMPUTE,
 					buffer: { type: 'read-only-storage' },
 				},
 				{
-					binding: 6,
+					binding: 4, // ref color positions
+					visibility: GPUShaderStage.COMPUTE,
+					buffer: { type: 'read-only-storage' },
+				},
+				{
+					binding: 5, // shine spots positions
 					visibility: GPUShaderStage.COMPUTE,
 					buffer: { type: 'read-only-storage' },
 				},
@@ -241,23 +236,20 @@ export class OcrCompute {
 			texWidth,
 			texHeight,
 			threshold255,
-			boardPositions,
-			refBlockPositions,
-			pieceBlockPositions,
-			offsets,
+			boardBlockPositions,
+			refColorPositions,
+			shinePositions,
 		} = params;
 
-		const numBlocks = boardPositions.length;
-		const numRefBlocks = refBlockPositions.length;
-		const numShineSpots = pieceBlockPositions.length;
+		const numBlocks = boardBlockPositions.length;
+		const numRefBlocks = refColorPositions.length;
+		const numShineSpots = shinePositions.length;
 
 		// Uniforms
 		const boardUniform = new Uint32Array([
 			texWidth,
 			texHeight,
 			threshold255 >>> 0,
-			numBlocks >>> 0,
-			numRefBlocks >>> 0,
 			numShineSpots >>> 0,
 			0,
 			0,
@@ -274,57 +266,28 @@ export class OcrCompute {
 			return out;
 		};
 		const boardPosBuf = this.makeBuffer(
-			packIVec2(boardPositions),
+			packIVec2(boardBlockPositions),
 			GPUBufferUsage.STORAGE
 		);
 		const refPosBuf = this.makeBuffer(
-			packIVec2(refBlockPositions),
+			packIVec2(refColorPositions),
 			GPUBufferUsage.STORAGE
 		);
 		const shineBuf = this.makeBuffer(
-			packIVec2(pieceBlockPositions),
+			packIVec2(shinePositions),
 			GPUBufferUsage.STORAGE
 		);
-
-		// Offsets buffer, in exact layout expected by WGSL
-		const offs = new Int32Array(
-			2 *
-				(offsets.boardColorOffsets.length +
-					offsets.boardShineOffsets.length +
-					offsets.refColorOffsets.length +
-					offsets.pieceBlockShineOffsets.length +
-					offsets.gymPauseOffsets.length)
-		);
-		let k = 0;
-		for (const v of offsets.boardColorOffsets) {
-			offs[k++] = v.x | 0;
-			offs[k++] = v.y | 0;
-		}
-		for (const v of offsets.boardShineOffsets) {
-			offs[k++] = v.x | 0;
-			offs[k++] = v.y | 0;
-		}
-		for (const v of offsets.refColorOffsets) {
-			offs[k++] = v.x | 0;
-			offs[k++] = v.y | 0;
-		}
-		for (const v of offsets.pieceBlockShineOffsets) {
-			offs[k++] = v.x | 0;
-			offs[k++] = v.y | 0;
-		}
-		for (const v of offsets.gymPauseOffsets) {
-			offs[k++] = v.x | 0;
-			offs[k++] = v.y | 0;
-		}
-		const offsBuf = this.makeBuffer(offs, GPUBufferUsage.STORAGE);
 
 		// Output buffer sizes
 		const boardColorsAndShinesBytes = 200 * 4; // 200 u32
 		const refColorsBytes = 3 * 4; // 3 u32
-		const shineBytes = 28 * 4; // 28 u32
+		const maxShineBytes = (14 + 20) * 4; // 28 u32
 		const gymPauseBytes = 1 * 4; // 1 u32
 		const totalBytes =
-			boardColorsAndShinesBytes + refColorsBytes + shineBytes + gymPauseBytes;
+			boardColorsAndShinesBytes +
+			refColorsBytes +
+			maxShineBytes +
+			gymPauseBytes;
 
 		// We will write into a single slab that matches WGSL layout. The layout there is sequential.
 		const outBuf = this.makeEmptyBuffer(
@@ -340,7 +303,6 @@ export class OcrCompute {
 
 			ubo,
 			boardPosBuf,
-			offsBuf,
 			outBuf,
 			refPosBuf,
 			shineBuf,
@@ -357,7 +319,6 @@ export class OcrCompute {
 
 			ubo,
 			boardPosBuf,
-			offsBuf,
 			outBuf,
 			refPosBuf,
 			shineBuf,
@@ -370,18 +331,17 @@ export class OcrCompute {
 			entries: [
 				{ binding: 0, resource: inputTexture.createView() },
 				{ binding: 1, resource: { buffer: ubo } },
+				{ binding: 2, resource: { buffer: outBuf } },
 				{
-					binding: 2,
+					binding: 3,
 					resource: { buffer: boardPosBuf },
 				},
-				{ binding: 3, resource: { buffer: offsBuf } },
-				{ binding: 4, resource: { buffer: outBuf } },
 				{
-					binding: 5,
+					binding: 4,
 					resource: { buffer: refPosBuf },
 				},
 				{
-					binding: 6,
+					binding: 5,
 					resource: { buffer: shineBuf },
 				},
 			],
@@ -414,8 +374,8 @@ export class OcrCompute {
 		offU += 200;
 		const refColors = u32.subarray(offU, offU + 3);
 		offU += 3;
-		const shines = u32.subarray(offU, offU + 28);
-		offU += 28;
+		const shines = u32.subarray(offU, offU + 34);
+		offU += 34;
 		const gymPauseF32 = f32[offU];
 
 		// Return slices as copies to avoid holding the large buffer. Copy by new typed arrays.

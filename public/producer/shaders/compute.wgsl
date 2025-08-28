@@ -100,48 +100,73 @@ fn match_digits(@builtin(global_invocation_id) gid: vec3<u32>) {
 //
 ///////////////////////////////////////////////
 
+struct IVec2 { x: i32, y: i32, };
+
+const GYM_PAUSE_CROP_RELATIVE_TO_FIELD = IVec2(37, 47);
+const NUM_BOARD_BLOCKS: u32 = 200u;
+const NUM_REF_COLORS: u32 = 3u;
+const MAX_SHINE_SPOTS: u32 = 14u + 20u;
+
+const boardColorOffsets: array<IVec2, 4> = array<IVec2, 4>(
+  IVec2(2, 4),
+  IVec2(3, 3),
+  IVec2(4, 4),
+  IVec2(4, 2)
+);
+
+const boardShineOffsets: array<IVec2, 3> = array<IVec2, 3>(
+  IVec2(1, 1),
+  IVec2(1, 2),
+  IVec2(2, 1)
+);
+
+const refColorOffsets: array<IVec2, 3> = array<IVec2, 3>(
+  IVec2(3, 2),
+  IVec2(3, 3),
+  IVec2(2, 3)
+);
+
+const pieceBlockShineOffsets: array<IVec2, 3> = array<IVec2, 3>(
+  IVec2(0, 0),
+  IVec2(1, 1),
+  IVec2(1, 2)
+);
+
+const gymPauseOffsets: array<IVec2, 4> = array<IVec2, 4>(
+  IVec2(GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 2,  GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y),
+  IVec2(GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 10, GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y),
+  IVec2(GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 17, GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y),
+  IVec2(GYM_PAUSE_CROP_RELATIVE_TO_FIELD.x + 18, GYM_PAUSE_CROP_RELATIVE_TO_FIELD.y),
+);
+
 @group(0) @binding(0) var inputTex_board: texture_2d<f32>;
 
 struct BoardGlobals {
   texWidth:      u32,
   texHeight:     u32,
   threshold255:  u32, // shine threshold in 0..255, avoids f32 in uniforms
-  numBlocks:     u32, // 200
-  numRefBlocks:  u32, // 3
-  numShineSpots: u32, // 28
+  numShineSpots: u32,
   _pad0:         u32,
 };
 @group(0) @binding(1) var<uniform> B: BoardGlobals;
 
-struct IVec2 { x: i32, y: i32, };
-
-// Top-left positions for the 200 board blocks
-@group(0) @binding(2) var<storage, read> boardPos: array<IVec2>;
-
-// Shared offsets used by tasks
-struct Offsets {
-  boardColorOffsets:      array<IVec2, 4>,   // relative to a board block top-left
-  boardShineOffsets:      array<IVec2, 3>,
-  refColorOffsets:        array<IVec2, 3>,   // relative to a ref block top-left
-  pieceBlockShineOffsets: array<IVec2, 3>,   // relative to a shine-spot top-left
-  gymPauseOffsets:        array<IVec2, 4>,   // relative to a shine-spot top-left
-};
-@group(0) @binding(3) var<storage, read> offs: Offsets;
-
 // Output slabs, fixed max sizes
 struct BoardOutputs {
-  boardColors: array<u32, 200>, // RGBS, S is the shine (hijacking alpha!)
-  refColors:   array<u32, 3>,
-  shines:      array<u32, 28>,  // 0 or 1
-  gymPause:    array<f32, 1>,   // 0 or 1
+  boardColors: array<u32, NUM_BOARD_BLOCKS>, // RGBS, S is the shine (hijacking alpha!)
+  refColors:   array<u32, NUM_REF_COLORS>,
+  shines:      array<u32, MAX_SHINE_SPOTS>,  // 0 or 1
+  gymPause:    array<f32, 1>,   // avg luma
 };
-@group(0) @binding(4) var<storage, read_write> outBuf: BoardOutputs;
+@group(0) @binding(2) var<storage, read_write> outBuf: BoardOutputs;
 
-// Positions for 3 reference blocks, top-left
-@group(0) @binding(5) var<storage, read> refBlockPos: array<IVec2>;
+// Top-left positions for the 200 board blocks
+@group(0) @binding(3) var<storage, read> boardBlockPos: array<IVec2>;
 
-// Positions for 28 shine-only checks, top-left
-@group(0) @binding(6) var<storage, read> shinePos: array<IVec2>;
+// Positions for NUM_REF_COLORS reference blocks, top-left
+@group(0) @binding(4) var<storage, read> refColorPos: array<IVec2>;
+
+// Positions for MAX_SHINE_SPOTS shine-only checks, top-left
+@group(0) @binding(5) var<storage, read> shinePos: array<IVec2>;
 
 fn loadTexelClampedB(x: i32, y: i32) -> vec4<f32> {
   let cx = clamp(x, 0, i32(B.texWidth) - 1);
@@ -156,12 +181,12 @@ fn analyze_everything(@builtin(global_invocation_id) gid: vec3<u32>) {
   let thr = f32(B.threshold255) / 255.0;
 
   // 1) 200 board blocks: average color of 4 points, plus shine from any of 3 points
-  if (id < B.numBlocks) {
-    let p = boardPos[id];
+  if (id < NUM_BOARD_BLOCKS) {
+    let p = boardBlockPos[id];
     // Average 4 colors
     var sum = vec3<f32>(0.0, 0.0, 0.0);
     for (var i: u32 = 0u; i < 4u; i = i + 1u) {
-      let o = offs.boardColorOffsets[i];
+      let o = boardColorOffsets[i];
       let c = loadTexelClampedB(p.x + o.x, p.y + o.y).rgb;
       sum = sum + c;
     }
@@ -170,7 +195,7 @@ fn analyze_everything(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Shine test on 3 points
     var s: f32 = 0.0;
     for (var j: u32 = 0u; j < 3u; j = j + 1u) {
-      let o = offs.boardShineOffsets[j];
+      let o = boardShineOffsets[j];
       let L = luma(loadTexelClampedB(p.x + o.x, p.y + o.y).rgb);
       if (L > thr) {
         s = 1.0;
@@ -185,25 +210,25 @@ fn analyze_everything(@builtin(global_invocation_id) gid: vec3<u32>) {
   }
 
   // 2) 3 reference blocks: average 3 colors
-  let refIdx = id - B.numBlocks;
+  let refIdx = id - NUM_BOARD_BLOCKS;
   if (refIdx == 0) {
     // find the highest seen R, G, B from each pixels
-    let p = refBlockPos[refIdx];
+    let p = refColorPos[refIdx];
     var white = vec3<f32>(0.0, 0.0, 0.0);
     for (var i: u32 = 0u; i < 3u; i = i + 1u) {
-      let o = offs.refColorOffsets[i];
+      let o = refColorOffsets[i];
       let c = loadTexelClampedB(p.x + o.x, p.y + o.y).rgb;
       white = max(white, c);
     }
     outBuf.refColors[refIdx] = pack4x8unorm(vec4<f32>(white, 1.0));
     return;    
   }
-  else if (refIdx < B.numRefBlocks) {
+  else if (refIdx < NUM_REF_COLORS) {
     // average colors at reference pixels
-    let p = refBlockPos[refIdx];
+    let p = refColorPos[refIdx];
     var sum = vec3<f32>(0.0, 0.0, 0.0);
     for (var i: u32 = 0u; i < 3u; i = i + 1u) {
-      let o = offs.refColorOffsets[i];
+      let o = refColorOffsets[i];
       let c = loadTexelClampedB(p.x + o.x, p.y + o.y).rgb;
       sum = sum + c;
     }
@@ -213,12 +238,12 @@ fn analyze_everything(@builtin(global_invocation_id) gid: vec3<u32>) {
   }
 
   // 3) 28 shine-only spots(preview: 14, curPiece: 14): any of 3 points above threshold
-  let sIdx = id - B.numBlocks - B.numRefBlocks;
+  let sIdx = id - NUM_BOARD_BLOCKS - NUM_REF_COLORS;
   if (sIdx < B.numShineSpots) {
     let p = shinePos[sIdx];
     var s: u32 = 0u;
     for (var j: u32 = 0u; j < 3u; j = j + 1u) {
-      let o = offs.pieceBlockShineOffsets[j];
+      let o = pieceBlockShineOffsets[j];
       let L = luma(loadTexelClampedB(p.x + o.x, p.y + o.y).rgb);
       if (L > thr) { 
         s = 1u;
@@ -226,20 +251,22 @@ fn analyze_everything(@builtin(global_invocation_id) gid: vec3<u32>) {
       }
     }
     outBuf.shines[sIdx] = s;
+    return;
   }
 
 
   // 4) gym Pause luma average
-  let pIdx = id - B.numBlocks - B.numRefBlocks - B.numShineSpots;
+  let pIdx = id - NUM_BOARD_BLOCKS - NUM_REF_COLORS - B.numShineSpots;
   if (pIdx == 0) {
-    let p = boardPos[0]; // first block of board is top-left of board
+    let p = boardBlockPos[0]; // first block of board is top-left of board
     var sum: f32 = 0.0;
     for (var j: u32 = 0u; j < 4u; j = j + 1u) {
-      let o = offs.gymPauseOffsets[j];
+      let o = gymPauseOffsets[j];
       let L = luma(loadTexelClampedB(p.x + o.x, p.y + o.y).rgb);
       sum = sum + L;
     }
     let avgLuma = sum / 4.0;
     outBuf.gymPause[pIdx] = avgLuma;
+    return;
   }
 }
