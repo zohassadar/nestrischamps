@@ -154,18 +154,18 @@ export const CONFIGS = {
 			'cur_piece',
 		],
 		packing: {
-			size: { w: getDigitsWidth(7), h: 224 },
+			size: { w: getDigitsWidth(7), h: 208 },
 			positions: {
 				score: { x: 0, y: 0 },
 				lines: { x: 0, y: 16 },
 				level: { x: 48, y: 16 },
 				preview: { x: 0, y: 32 },
 
-				instant_das: { x: 0, y: 48 },
-				cur_piece_das: { x: 32, y: 48 },
-				cur_piece: { x: 64, y: 48 },
+				instant_das: { x: 32, y: 32 },
+				cur_piece_das: { x: 64, y: 32 },
+				cur_piece: { x: 80, y: 16 },
 
-				field: { x: 0, y: 64 },
+				field: { x: 0, y: 48 },
 			},
 		},
 	},
