@@ -208,7 +208,12 @@ export class Player extends EventTarget {
 		console.log('Creating Connection');
 
 		if (this.num === null) {
-			this.#connection = new Connection();
+			this.#connection = new Connection(
+				null,
+				new URLSearchParams({
+					_remote_calibration: 1,
+				})
+			);
 		} else {
 			// multiviewer mode, we connect by static player secret
 			const url = new URL(location);
@@ -220,7 +225,12 @@ export class Player extends EventTarget {
 
 			console.log(`Using custom url: ${url.toString()}`);
 
-			this.#connection = new Connection(url.toString());
+			this.#connection = new Connection(
+				url.toString(),
+				new URLSearchParams({
+					_remote_calibration: 1,
+				})
+			);
 		}
 
 		this.#connection.onMessage = frame => {
