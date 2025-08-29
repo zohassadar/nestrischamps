@@ -1,9 +1,5 @@
-import { TetrisOCR } from './TetrisOCR.js';
-import {
-	PATTERN_MAX_INDEXES,
-	GYM_PAUSE_CROP_RELATIVE_TO_FIELD,
-	GYM_PAUSE_LUMA_THRESHOLD,
-} from './constants.js';
+import { TetrisOCR } from '../TetrisOCR.js';
+import { PATTERN_MAX_INDEXES, GYM_PAUSE_LUMA_THRESHOLD } from '../constants.js';
 import { findMinIndex, u32ToRgba } from '/ocr/utils.js';
 import { OcrCompute } from './ocrCompute.js';
 
@@ -83,9 +79,9 @@ async function getGPU() {
 	const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
 	const [vertex, fragment, compute] = await Promise.all([
-		loadShaderSource('/producer/shaders/vertex.wgsl'),
-		loadShaderSource('/producer/shaders/fragment.wgsl'),
-		loadShaderSource('/producer/shaders/compute.wgsl'),
+		loadShaderSource('/producer/webgpu/shaders/vertex.wgsl'),
+		loadShaderSource('/producer/webgpu/shaders/fragment.wgsl'),
+		loadShaderSource('/producer/webgpu/shaders/compute.wgsl'),
 	]);
 
 	return {

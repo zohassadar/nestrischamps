@@ -8,7 +8,7 @@ import { getSerializableConfigCopy } from './ConfigUtils.js';
 
 import GameTracker from './GameTracker.js';
 import { CpuTetrisOCR } from './cpuTetrisOCR.js';
-import { WGpuTetrisOCR } from './wgpuTetrisOCR.js';
+import { WGpuTetrisOCR } from './webgpu/wgpuTetrisOCR.js';
 
 const send_binary = QueryString.get('binary') !== '0';
 const force_cpu = QueryString.get('cpu') === '1';
