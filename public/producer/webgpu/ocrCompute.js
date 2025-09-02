@@ -2,6 +2,8 @@
 // WebGPU OCR Compute – Javascript host code
 // ============================================
 
+let perfSuffix = 0;
+
 export class OcrCompute {
 	device;
 
@@ -10,6 +12,7 @@ export class OcrCompute {
 	boardPipeline;
 
 	constructor(device, computeShaderModule) {
+		this.perfSuffix = ++perfSuffix;
 		this.device = device;
 
 		// Pipeline 1: match_digits
@@ -148,6 +151,14 @@ export class OcrCompute {
 
 	prepMatchDigitsGPUAssets(params) {
 		const { texWidth, texHeight, digitSize, refDigits, numRefs, jobs } = params;
+
+		if (this.matchDigitsAssets) {
+			const { ubo, jobsBuf, refsBuf, outBuf } = this.matchDigitsAssets;
+			ubo.destroy();
+			jobsBuf.destroy();
+			refsBuf.destroy();
+			outBuf.destroy();
+		}
 
 		// Uniforms
 		const refStride = digitSize * digitSize; // 196
@@ -365,6 +376,7 @@ export class OcrCompute {
 
 		// Read back once, then slice views according to the fixed layout
 		const raw = await this.readBuffer(outBuf, totalBytes);
+
 		const u32 = new Uint32Array(raw);
 		const f32 = new Float32Array(raw);
 

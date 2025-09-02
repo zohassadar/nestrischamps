@@ -110,13 +110,16 @@ export class CaptureDriver extends EventTarget {
 		} else if (this.#driverMode === 'callback') {
 			console.log('Using requestVideoFrameCallback in driver');
 			const tick = async () => {
+				// schedule next frame capture before work
+				// if it fires early, a frame skip warning will be shown
+				this.#captureFrameCallbackId =
+					this.#video.requestVideoFrameCallback(tick);
+
 				try {
 					await this.#work();
 				} catch (err) {
 					console.warn(err);
 				}
-				this.#captureFrameCallbackId =
-					this.#video.requestVideoFrameCallback(tick);
 			};
 			this.#captureFrameCallbackId =
 				this.#video.requestVideoFrameCallback(tick);
@@ -135,20 +138,16 @@ export class CaptureDriver extends EventTarget {
 	}
 
 	async #work(videoFrame) {
-		const now = Date.now();
+		const now = performance.now();
 
 		if (this.#working) {
 			console.warn(
-				`skip frame. Elapsed: ${now - (this.#then || 0)}. Current player work: ${this.#curPlayerNum}`
+				`skip frame. Elapsed: ${(now - (this.#then || 0)).toFixed(1)}. Current player work: ${this.#curPlayerNum}`
 			);
 			return;
 		}
 
 		this.#working = true;
-
-		// if (this.#then) {
-		// 	console.log('elapsed: ', now - this.#then);
-		// }
 		this.#then = now;
 
 		performance.clearMarks();
@@ -161,30 +160,8 @@ export class CaptureDriver extends EventTarget {
 			video: this.#video,
 		};
 
-		// TODO / TOTRY: Trigger all the job in parallel instead of sequentially below
-		// await Promise.allSettled(this.players.map(p => p.processVideoFrame(frame)));
-
-		for (const [idx, player] of this.players.entries()) {
-			this.#curPlayerNum = player.num || idx + 1;
-			const measure_name = `driver-${this.driverSuffix}-player-${this.#curPlayerNum}`;
-
-			performance.mark(`start-${measure_name}`);
-
-			try {
-				await player.processVideoFrame(frame);
-			} catch (err) {
-				console.warn(err);
-			}
-
-			performance.mark(`end-${measure_name}`);
-			performance.measure(
-				measure_name,
-				`start-${measure_name}`,
-				`end-${measure_name}`
-			);
-
-			await sleep(0); // Is this needed?
-		}
+		// Run all players in parallel
+		await Promise.allSettled(this.players.map(p => p.processVideoFrame(frame)));
 
 		performance.mark(`end-driver-${this.driverSuffix}`);
 		performance.measure(
@@ -194,8 +171,6 @@ export class CaptureDriver extends EventTarget {
 		);
 
 		this.#curPlayerNum = null;
-
-		// console.log('work', Date.now() - now);
 
 		this.dispatchEvent(new CustomEvent('frame'));
 

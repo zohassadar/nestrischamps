@@ -59,7 +59,7 @@ export const REFERENCE_LOCATIONS = {
 export const DEFAULT_COLOR_0 = [0x00, 0x00, 0x00];
 export const DEFAULT_COLOR_1 = [0xf0, 0xf0, 0xf0];
 
-function getDigitsWidth(n) {
+export function getDigitsWidth(n) {
 	// width per digit is 8px times 2
 	// and for last digit, we ignore the 1px (times 2)
 	// border on the right, hence -2
