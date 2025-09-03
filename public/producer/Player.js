@@ -44,38 +44,43 @@ async function hasWebGPU() {
 	}
 }
 
-async function getCapabilities() {
-	return {
-		has_wgpu: await hasWebGPU(),
-		has_wgl: hasWebGL2(),
-	};
-}
-
-const getCapabilitiesPromise = getCapabilities(); // no await, shared promise
-
-async function createOCR(config) {
+async function doGetOcrClass() {
 	// force_ocr_mode has precedence
 	switch (force_ocr_mode) {
 		case 'wgpu':
-			return new WGpuTetrisOCR(config);
+			return WGpuTetrisOCR;
 		case 'wgl':
-			return new WGlTetrisOCR(config);
+			return WGlTetrisOCR;
 		case 'cpu':
-			return new CpuTetrisOCR(config);
+			return CpuTetrisOCR;
 	}
 
 	// if no force_ocr_mode matched, use precendence rules below:
-	const capabilities = await getCapabilitiesPromise;
-
-	if (capabilities.has_wgpu) {
-		return new WGpuTetrisOCR(config);
+	if (await hasWebGPU()) {
+		return WGpuTetrisOCR;
 	}
 
-	if (capabilities.has_wgl) {
-		return new WGlTetrisOCR(config);
+	if (hasWebGL2()) {
+		return WGlTetrisOCR;
 	}
 
-	return new CpuTetrisOCR(config);
+	return CpuTetrisOCR;
+}
+
+async function getOcrClass() {
+	const klass = await doGetOcrClass();
+
+	console.log(`OCR class: ${klass.name}`);
+
+	return klass;
+}
+
+export const getOcrClassPromise = getOcrClass(); // no await, shared promise
+
+async function createOCR(config) {
+	const klass = await getOcrClassPromise;
+
+	return new klass(config);
 }
 
 export class Player extends EventTarget {
