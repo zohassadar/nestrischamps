@@ -1,5 +1,5 @@
 import { GpuTetrisOCR } from '../gpuTetrisOCR.js';
-import { PATTERN_MAX_INDEXES } from '../constants.js';
+import { PATTERN_MAX_INDEXES, GYM_PAUSE_LUMA_THRESHOLD } from '../constants.js';
 import { findMinIndex, u32ToRgba } from '/ocr/utils.js';
 
 const MAX_SHINE_SPOTS = 20 + 14;
@@ -734,13 +734,7 @@ export class WGlTetrisOCR extends GpuTetrisOCR {
 		offU += MAX_SHINE_SPOTS;
 		const gymPauseU32 = u32[offU];
 
-		const temp = {
-			allDigitsJobs: new Uint32Array(allDigitsJobs),
-			boardColors: new Uint32Array(boardColors),
-			refColors: new Uint32Array(refColors),
-			shines: new Uint32Array(shines),
-			gymPauseU32,
-		};
+		const gymPauseLuma255 = (gymPauseU32 / 4294967295) * 255; // gymPauseU32 is scaled on the full uint range
 
 		const res = {
 			field: boardColors,
@@ -748,7 +742,14 @@ export class WGlTetrisOCR extends GpuTetrisOCR {
 		};
 
 		if (this.config.tasks.cur_piece) {
+			// das trainer
 			res.cur_piece = GpuTetrisOCR.getCurPieceFromShines(shines.subarray(14));
+			res.gym_pause = [0, false];
+		} else {
+			res.gym_pause = [
+				Math.round(gymPauseLuma255),
+				gymPauseLuma255 > GYM_PAUSE_LUMA_THRESHOLD,
+			];
 		}
 
 		if (this.config.tasks.color1) {

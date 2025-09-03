@@ -185,10 +185,9 @@ vec4 doGymPause() {
     ivec2 p = uBoardTLPosition + gymPauseOffsets[i];
     acc += luma601(texture(uAtlasTex, uv_at_pixel(p)).rgb);
   }
-  float y = acc / 4.0;
-  float thr= float(uShineThreshold)/255.0;
-  uint v = y > thr ? 1u : 0u;
-  return packUintToRGBA8(v);
+  float y = acc / float(gymPauseOffsets.length());
+  uint enc = uint(y * 4294967295.0); // y is in range [0,1], so we can convert to range 0-max-uint
+  return packUintToRGBA8(enc);
 }
 
 void main() {
@@ -216,7 +215,7 @@ void main() {
     fragColor = doShine(i);
     return;
   }
-  i -= uNumShinePositions;
+  i -= MAX_SHINE_POSITIONS;
 
   if (i == 0) {
     // last one: gym pause
