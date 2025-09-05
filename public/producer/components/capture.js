@@ -53,6 +53,7 @@ const MARKUP = html`
 
 export class NTC_Producer_Capture extends NtcComponent {
 	#domrefs;
+	#player;
 	#is_match_room;
 	#roomIFrame;
 
@@ -105,12 +106,21 @@ export class NTC_Producer_Capture extends NtcComponent {
 		});
 	}
 
-	setOCR(ocr) {
+	async setPlayer(player) {
+		this.#player = player;
+
+		// wire up player APIs
+		player.API.makePlayer = (player_index, view_meta) => {
+			this.#domrefs.room.loadRoomView(view_meta);
+		};
+
+		player.API.dropPlayer = () => {};
+
+		const ocr = await this.#player.ocrPromise;
 		this.#domrefs.ocr_results.setOCR(ocr);
 		this.#domrefs.calibration.setOCR(ocr);
-	}
 
-	setGameTracker(gameTracker) {
+		const gameTracker = this.#player.gameTracker;
 		this.#domrefs.ocr_results.setGameTracker(gameTracker);
 	}
 }

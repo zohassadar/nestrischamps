@@ -11,15 +11,6 @@ import { hasConfig, loadConfig } from './ConfigUtils.js';
 import { CaptureDriver } from './CaptureDriver.js';
 import { Player } from './Player.js';
 
-function loadCaptureUI() {
-	const capture = document.createElement('ntc-capture');
-
-	capture.id = 'capture';
-	document.body.prepend(capture);
-
-	return capture;
-}
-
 async function initEverDriveCapture(config, tabToOpen) {
 	removeCalibrationTab();
 	initCaptureFromEverdrive(config.frame_rate); // TODO
@@ -55,10 +46,12 @@ async function initOCRCapture(config, tabToOpen) {
 
 	driver.addPlayer(player);
 
-	const capture = loadCaptureUI();
-	capture.setOCR(await player.ocrPromise);
-	capture.setGameTracker(player.gameTracker);
+	const capture = document.createElement('ntc-capture');
+	capture.id = 'capture';
+	capture.setPlayer(player);
 	capture.showTab(tabToOpen);
+
+	document.body.prepend(capture);
 }
 
 async function initFromConfig(tabToOpen) {

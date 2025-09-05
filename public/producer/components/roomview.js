@@ -4,11 +4,11 @@ import { html } from '../StringUtils.js';
 
 const MARKUP = html`
 	<div id="room">
-		<div class="controls container mt-5 mb-4 has-text-centered">
+		<div class="controls container mt-5 mb-5 has-text-centered">
 			<button class="button is-success" id="setReady">Set Ready</button>
 			<button class="button is-danger" id="notReady">Not Ready</button>
 		</div>
-		<div id="view"></div>
+		<div id="view" class="is-flex is-justify-content-center"></div>
 	</div>
 `;
 
@@ -21,6 +21,7 @@ cssOverride.replaceSync(`
 
 export class NTC_Producer_RoomView extends NtcComponent {
 	#domrefs;
+	#view_meta;
 	#roomIFrame;
 	#observer;
 	#destroyIframeTO;
@@ -57,7 +58,8 @@ export class NTC_Producer_RoomView extends NtcComponent {
 		entries.forEach(entry => {
 			if (entry.isIntersecting) {
 				console.log('Room is visible!');
-				this.#loadRoomView();
+				this.loadRoomView();
+				this.#resizeRoomIFrame();
 			} else {
 				console.log('Room is not visible.');
 				this.#destroyIframeTO = setTimeout(this.#destroyRoomView, 15000); // 15 seconds to allow users to click around
@@ -65,8 +67,10 @@ export class NTC_Producer_RoomView extends NtcComponent {
 		});
 	};
 
-	#loadRoomView() {
-		const view_url = this.#getViewURL();
+	loadRoomView(view_meta) {
+		if (view_meta) this.#view_meta = view_meta;
+
+		const view_url = this.#getViewURL(view_meta);
 
 		if (this.#roomIFrame) {
 			if (this.#roomIFrame.getAttribute('src') === view_url) {
@@ -92,9 +96,9 @@ export class NTC_Producer_RoomView extends NtcComponent {
 		this.#roomIFrame.setAttribute('src', view_url);
 
 		const size =
-			this.view_meta?._size === '720'
+			view_meta?._size === '720'
 				? { w: 1280, h: 720 }
-				: this.view_meta?._size === '750'
+				: view_meta?._size === '750'
 					? { w: 1334, h: 750 }
 					: { w: 1920, h: 1080 };
 
@@ -111,9 +115,9 @@ export class NTC_Producer_RoomView extends NtcComponent {
 		if (!this.#roomIFrame) return;
 
 		const size =
-			this.view_meta?._size === '720'
+			this.#view_meta?._size === '720'
 				? 1280
-				: this.view_meta?._size === '750'
+				: this.#view_meta?._size === '750'
 					? 1334
 					: 1920;
 
@@ -136,11 +140,11 @@ export class NTC_Producer_RoomView extends NtcComponent {
 
 		let mainViewLayout;
 
-		if (false && this.view_meta) {
-			mainViewLayout = this.#getLayout(this.view_meta._layout);
+		if (this.#view_meta) {
+			mainViewLayout = this.#getLayout(this.#view_meta._layout);
 
 			// add remote view settings (all except private keys)
-			Object.entries(this.view_meta)
+			Object.entries(this.#view_meta)
 				.filter(([key, _]) => !key.startsWith('_'))
 				.forEach(([key, value]) => searchParams.set(key, value));
 		}
