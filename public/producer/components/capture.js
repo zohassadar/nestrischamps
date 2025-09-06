@@ -55,7 +55,6 @@ export class NTC_Producer_Capture extends NtcComponent {
 	#domrefs;
 	#player;
 	#is_match_room;
-	#roomIFrame;
 
 	constructor() {
 		super();
@@ -115,6 +114,10 @@ export class NTC_Producer_Capture extends NtcComponent {
 		};
 
 		player.API.dropPlayer = () => {};
+
+		player.addEventListener('remote_config_update', ({ detail: config }) => {
+			this.#domrefs.calibration.handleRemoteConfigUpdate(config);
+		});
 
 		const ocr = await this.#player.ocrPromise;
 		this.#domrefs.ocr_results.setOCR(ocr);

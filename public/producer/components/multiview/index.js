@@ -151,6 +151,10 @@ export class NTC_MultiView extends NtcComponent {
 			cal.setOCR(ocr);
 		});
 
+		player.addEventListener('remote_config_update', ({ detail: config }) => {
+			cal.handleRemoteConfigUpdate(config);
+		});
+
 		tabs.querySelector('ul').appendChild(tab);
 		content.appendChild(cal);
 

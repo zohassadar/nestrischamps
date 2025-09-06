@@ -544,6 +544,21 @@ export class NTC_Producer_Calibration extends NtcComponent {
 			control?.setOCRResults?.(value);
 		});
 	};
+
+	handleRemoteConfigUpdate(remoteConfig) {
+		// We do NOT use the remoteCOnfig values since those were already put in the run-time config
+		// but we do use the keys to update whatever display settings needs updating
+
+		if ('brightness' in remoteConfig) {
+			this.#domrefs.brightness_slider.value = this.ocr.config.brightness;
+			this.#onBrightnessChange();
+		}
+
+		if ('contrast' in remoteConfig) {
+			this.#domrefs.contrast_slider.value = this.ocr.config.contrast;
+			this.#onContrastChange();
+		}
+	}
 }
 
 customElements.define('ntc-calibration', NTC_Producer_Calibration);

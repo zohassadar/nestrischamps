@@ -89,12 +89,18 @@ export class Player extends EventTarget {
 
 					// TODO: how to update the controls?
 					['brightness', 'contrast'].forEach(prop => {
-						if (prop in config) this.config[prop] = config[prop];
+						if (prop in config) {
+							this.config[prop] = config[prop];
+						}
 					});
 
 					// TODO: carry score7 and reset entire config
 
 					this.config.save();
+
+					this.dispatchEvent(
+						new CustomEvent('remote_config_update', { detail: config })
+					);
 				});
 
 				this.conn.on('close', () => {
