@@ -4,7 +4,7 @@ import { peerServerOptions } from '/views/constants.js';
 
 import { getSerializableConfigCopy } from '/producer/ConfigUtils.js';
 import { CaptureDriver } from '/producer/CaptureDriver.js';
-import { CpuTetrisOCR } from '/producer/cpuTetrisOCR.js';
+import { createOCRInstance } from '/producer/ocrStrategy.js';
 
 const dom = {
 	roomid: document.querySelector('#roomid'),
@@ -290,7 +290,7 @@ class Player {
 						saveConfig(name);
 					};
 
-					ocr = new CpuTetrisOCR(config);
+					ocr = await createOCRInstance(config);
 
 					calibration.setOCR(ocr);
 
