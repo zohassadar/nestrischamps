@@ -565,9 +565,16 @@ export class NTC_Producer_Calibration extends NtcComponent {
 	};
 
 	handleRemoteConfigUpdate(remoteConfig) {
-		// We do NOT use the remoteCOnfig values since those were already put in the run-time config
-		// but we do use the keys to update whatever display settings needs updating
+		// We do NOT use the remoteConfig values since those were already put in the run-time config
+		// but we do use the keys to update whatever display settings needs updating so they are in sync with the config
 
+		// 1 update all the crop coodinates in UI
+		for (const [name, task] of Object.entries(remoteConfig.tasks)) {
+			const cropControls = this.shadow.getElementById(name);
+			cropControls?.setCoordinates(this.ocr.config.tasks[name].crop);
+		}
+
+		// 2 update the top level controls
 		if ('brightness' in remoteConfig) {
 			this.#domrefs.brightness_slider.value = this.ocr.config.brightness;
 			this.#onBrightnessChange();
@@ -581,7 +588,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		if ('score7' in remoteConfig) {
 			// we need to update the control checkbox and the task, but NOT the score width, since that would have been updated remotely already
 			this.#domrefs.score7.checked = !!remoteConfig.score7;
-			this.#onScore7Change({ adjustCropWidth: false });
+			this.#onScore7Change({ adjustCropWidth: false }); // crop width was already updated
 		}
 	}
 }
