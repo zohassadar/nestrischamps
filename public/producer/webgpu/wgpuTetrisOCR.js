@@ -72,6 +72,7 @@ export class WGpuTetrisOCR extends GpuTetrisOCR {
 	}
 
 	updateScore67Config() {
+		this.#updateTaskRegionBuffer(this.config.tasks.score);
 		this.#prepGpuComputeDigitAssets();
 	}
 
@@ -175,6 +176,8 @@ export class WGpuTetrisOCR extends GpuTetrisOCR {
 				layout: this.#renderBindGroupLayoutRegion,
 				entries: [{ binding: 0, resource: { buffer: task.regionBuffer } }],
 			});
+
+			this.#updateTaskRegionBuffer(task);
 		}
 	}
 
@@ -210,16 +213,7 @@ export class WGpuTetrisOCR extends GpuTetrisOCR {
 		task.dirty = false;
 	}
 
-	#fillRegionBuffers() {
-		for (const task of Object.values(this.config.tasks)) {
-			this.#updateTaskRegionBuffer(task);
-		}
-	}
-
 	#prepGpuComputeDigitAssets() {
-		// run this one to update all the buffers (only needed for score but whatever)
-		this.#fillRegionBuffers();
-
 		const digitSize = 14;
 		const digitSizeWBorder = 16;
 		const jobs = [];
