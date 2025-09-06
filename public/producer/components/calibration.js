@@ -278,6 +278,8 @@ export class NTC_Producer_Calibration extends NtcComponent {
 	}
 
 	#observerCallBack = (entries, observer) => {
+		if (!this.ocr) return; // not ready - happens in remote calibration
+
 		entries.forEach(entry => {
 			if (entry.isIntersecting) {
 				this.ocr.config.show_capture_ui = true;

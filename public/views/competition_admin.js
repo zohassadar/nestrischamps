@@ -282,6 +282,10 @@ class Player {
 					this.dataConnection = dataConnection;
 
 					const { config, video } = dataConnection.metadata;
+
+					// we force show the capture ui here
+					config.show_capture_ui = true;
+
 					config.save = function (name) {
 						saveConfig(name);
 					};
