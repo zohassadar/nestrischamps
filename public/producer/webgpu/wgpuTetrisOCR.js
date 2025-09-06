@@ -382,6 +382,8 @@ export class WGpuTetrisOCR extends GpuTetrisOCR {
 			],
 		});
 
+		this.#fillRegionBuffers(); // find a way to run this conditionally (i.e. only when capture coordinates have changed)
+
 		const commandEncoder = device.createCommandEncoder();
 
 		// --- Render all regions to the main output canvas ---
