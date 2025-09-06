@@ -234,6 +234,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 
 		if (!this.ocr?.config?.tasks?.[name]) return;
 
+		this.ocr.config.tasks[name].dirty = true; // dirty flag to tell OCR that this field must be updated
 		this.ocr.config.tasks[name].crop[key] = value;
 		this.ocr.config.save([name]);
 	};
@@ -250,6 +251,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 			.filter(name => this.ocr?.config?.tasks?.[name]);
 
 		names.forEach(name => {
+			this.ocr.config.tasks[name].dirty = true; // dirty flag to tell OCR that this field must be updated
 			this.ocr.config.tasks[name].crop[key] = value;
 		});
 

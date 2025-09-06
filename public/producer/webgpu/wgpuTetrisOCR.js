@@ -178,35 +178,41 @@ export class WGpuTetrisOCR extends GpuTetrisOCR {
 		}
 	}
 
-	#fillRegionBuffers() {
+	#updateTaskRegionBuffer(task) {
 		const { device } = this.#gpu;
 
+		// Get the transform type from task configuration
+		const transformType = task.luma
+			? GpuTetrisOCR.TRANSFORM_TYPES.LUMA
+			: task.red_luma
+				? GpuTetrisOCR.TRANSFORM_TYPES.RED_LUMA
+				: GpuTetrisOCR.TRANSFORM_TYPES.NONE;
+
+		// Create the data for the uniform buffer
+		const regionData = new Float32Array([
+			task.crop.x, // TODO: need to update buffer when crop changes!
+			task.crop.y,
+			task.crop.w,
+			task.crop.h,
+			task.packing_pos.x,
+			task.packing_pos.y,
+			task.canvas.width,
+			task.canvas.height,
+			transformType,
+			0.0,
+			0.0,
+			0.0, // Padding for vec4<f32> alignment
+		]);
+
+		// Write the new data to the buffer.
+		device.queue.writeBuffer(task.regionBuffer, 0, regionData);
+
+		task.dirty = false;
+	}
+
+	#fillRegionBuffers() {
 		for (const task of Object.values(this.config.tasks)) {
-			// Get the transform type from task configuration
-			const transformType = task.luma
-				? GpuTetrisOCR.TRANSFORM_TYPES.LUMA
-				: task.red_luma
-					? GpuTetrisOCR.TRANSFORM_TYPES.RED_LUMA
-					: GpuTetrisOCR.TRANSFORM_TYPES.NONE;
-
-			// Create the data for the uniform buffer
-			const regionData = new Float32Array([
-				task.crop.x, // TODO: need to update buffer when crop changes!
-				task.crop.y,
-				task.crop.w,
-				task.crop.h,
-				task.packing_pos.x,
-				task.packing_pos.y,
-				task.canvas.width,
-				task.canvas.height,
-				transformType,
-				0.0,
-				0.0,
-				0.0, // Padding for vec4<f32> alignment
-			]);
-
-			// Write the new data to the buffer.
-			device.queue.writeBuffer(task.regionBuffer, 0, regionData);
+			this.#updateTaskRegionBuffer(task);
 		}
 	}
 
@@ -382,8 +388,6 @@ export class WGpuTetrisOCR extends GpuTetrisOCR {
 			],
 		});
 
-		this.#fillRegionBuffers(); // find a way to run this conditionally (i.e. only when capture coordinates have changed)
-
 		const commandEncoder = device.createCommandEncoder();
 
 		// --- Render all regions to the main output canvas ---
@@ -406,6 +410,10 @@ export class WGpuTetrisOCR extends GpuTetrisOCR {
 		// Loop through each task and draw its region
 		this.configData.fields.forEach(name => {
 			const task = this.config.tasks[name];
+
+			if (task.dirty) {
+				this.#updateTaskRegionBuffer(task);
+			}
 
 			// Set the per-task bind group and draw.
 			mainPass.setBindGroup(1, task.regionBindGroup);
