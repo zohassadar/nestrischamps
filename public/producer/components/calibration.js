@@ -405,35 +405,54 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		config.save();
 	};
 
-	#onScore7Change = () => {
+	#onScore7Change = ({ adjustCropWidth }) => {
 		const config = this.ocr.config;
-		config.score7 = !!this.#domrefs.score7.checked;
 		const task = config.tasks.score;
+
+		if (adjustCropWidth === undefined) {
+			adjustCropWidth = true; // assume from click event
+		}
 
 		const scale6to7 =
 			REFERENCE_LOCATIONS.score7.crop.w / REFERENCE_LOCATIONS.score.crop.w;
 
-		// assume transition is valid
-		if (config.score7) {
-			task.crop.w *= scale6to7;
-			task.pattern = REFERENCE_LOCATIONS.score7.pattern;
-			task.canvas.width = TASK_RESIZE.score7.w;
-		} else {
-			task.crop.w /= scale6to7;
-			task.pattern = REFERENCE_LOCATIONS.score.pattern;
-			task.canvas.width = TASK_RESIZE.score.w;
+		// verify if transition is needed - assume nothing
+		const needs7 = !!this.#domrefs.score7.checked;
+		const is6 =
+			!config.score7 &&
+			task.pattern.length === 6 &&
+			task.canvas.width === TASK_RESIZE.score.w;
+		const is7 =
+			config.score7 &&
+			task.pattern.length === 7 &&
+			task.canvas.width === TASK_RESIZE.score7.w;
+
+		// only update for valid transition, use positive conditions for each of comprehension
+		if ((is6 && needs7) || (is7 && !needs7)) {
+			// we need to run update, checkbox drives behaviour
+			config.score7 = needs7;
+
+			if (needs7) {
+				if (adjustCropWidth) task.crop.w *= scale6to7;
+				task.pattern = REFERENCE_LOCATIONS.score7.pattern;
+				task.canvas.width = TASK_RESIZE.score7.w;
+			} else {
+				if (adjustCropWidth) task.crop.w /= scale6to7;
+				task.pattern = REFERENCE_LOCATIONS.score.pattern;
+				task.canvas.width = TASK_RESIZE.score.w;
+			}
+
+			if (adjustCropWidth) task.crop.w = Math.round(task.crop.w);
+
+			const scoreControls = this.shadow.getElementById('score');
+
+			scoreControls.setCoordinates(task.crop);
+			scoreControls.setCaptureCanvas(task.canvas);
+
+			this.ocr.updateScore67Config();
+
+			config.save();
 		}
-
-		task.crop.w = Math.round(task.crop.w);
-
-		const scoreControls = this.shadow.getElementById('score');
-
-		scoreControls.setCoordinates(task.crop);
-		scoreControls.setCaptureCanvas(task.canvas);
-
-		this.ocr.updateScore67Config();
-
-		config.save();
 	};
 
 	#onHandleRetron67Change = () => {
@@ -557,6 +576,12 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		if ('contrast' in remoteConfig) {
 			this.#domrefs.contrast_slider.value = this.ocr.config.contrast;
 			this.#onContrastChange();
+		}
+
+		if ('score7' in remoteConfig) {
+			// we need to update the control checkbox and the task, but NOT the score width, since that would have been updated remotely already
+			this.#domrefs.score7.checked = !!remoteConfig.score7;
+			this.#onScore7Change({ adjustCropWidth: false });
 		}
 	}
 }
