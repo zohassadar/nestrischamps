@@ -131,6 +131,10 @@ cssOverride.replaceSync(`
 `);
 
 const ATTRIBUTES = {
+	enableInstructions: {
+		name: 'enable-instructions',
+		init: 'true',
+	},
 	enableShowParts: {
 		name: 'enable-show-parts',
 		init: 'true',
@@ -143,12 +147,19 @@ const ATTRIBUTES = {
 		name: 'enable-capture-rate',
 		init: 'true',
 	},
+	enableScore7: {
+		name: 'enable-score7',
+		init: 'true',
+	},
+	enableRetron67: {
+		name: 'enable-handle-retron-levels-6-7',
+		init: 'true',
+	},
 };
 
 export class NTC_Producer_Calibration extends NtcComponent {
 	#domrefs;
 	#observer;
-	#hidePartsTID;
 
 	static get observedAttributes() {
 		return Object.values(ATTRIBUTES).map(v => v.name);
@@ -168,6 +179,8 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		this.#domrefs = {
 			capture: this.shadow.getElementById('capture'),
 			adjustments: this.shadow.getElementById('adjustments'),
+
+			instructions: this.shadow.getElementById('instructions'),
 
 			use_half_height: this.shadow.getElementById('use_half_height'),
 			score7: this.shadow.getElementById('score7'),
@@ -296,14 +309,16 @@ export class NTC_Producer_Calibration extends NtcComponent {
 			return;
 		}
 
-		const settingElement =
-			this.#domrefs[name.replace(/^enable-/, '').replace(/-/g, '_')];
+		const settingName = name.replace(/^enable-/, '').replace(/-/g, '_');
+		const settingElement = this.#domrefs[settingName];
 
 		if (!settingElement) return;
 
-		settingElement
-			.closest('.field')
-			.classList[newValue === 'true' ? 'remove' : 'add']('is-hidden');
+		const field = settingElement.closest('.field');
+
+		(field || settingElement).classList[newValue === 'true' ? 'remove' : 'add'](
+			'is-hidden'
+		);
 	}
 
 	#onBrightnessChange = () => {
