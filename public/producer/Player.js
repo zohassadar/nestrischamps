@@ -83,6 +83,7 @@ export class Player extends EventTarget {
 
 				this.conn.on('data', ({ config }) => {
 					for (const [name, task] of Object.entries(config.tasks)) {
+						this.config.tasks[name].dirty = true;
 						Object.assign(this.config.tasks[name].crop, task.crop);
 					}
 
