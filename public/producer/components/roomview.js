@@ -4,7 +4,7 @@ import { html } from '../StringUtils.js';
 
 const MARKUP = html`
 	<div id="room">
-		<div class="controls container mt-5 mb-5 has-text-centered">
+		<div id="controls" class="controls container mt-5 mb-5 has-text-centered">
 			<button class="button is-success" id="setReady">Set Ready</button>
 			<button class="button is-danger" id="notReady">Not Ready</button>
 		</div>
@@ -17,11 +17,16 @@ cssOverride.replaceSync(`
 	:host {
 		display: block
 	}
+
+	#controls button {
+		cursor: pointer;
+	}
 `);
 
 export class NTC_Producer_RoomView extends NtcComponent {
 	#domrefs;
 	#view_meta;
+	#handlers = {};
 	#roomIFrame;
 	#observer;
 	#destroyIframeTO;
@@ -42,6 +47,19 @@ export class NTC_Producer_RoomView extends NtcComponent {
 		};
 
 		this.#observer = new IntersectionObserver(this.#observerCallBack);
+
+		this.#domrefs.setReady.addEventListener('click', evt => {
+			evt.stopPropagation();
+			this.#handlers.ready?.(true);
+		});
+		this.#domrefs.notReady.addEventListener('click', evt => {
+			evt.stopPropagation();
+			this.#handlers.ready?.(false);
+		});
+	}
+
+	setReadyHandler(readyHandler) {
+		this.#handlers.ready = readyHandler;
 	}
 
 	connectedCallback() {

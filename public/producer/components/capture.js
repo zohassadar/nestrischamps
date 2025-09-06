@@ -109,7 +109,7 @@ export class NTC_Producer_Capture extends NtcComponent {
 	async setPlayer(player) {
 		this.#player = player;
 
-		// wire up player APIs
+		// wire up player (APIs and event capture)
 		player.API.makePlayer = (player_index, view_meta) => {
 			this.#domrefs.room.loadRoomView(view_meta);
 		};
@@ -122,6 +122,8 @@ export class NTC_Producer_Capture extends NtcComponent {
 
 		const gameTracker = this.#player.gameTracker;
 		this.#domrefs.ocr_results.setGameTracker(gameTracker);
+
+		this.#domrefs.room.setReadyHandler(this.#player.sendReady);
 	}
 }
 

@@ -358,4 +358,8 @@ export class Player extends EventTarget {
 	}
 
 	resetNotice = () => {};
+
+	sendReady = (ready = false) => {
+		this.#connection?.send(['setReady', !!ready]);
+	};
 }
