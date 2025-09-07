@@ -1,6 +1,6 @@
 import { timingDecorator } from '/ocr/utils.js';
 import { bicubic, crop, luma } from '/ocr/image_tools.js';
-import { rgb2lab } from '/ocr/utils.js';
+import { rgbToOklab, findClosestOklabIndex } from '/ocr/utils.js';
 
 const PATTERN_MAX_INDEXES = {
 	B: 3, // null, 0, 1 (Binary)
@@ -759,13 +759,13 @@ export default class TetrisOCR extends EventTarget {
 		return [Math.round(avg_luma), avg_luma > GYM_PAUSE_LUMA_THRESHOLD];
 	}
 
-	async scanField(source_img, _colors) {
+	async scanField(source_img, refColors) {
 		// Note: We work in the square of colors domain
 		// see: https://www.youtube.com/watch?v=LKnqECcg6Gw
 		const task = this.config.tasks.field;
 		const xywh_coordinates = this.getCropCoordinates(task);
-		const colors = _colors.map(rgb2lab); // we operate in Lab color space
-		const index_offset = _colors.length == 4 ? 0 : 1; // length of colors is either 3 or 4
+		const refOkLabColors = refColors.map(rgbToOklab);
+		const index_offset = refColors.length == 4 ? 0 : 1; // length of colors is either 3 or 4
 
 		// crop is not needed, but done anyway to share task captured area with caller app
 		crop(source_img, ...xywh_coordinates, task.crop_img);
@@ -837,40 +837,24 @@ export default class TetrisOCR extends EventTarget {
 					continue;
 				}
 
-				const channels = rgb2lab(
-					pix_refs
-						.map(([x, y]) => {
-							const col_idx = block_offset + y * row_width * 4 + x * 4;
-							return field_img.data.subarray(col_idx, col_idx + 3);
-						})
-						.reduce(
-							(acc, col) => {
-								acc[0] += col[0] * col[0];
-								acc[1] += col[1] * col[1];
-								acc[2] += col[2] * col[2];
-								return acc;
-							},
-							[0, 0, 0]
-						)
-						.map(v => Math.sqrt(v / pix_refs.length))
-				);
+				const blockColorRgb = pix_refs
+					.map(([x, y]) => {
+						const col_idx = block_offset + y * row_width * 4 + x * 4;
+						return field_img.data.subarray(col_idx, col_idx + 3);
+					})
+					.reduce(
+						(acc, col) => {
+							acc[0] += col[0] * col[0];
+							acc[1] += col[1] * col[1];
+							acc[2] += col[2] * col[2];
+							return acc;
+						},
+						[0, 0, 0]
+					)
+					.map(v => Math.sqrt(v / pix_refs.length));
 
-				let min_diff = 0xffffffff;
-				let min_idx = -1;
-
-				colors.forEach((col, col_idx) => {
-					const sum = col.reduce(
-						(acc, c, idx) => acc + (c - channels[idx]) * (c - channels[idx]),
-						0
-					);
-
-					if (sum < min_diff) {
-						min_diff = sum;
-						min_idx = col_idx;
-					}
-				});
-
-				field[ridx * 10 + cidx] = min_idx + index_offset;
+				field[ridx * 10 + cidx] =
+					index_offset + findClosestOklabIndex(blockColorRgb, refOkLabColors);
 			}
 		}
 		/**/

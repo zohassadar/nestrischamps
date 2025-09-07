@@ -52,40 +52,82 @@ export function rgbaToU32(r, g, b, a) {
 	);
 }
 
-export function rgb2lab_normalizeRgbChannel(channel) {
-	channel /= 255;
+/* === new oklab functions === */
 
-	return (
-		100 *
-		(channel > 0.04045
-			? Math.pow((channel + 0.055) / 1.055, 2.4)
-			: channel / 12.92)
-	);
+/**
+ * Convert one 8-bit sRGB channel to linear sRGB.
+ * @param {number} c8 - 0..255
+ * @returns {number} linear 0..1
+ */
+function srgb8ToLinear(c8) {
+	const c = c8 / 255;
+	return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
-export function rgb2lab_normalizeXyzChannel(channel) {
-	return channel > 0.008856
-		? Math.pow(channel, 1 / 3)
-		: 7.787 * channel + 16 / 116;
+const cbrt = Math.cbrt || (x => Math.sign(x) * Math.pow(Math.abs(x), 1 / 3));
+
+/**
+ * Convert sRGB (8-bit per channel) to OKLab.
+ * @param {[number, number, number]} rgb - [R, G, B] in 0..255
+ * @returns {{L:number, a:number, b:number}}
+ */
+export function rgbToOklab(rgb) {
+	let [R8, G8, B8] = rgb;
+
+	// Linearize
+	const R = srgb8ToLinear(R8);
+	const G = srgb8ToLinear(G8);
+	const B = srgb8ToLinear(B8);
+
+	// Linear sRGB to LMS
+	const l = 0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B;
+	const m = 0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B;
+	const s = 0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B;
+
+	// Nonlinear transform
+	const l_ = cbrt(l);
+	const m_ = cbrt(m);
+	const s_ = cbrt(s);
+
+	// LMS to OKLab
+	const L = 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_;
+	const a = 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_;
+	const b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_;
+
+	return { L, a, b };
 }
 
-export function rgb2lab([r, g, b]) {
-	r = rgb2lab_normalizeRgbChannel(r);
-	g = rgb2lab_normalizeRgbChannel(g);
-	b = rgb2lab_normalizeRgbChannel(b);
+/**
+ * Weighted squared distance in OKLab.
+ * wL < 1 reduces sensitivity to lightness differences.
+ * Typical: wL = 0.4..0.7, wa = 1, wb = 1.
+ */
+export function oklabDist2Weighted(x, y, wL = 0.5, wa = 1, wb = 1) {
+	const dL = x.L - y.L;
+	const da = x.a - y.a;
+	const db = x.b - y.b;
+	return wL * dL * dL + wa * da * da + wb * db * db;
+}
 
-	let X = r * 0.4124 + g * 0.3576 + b * 0.1805;
-	let Y = r * 0.2126 + g * 0.7152 + b * 0.0722;
-	let Z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+/**
+ * Find the index of the closest color in a reference palette by OKLab distance.
+ * Reference colors are given as sRGB [R,G,B] in 0..255.
+ * @param {[number,number,number]} targetRgb
+ * @param {Array<[number,number,number]>} referenceRgbs
+ * @returns {number} index of the closest color
+ */
+export function findClosestOklabIndex(targetRgb, referenceLabs) {
+	const targetLab = rgbToOklab(targetRgb);
+	let bestIdx = -1;
+	let bestD2 = Infinity;
 
-	// Observer= 2°, Illuminant= D65
-	X = rgb2lab_normalizeXyzChannel(X / 95.047);
-	Y = rgb2lab_normalizeXyzChannel(Y / 100.0);
-	Z = rgb2lab_normalizeXyzChannel(Z / 108.883);
-
-	return [
-		116 * Y - 16, // L
-		500 * (X - Y), // a
-		200 * (Y - Z), // b
-	];
+	for (let i = 0; i < referenceLabs.length; i++) {
+		const lab = referenceLabs[i];
+		const d2 = oklabDist2Weighted(targetLab, lab);
+		if (d2 < bestD2) {
+			bestD2 = d2;
+			bestIdx = i;
+		}
+	}
+	return bestIdx;
 }

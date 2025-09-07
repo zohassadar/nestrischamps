@@ -1,7 +1,7 @@
 import ScoreFixer from '/ocr/ScoreFixer.js';
 import { PIECES, TRANSITIONS } from '/views/constants.js';
 import { getNextGameId } from './gameid.js';
-import { u32ToRgba } from '/ocr/utils.js';
+import { u32ToRgba, rgbToOklab, findClosestOklabIndex } from '/ocr/utils.js';
 
 const FRAME_BUFFER_MAXSIZE = 3; // all tracked changes are stable over 2 frames - using 3 for safety
 const DEFAULT_COLOR_0 = [0x00, 0x00, 0x00];
@@ -58,7 +58,7 @@ export default class GameTracker extends EventTarget {
 		return this.start_level + 1 + Math.floor((lines - this.transition) / 10);
 	}
 
-	async processFrame(last_frame) {
+	processFrame(last_frame) {
 		if (this.frame_buffer.length < FRAME_BUFFER_MAXSIZE) {
 			this.frame_buffer.push(last_frame);
 			return null;
@@ -377,29 +377,15 @@ export default class GameTracker extends EventTarget {
 	// field is a u32[]
 	matchField(field, refColors) {
 		const index_offset = refColors.length === 4 ? 0 : 1; // length of colors is either 3 or 4
+		const refOkLabColors = refColors.map(rgbToOklab);
 
-		// iterates with shines.map(), since shines is a Uint8ClampedArray
 		return field.map(blockColor => {
-			const [r, g, b, shine] = u32ToRgba(blockColor);
+			const bCol = u32ToRgba(blockColor);
+			const shine = bCol[3]; // r:0, g:1, b:2, a:3
 
 			if (shine === 0) return 0; // black block
 
-			let min_diff = 0xffffffff;
-			let min_idx = -1;
-
-			refColors.forEach(([refR, refG, refB], col_idx) => {
-				const sum =
-					(refR - r) * (refR - r) +
-					(refG - g) * (refG - g) +
-					(refB - b) * (refB - b);
-
-				if (sum < min_diff) {
-					min_diff = sum;
-					min_idx = col_idx;
-				}
-			});
-
-			return min_idx + index_offset;
+			return index_offset + findClosestOklabIndex(bCol, refOkLabColors);
 		});
 	}
 
