@@ -3,7 +3,7 @@ import { timer } from './timer.js';
 import { getStream } from './MediaUtils.js';
 
 const defaultDriverMode = (value =>
-	/^(mstp|callback|interval)$/.test(value) ? value : 'callback')(
+	/^(mstp|callback|interval)$/.test(value) ? value : 'interval')(
 	QueryString.get('capdriver')
 );
 
