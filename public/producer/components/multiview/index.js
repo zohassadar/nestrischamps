@@ -4,6 +4,7 @@ import { clearConfigAndReset } from '../../ConfigUtils.js';
 
 import '../calibration.js';
 import '../PerfResults.js';
+import '../CaptureDetails.js';
 
 const MARKUP = html`
 	<div class="container is-fluid mt-5">
@@ -37,10 +38,16 @@ const MARKUP = html`
 					<div id="video_container"></div>
 				</fieldset>
 
-				<fieldset class="column">
-					<legend>OCR Performance (in ms)</legend>
-					<ntc-perfresults id="perf_data"></ntc-perfresults>
-				</fieldset>
+				<div class="column">
+					<fieldset>
+						<legend>Capture Info</legend>
+						<ntc-capturedetails id="capture_details"></ntc-capturedetails>
+					</fieldset>
+					<fieldset>
+						<legend>OCR Performance (in ms)</legend>
+						<ntc-perfresults id="perf_data"></ntc-perfresults>
+					</fieldset>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -92,6 +99,7 @@ export class NTC_MultiView extends NtcComponent {
 			source: this.shadow.getElementById('source'),
 			video_container: this.shadow.getElementById('video_container'),
 			clear_config: this.shadow.getElementById('clear_config'),
+			capture_details: this.shadow.getElementById('capture_details'),
 			perf_data: this.shadow.getElementById('perf_data'),
 		};
 
@@ -161,8 +169,9 @@ export class NTC_MultiView extends NtcComponent {
 		this.#players.push(player);
 	}
 
-	#handleFrame = () => {
-		this.#domrefs.perf_data.showPerfData();
+	#handleFrame = event => {
+		this.#domrefs.perf_data.showPerfData(event);
+		this.#domrefs.capture_details.showCaptureDetails(event);
 	};
 }
 

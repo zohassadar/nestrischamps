@@ -3,21 +3,22 @@ import { timer } from './timer.js';
 import { getStream } from './MediaUtils.js';
 
 const defaultDriverMode = (value =>
-	/^(mstp|callback)$/.test(value) ? value : 'interval')(
+	/^(mstp|callback|interval)$/.test(value) ? value : 'callback')(
 	QueryString.get('capdriver')
 );
 
 let driverSuffix = 0;
 
 export class CaptureDriver extends EventTarget {
-	#working;
+	#working = false;
 	#stream;
 	#video;
 	#captureIntervalId;
 	#captureFrameCallbackId;
-	#driverMode;
+	#requestedDriverMode;
+	#actualDriverMode;
+	#captureDetails;
 	#then;
-	#curPlayerNum;
 
 	constructor(config, stream = null, driverMode = null) {
 		super();
@@ -26,7 +27,7 @@ export class CaptureDriver extends EventTarget {
 
 		this.config = config;
 		this.#stream = stream;
-		this.#driverMode = driverMode || defaultDriverMode;
+		this.#requestedDriverMode = driverMode || defaultDriverMode;
 
 		this.players = [];
 
@@ -88,7 +89,7 @@ export class CaptureDriver extends EventTarget {
 		console.log(
 			`#startFrameCapture: ${JSON.stringify(
 				{
-					driverMode: this.#driverMode,
+					requestedDriverMode: this.#requestedDriverMode,
 					trackFps,
 					MediaStreamTrackProcessorSupported,
 				},
@@ -97,7 +98,21 @@ export class CaptureDriver extends EventTarget {
 			)}`
 		);
 
-		if (this.#driverMode === 'mstp' && MediaStreamTrackProcessorSupported) {
+		this.#actualDriverMode =
+			this.#requestedDriverMode === 'mstp' && MediaStreamTrackProcessorSupported
+				? 'mstp'
+				: this.#requestedDriverMode === 'callback'
+					? 'callback'
+					: 'interval';
+
+		this.#captureDetails = {
+			video: this.#video,
+			videoSize: `${this.#video.videoWidth} x ${this.#video.videoHeight}`,
+			videoFps: trackFps,
+			driverMode: this.#actualDriverMode,
+		};
+
+		if (this.#actualDriverMode === 'mstp') {
 			console.log('Using MediaStreamTrackProcessor in driver');
 			for await (const frame of this.#frameGenerator()) {
 				try {
@@ -107,7 +122,7 @@ export class CaptureDriver extends EventTarget {
 				}
 				frame.close();
 			}
-		} else if (this.#driverMode === 'callback') {
+		} else if (this.#actualDriverMode === 'callback') {
 			console.log('Using requestVideoFrameCallback in driver');
 			const tick = async () => {
 				// schedule next frame capture before work
@@ -123,13 +138,15 @@ export class CaptureDriver extends EventTarget {
 			};
 			this.#captureFrameCallbackId =
 				this.#video.requestVideoFrameCallback(tick);
-		} else {
+		} else if (this.#actualDriverMode === 'interval') {
 			const frame_rate = trackFps || this.config.frame_rate || 30;
 			const frame_ms = 1000 / frame_rate; // at ms accuracy, it drifts
 
 			console.log(
 				`Using Interval in driver at ${frame_rate}fps (${frame_ms} ms/frame)`
 			);
+
+			this.#captureDetails.frameMs = frame_ms;
 
 			this.#captureIntervalId = timer.setInterval(async () => {
 				await this.#work();
@@ -141,8 +158,15 @@ export class CaptureDriver extends EventTarget {
 		const now = performance.now();
 
 		if (this.#working) {
-			console.warn(
-				`skip frame. Elapsed: ${(now - (this.#then || 0)).toFixed(1)}. Current player work: ${this.#curPlayerNum}`
+			this.dispatchEvent(
+				new CustomEvent('frame', {
+					detail: {
+						ts: now,
+						skipped: true,
+						elapsed: now - this.#then,
+						captureDetails: this.#captureDetails,
+					},
+				})
 			);
 			return;
 		}
@@ -164,21 +188,29 @@ export class CaptureDriver extends EventTarget {
 		await Promise.allSettled(this.players.map(p => p.processVideoFrame(frame)));
 
 		performance.mark(`end-driver-${this.driverSuffix}`);
-		performance.measure(
+
+		const measure = performance.measure(
 			`driver-${this.driverSuffix}`,
 			`start-driver-${this.driverSuffix}`,
 			`end-driver-${this.driverSuffix}`
 		);
 
-		this.#curPlayerNum = null;
-
-		this.dispatchEvent(new CustomEvent('frame'));
+		this.dispatchEvent(
+			new CustomEvent('frame', {
+				detail: {
+					ts: now,
+					skipped: false,
+					elapsed: measure.duration,
+					captureDetails: this.#captureDetails,
+				},
+			})
+		);
 
 		this.#working = false;
 	}
 
 	destroy() {
-		if (this.#captureIntervalId) clearInterval(this.#captureIntervalId);
+		if (this.#captureIntervalId) timer.clearInterval(this.#captureIntervalId);
 
 		if (this.#captureFrameCallbackId)
 			this.#video.cancelVideoFrameCallback(this.#captureFrameCallbackId);

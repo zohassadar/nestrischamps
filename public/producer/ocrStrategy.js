@@ -59,18 +59,14 @@ async function doGetOcrClass() {
 	return CpuTetrisOCR;
 }
 
-async function getOcrClass() {
-	const klass = await doGetOcrClass();
+const getOcrClassPromise = doGetOcrClass(); // no await, shared promise
 
-	console.log(`OCR class: ${klass.name}`);
-
-	return klass;
+export async function getOcrClass() {
+	return await getOcrClassPromise;
 }
 
-const getOcrClassPromise = getOcrClass(); // no await, shared promise
-
 export async function createOCRInstance(config) {
-	const klass = await getOcrClassPromise;
+	const klass = await getOcrClass();
 
 	return new klass(config);
 }
