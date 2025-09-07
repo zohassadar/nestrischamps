@@ -62,7 +62,11 @@ export async function loadConfig() {
 				Object.entries(playerConf.tasks).forEach(
 					([name, task]) => (task.name = name)
 				);
-				playerConf.palette_data = await getPalette(parsed.palette); // TODO report error
+
+				if (playerConf.palette) {
+					playerConf.palette_data = await getPalette(playerConf.palette); // TODO report error
+				}
+
 				playerConf.save = function () {
 					parsed.save();
 				};
