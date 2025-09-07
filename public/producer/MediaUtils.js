@@ -54,7 +54,7 @@ export async function getStream(config) {
 				audio: false,
 				video: {
 					cursor: 'never',
-					frameRate: { ideal: fps },
+					frameRate: { ideal: config.frame_rate || default_frame_rate },
 				},
 			};
 
