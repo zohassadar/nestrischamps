@@ -34,10 +34,10 @@ async function initMultiViewerCapture(config) {
 	capture.setDriver(driver);
 }
 
-async function initOCRCapture(config, tabToOpen) {
+async function initOCRCapture(config, tabToOpen, stream) {
 	console.log('initOCRCapture');
 
-	const driver = new CaptureDriver(config);
+	const driver = new CaptureDriver(config, stream);
 	const player = new Player(config);
 
 	driver.addPlayer(player);
@@ -51,7 +51,7 @@ async function initOCRCapture(config, tabToOpen) {
 	document.body.prepend(capture);
 }
 
-async function initFromConfig(tabToOpen) {
+async function initFromConfig(tabToOpen, stream = null) {
 	const config = await loadConfig();
 
 	if (config.device_id === 'everdrive') {
@@ -59,7 +59,7 @@ async function initFromConfig(tabToOpen) {
 	} else if (config.mode === 'multiviewer') {
 		initMultiViewerCapture(config);
 	} else {
-		initOCRCapture(config, tabToOpen);
+		initOCRCapture(config, tabToOpen, stream);
 	}
 }
 
@@ -76,7 +76,9 @@ async function initFromConfig(tabToOpen) {
 		const wizard = document.createElement('ntc-wizard');
 		document.body.prepend(wizard);
 
-		await new Promise(resolve => {
+		const {
+			detail: { stream },
+		} = await new Promise(resolve => {
 			wizard.addEventListener('config-ready', resolve, { once: true });
 		});
 
@@ -84,6 +86,6 @@ async function initFromConfig(tabToOpen) {
 		wizard.remove();
 		await sleep(0);
 
-		initFromConfig('calibration');
+		initFromConfig('calibration', stream);
 	}
 })();

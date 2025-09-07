@@ -547,7 +547,10 @@ export class NTC_Producer_Wizard extends NtcComponent {
 		const event = new CustomEvent('config-ready', {
 			bubbles: true, // Allow event to bubble up
 			composed: true, // Allow event to cross Shadow DOM boundary
-			detail: config,
+			detail: {
+				config,
+				stream: this.#domrefs.video.srcObject,
+			},
 		});
 
 		// 2. Dispatch the event from this custom element instance
@@ -803,8 +806,9 @@ export class NTC_Producer_Wizard extends NtcComponent {
 		const { video } = this.#domrefs;
 
 		if (video.srcObject) {
-			video.pause();
-			video.srcObject.getVideoTracks()[0].stop();
+			// don't stop the video, so the stream can be used by the main page later
+			// video.pause();
+			// video.srcObject.getVideoTracks()[0].stop();
 			video.srcObject = null;
 		}
 	}
