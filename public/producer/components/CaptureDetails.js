@@ -74,8 +74,8 @@ export class NTC_CaptureDetails extends NtcComponent {
 		const data = {
 			...detail.captureDetails,
 			'ocr-class': (await getOcrClass()).name,
-			'skipped-frames-60s': `${ss.last60s.skipped} / ${ss.last60s.processed} (${(100 * ss.last60s.skipRate).toFixed(1)}%)`,
-			'skipped-frames-5mins': `${ss.last5m.skipped} / ${ss.last5m.processed} (${(100 * ss.last5m.skipRate).toFixed(1)}%)`,
+			'skipped-frames-60s': `${ss.last60s.skipped} / ${ss.last60s.processed} (${(100 * ss.last60s.skipRate).toFixed(2)}%)`,
+			'skipped-frames-5mins': `${ss.last5m.skipped} / ${ss.last5m.processed} (${(100 * ss.last5m.skipRate).toFixed(2)}%)`,
 		};
 
 		delete data.video;
