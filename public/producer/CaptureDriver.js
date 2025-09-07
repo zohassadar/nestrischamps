@@ -1,5 +1,5 @@
 import QueryString from '/js/QueryString.js';
-import { sleep, timer } from './timer.js';
+import { timer } from './timer.js';
 import { getStream } from './MediaUtils.js';
 
 const defaultDriverMode = (value =>
