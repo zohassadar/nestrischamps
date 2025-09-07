@@ -4,7 +4,6 @@ import './components/multiview/index.js';
 
 import QueryString from '/js/QueryString.js';
 
-import loadPalettes from '/ocr/palettes.js';
 import { sleep, timer } from './timer.js';
 import { hasConfig, loadConfig } from './ConfigUtils.js';
 
@@ -71,9 +70,6 @@ async function initFromConfig(tabToOpen) {
 
 	// unfortunate bootstrap delay, but makes everything else simpler later on
 	await timer.init();
-
-	// load external assets - could parrallelize
-	const palettes = await loadPalettes();
 
 	if (hasConfig()) {
 		console.log('has config');
