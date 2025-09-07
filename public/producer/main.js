@@ -18,7 +18,6 @@ async function initEverDriveCapture(config, tabToOpen) {
 async function initMultiViewerCapture(config) {
 	const capture = document.createElement('ntc-multiview');
 
-	capture.id = 'capture';
 	document.body.prepend(capture);
 
 	const driver = new CaptureDriver(config);
@@ -33,8 +32,6 @@ async function initMultiViewerCapture(config) {
 	}
 
 	capture.setDriver(driver);
-
-	return capture;
 }
 
 async function initOCRCapture(config, tabToOpen) {
