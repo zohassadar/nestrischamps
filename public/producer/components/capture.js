@@ -105,6 +105,10 @@ export class NTC_Producer_Capture extends NtcComponent {
 		});
 	}
 
+	async setDriver(driver) {
+		this.#domrefs.ocr_results.setDriver(driver);
+	}
+
 	async setPlayer(player) {
 		this.#player = player;
 

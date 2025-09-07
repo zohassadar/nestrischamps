@@ -47,6 +47,7 @@ async function initOCRCapture(config, tabToOpen) {
 
 	const capture = document.createElement('ntc-capture');
 	capture.id = 'capture';
+	capture.setDriver(driver);
 	capture.setPlayer(player);
 	capture.showTab(tabToOpen);
 

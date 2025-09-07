@@ -1,5 +1,7 @@
 import { NtcComponent } from './NtcComponent.js';
 import { html } from '../StringUtils.js';
+
+import './CaptureDetails.js';
 import './PerfResults.js';
 
 const MARKUP = html`
@@ -8,10 +10,16 @@ const MARKUP = html`
 			<legend>Frame Data</legend>
 			<dl id="frame_data"></dl>
 		</fieldset>
-		<fieldset class="column">
-			<legend>OCR Performance (in ms)</legend>
-			<ntc-perfresults id="perf_data"></ntc-perfresults>
-		</fieldset>
+		<div class="column p-0">
+			<fieldset>
+				<legend>Capture Info</legend>
+				<ntc-capturedetails id="capture_details"></ntc-capturedetails>
+			</fieldset>
+			<fieldset>
+				<legend>OCR Performance (in ms)</legend>
+				<ntc-perfresults id="perf_data"></ntc-perfresults>
+			</fieldset>
+		</div>
 	</div>
 `;
 
@@ -27,12 +35,15 @@ export class NTC_Producer_OcrResults extends NtcComponent {
 		this.#domrefs = {
 			frame_data: this.shadow.getElementById('frame_data'),
 			perf_data: this.shadow.getElementById('perf_data'),
+			capture_details: this.shadow.getElementById('capture_details'),
 		};
 	}
 
-	setOCR(ocr) {
-		this.ocr = ocr;
+	setDriver(driver) {
+		driver.addEventListener('frame', this.#handleDriverFrame);
+	}
 
+	setOCR(ocr) {
 		ocr.addEventListener('frame', this.#handleOCRFrame);
 	}
 
@@ -42,8 +53,12 @@ export class NTC_Producer_OcrResults extends NtcComponent {
 		game_tracker.addEventListener('frame', this.#handleGameTrackerFrame);
 	}
 
-	#handleOCRFrame = () => {
-		this.#domrefs.perf_data.showPerfData();
+	#handleDriverFrame = event => {
+		this.#domrefs.capture_details.showCaptureDetails(event);
+	};
+
+	#handleOCRFrame = event => {
+		this.#domrefs.perf_data.showPerfData(event);
 	};
 
 	#handleGameTrackerFrame = ({ detail: frame }) => {

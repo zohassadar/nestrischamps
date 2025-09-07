@@ -21,7 +21,7 @@ const MARKUP = html`
 	</div>
 	<div id="content" class="container mt-5 is-fluid">
 		<div id="settings" class="is-active">
-			<div class="colums">
+			<div>
 				<fieldset>
 					<legend>Controls</legend>
 
@@ -32,13 +32,13 @@ const MARKUP = html`
 					</div>
 				</fieldset>
 			</div>
-			<div class="columns">
+			<div class="columns is-align-items-flex-start">
 				<fieldset id="source" class="column">
 					<legend>Source</legend>
 					<div id="video_container"></div>
 				</fieldset>
 
-				<div class="column">
+				<div class="column p-0">
 					<fieldset>
 						<legend>Capture Info</legend>
 						<ntc-capturedetails id="capture_details"></ntc-capturedetails>
