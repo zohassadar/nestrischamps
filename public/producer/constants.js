@@ -188,8 +188,9 @@ export const CONFIGS = {
 };
 
 export const RETRON_HD_CONFIG = {
-	169: {
-		classic: {
+	single: {
+		// assumes 1 capture on a 720p capture
+		169: {
 			score: { crop: { x: 954, y: 188, w: 230, h: 21 } },
 			level: { crop: { x: 1033, y: 500, w: 72, h: 21 } },
 			lines: { crop: { x: 757, y: 68, w: 112, h: 21 } },
@@ -206,16 +207,7 @@ export const RETRON_HD_CONFIG = {
 			L: { crop: { x: 245, y: 524, w: 112, h: 21 } },
 			I: { crop: { x: 245, y: 572, w: 112, h: 21 } },
 		},
-		minimal: {
-			score: { crop: { x: 954, y: 188, w: 230, h: 21 } },
-			level: { crop: { x: 1033, y: 500, w: 72, h: 21 } },
-			lines: { crop: { x: 757, y: 68, w: 112, h: 21 } },
-			field: { crop: { x: 481, y: 140, w: 388, h: 477 } },
-			preview: { crop: { x: 953, y: 356, w: 153, h: 45 } },
-		},
-	},
-	43: {
-		classic: {
+		43: {
 			score: { crop: { x: 862, y: 188, w: 163, h: 21 } },
 			level: { crop: { x: 917, y: 500, w: 52, h: 21 } },
 			lines: { crop: { x: 722, y: 68, w: 80, h: 21 } },
@@ -232,12 +224,43 @@ export const RETRON_HD_CONFIG = {
 			L: { crop: { x: 361, y: 524, w: 80, h: 21 } },
 			I: { crop: { x: 361, y: 572, w: 80, h: 21 } },
 		},
-		minimal: {
-			score: { crop: { x: 862, y: 188, w: 163, h: 21 } },
-			level: { crop: { x: 917, y: 500, w: 52, h: 21 } },
-			lines: { crop: { x: 722, y: 68, w: 80, h: 21 } },
-			field: { crop: { x: 527, y: 140, w: 275, h: 477 } },
-			preview: { crop: { x: 861, y: 356, w: 109, h: 45 } },
+	},
+
+	multiviewer: {
+		// assumes 4 captures scaled on 4 quadrants of a 1080p input
+		169: {
+			score: { crop: { x: 716, y: 142, w: 173, h: 15 } },
+			level: { crop: { x: 775, y: 376, w: 54, h: 15 } },
+			lines: { crop: { x: 568, y: 52, w: 84, h: 15 } },
+			field: { crop: { x: 361, y: 106, w: 291, h: 357 } },
+			preview: { crop: { x: 715, y: 268, w: 115, h: 33 } },
+			color1: { crop: { x: 147, y: 207, w: 18, h: 11 } },
+			color2: { crop: { x: 147, y: 254, w: 18, h: 11 } },
+			color3: { crop: { x: 147, y: 293, w: 18, h: 11 } },
+			T: { crop: { x: 184, y: 214, w: 84, h: 15 } },
+			J: { crop: { x: 184, y: 250, w: 84, h: 15 } },
+			Z: { crop: { x: 184, y: 286, w: 84, h: 15 } },
+			O: { crop: { x: 184, y: 322, w: 84, h: 15 } },
+			S: { crop: { x: 184, y: 358, w: 84, h: 15 } },
+			L: { crop: { x: 184, y: 394, w: 84, h: 15 } },
+			I: { crop: { x: 184, y: 430, w: 84, h: 15 } },
+		},
+		43: {
+			score: { crop: { x: 647, y: 142, w: 122, h: 15 } },
+			level: { crop: { x: 689, y: 376, w: 38, h: 15 } },
+			lines: { crop: { x: 543, y: 52, w: 59, h: 15 } },
+			field: { crop: { x: 396, y: 106, w: 206, h: 357 } },
+			preview: { crop: { x: 647, y: 268, w: 81, h: 33 } },
+			color1: { crop: { x: 245, y: 207, w: 13, h: 11 } },
+			color2: { crop: { x: 245, y: 254, w: 13, h: 11 } },
+			color3: { crop: { x: 245, y: 293, w: 13, h: 11 } },
+			T: { crop: { x: 271, y: 214, w: 60, h: 15 } },
+			J: { crop: { x: 271, y: 250, w: 60, h: 15 } },
+			Z: { crop: { x: 271, y: 286, w: 60, h: 15 } },
+			O: { crop: { x: 271, y: 322, w: 60, h: 15 } },
+			S: { crop: { x: 271, y: 358, w: 60, h: 15 } },
+			L: { crop: { x: 271, y: 394, w: 60, h: 15 } },
+			I: { crop: { x: 271, y: 430, w: 60, h: 15 } },
 		},
 	},
 };

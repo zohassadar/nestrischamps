@@ -88,7 +88,7 @@ const MARKUP = html`
 										</option>
 									</optgroup>
 									<optgroup
-										label="Retron1HD HDMI presets (start capture immediately)"
+										label="Retron1HD HDMI presets (starts capture immediately)"
 									>
 										<option
 											value="retron1hd_hdmi_169_classic"
@@ -620,15 +620,16 @@ export class NTC_Producer_Wizard extends NtcComponent {
 	}
 
 	#getMultiviewerOffsets() {
-		const { video } = this.#domrefs;
+		// typically called when input video is 1920x1080
+		const { videoWidth, videoHeight } = this.#domrefs.video;
 
 		return [
 			{ x: 0, y: 0 },
-			{ x: Math.floor(video.videoWidth / 2), y: 0 },
-			{ x: 0, y: Math.floor(video.videoHeight / 2) },
+			{ x: Math.floor(videoWidth / 2), y: 0 },
+			{ x: 0, y: Math.floor(videoHeight / 2) },
 			{
-				x: Math.floor(video.videoWidth / 2),
-				y: Math.floor(video.videoHeight / 2),
+				x: Math.floor(videoWidth / 2),
+				y: Math.floor(videoHeight / 2),
 			},
 		];
 	}
@@ -650,6 +651,7 @@ export class NTC_Producer_Wizard extends NtcComponent {
 			device_id,
 		};
 
+		const retron_definitions = RETRON_HD_CONFIG[this.#mode][aspect];
 		const game_type = BinaryFrame.GAME_TYPE[rom_id.toUpperCase()];
 
 		if (this.#mode === 'single') {
@@ -658,22 +660,14 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				palette: rom_id === 'minimal' ? 'retron1hd' : '',
 			});
 
-			for (const [name, definition] of Object.entries(
-				RETRON_HD_CONFIG[aspect][rom_id]
-			)) {
-				if (name === 'score7') continue;
-
+			CONFIGS[rom_id].fields.forEach(name => {
 				config.tasks[name] = Object.assign(
 					{},
 					REFERENCE_LOCATIONS[name], // all task parameters
-					definition // retron-specific crop values
+					retron_definitions[name] // retron-specific crop values
 				);
-			}
+			});
 		} else if (this.#mode === 'multiviewer') {
-			const retronCaptureSize = { w: 1280, h: 720 }; // TODO move to constants
-			const scaleX = video.videoWidth / 2 / retronCaptureSize.w;
-			const scaleY = video.videoHeight / 2 / retronCaptureSize.h;
-
 			config.frame_rate = getDefaultOcrConfig().frame_rate;
 			config.players = this.#getMultiviewerOffsets().map(({ x, y }) => {
 				const playerConfig = Object.assign(getDefaultOcrConfig(), {
@@ -686,29 +680,25 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				delete playerConfig.frame_rate;
 				delete playerConfig.save;
 
-				for (const [name, definition] of Object.entries(
-					RETRON_HD_CONFIG[aspect][rom_id]
-				)) {
-					if (name === 'score7') continue;
-
+				CONFIGS[rom_id].fields.forEach(name => {
+					// 1. get the task definition from constants
 					playerConfig.tasks[name] = Object.assign(
 						{},
 						REFERENCE_LOCATIONS[name], // all task parameters
-						definition // retron-specific crop values
+						retron_definitions[name] // retron-specific task parameters
 					);
 
-					// adjust crop coordinates to account for the scale
-					const crop = playerConfig.tasks[name].crop;
-					playerConfig.tasks[name].crop = {
-						x: x + Math.round(crop.x * scaleX),
-						y: y + Math.round(crop.y * scaleY),
-						w: Math.round(crop.w * scaleX),
-						h: Math.round(crop.h * scaleY),
-					};
-				}
+					// 2. set up a player-specific crop (i.e. deep copy to avoid shared references!)
+					playerConfig.tasks[name].crop = { ...playerConfig.tasks[name].crop };
+
+					// 3. adjust crop capture offsets
+					playerConfig.tasks[name].crop.x += x;
+					playerConfig.tasks[name].crop.y += y;
+				});
 
 				return playerConfig;
 			});
+
 			config.save = function () {
 				saveMultiviewerConfig(this);
 			};
