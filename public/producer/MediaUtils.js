@@ -72,7 +72,10 @@ export async function getStream(config) {
 					deviceId: { exact: config.device_id },
 					height: {
 						ideal:
-							config.mode === 'multiviewer' ? 1080 : DEFAULT_1P_CAPTURE_HEIGHT,
+							config.capheight ||
+							(config.mode === 'multiviewer'
+								? 1080
+								: DEFAULT_1P_CAPTURE_HEIGHT),
 					},
 					frameRate: { ideal: ideal_frame_rate }, // Should we always try to get the highest the card can support?
 				},

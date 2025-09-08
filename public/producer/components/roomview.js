@@ -106,7 +106,7 @@ export class NTC_Producer_RoomView extends NtcComponent {
 		const iFrameStyles = {
 			border: 0,
 			margin: 'auto',
-			transformOrigin: `0 0`,
+			transformOrigin: `50% 0`,
 		};
 
 		this.#roomIFrame = document.createElement('iframe');

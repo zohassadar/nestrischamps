@@ -1,14 +1,57 @@
 import QueryString from '/js/QueryString.js';
 import BinaryFrame from '/js/BinaryFrame.js';
 import { getPalette } from '/ocr/palettes.js';
+import { REFERENCE_LOCATIONS } from './constants.js';
+
+const OLD_CONFIG_NAME = 'config';
 
 function getConfigName() {
 	return QueryString.get('config') || 'config_v2';
 }
 
+function carryOldConfig(config) {
+	const parsed = JSON.parse(config);
+
+	// convert all tasks crop format
+	Object.entries(parsed.tasks).forEach(([name, task]) => {
+		let crop;
+		if (Array.isArray(task.crop)) {
+			const [x, y, w, h] = task.crop;
+			crop = { x, y, w, h };
+		}
+		const newTask = {
+			...REFERENCE_LOCATIONS[name],
+			...task,
+			crop,
+		};
+
+		parsed.tasks[name] = newTask;
+	});
+
+	parsed.capheight = 480; // because old system was capturing at 480p
+
+	const upgraded_config = JSON.stringify(parsed);
+
+	localStorage.setItem(getConfigName(), upgraded_config);
+
+	return upgraded_config;
+}
+
 export function hasConfig() {
-	const maybeConfig = localStorage.getItem(getConfigName());
-	if (!maybeConfig) return false;
+	let maybeConfig = localStorage.getItem(getConfigName());
+
+	if (!maybeConfig) {
+		// let's if an old config is available and if we can convert it to new
+		const oldConfig = localStorage.getItem(OLD_CONFIG_NAME);
+
+		if (oldConfig) {
+			try {
+				maybeConfig = carryOldConfig(oldConfig);
+			} catch (err) {
+				return false;
+			}
+		}
+	}
 
 	// minimal checks for validity of the config object
 	// could add comprehensive verification later
@@ -108,6 +151,7 @@ export function getSerializableConfigCopy(config) {
 		use_half_height,
 		use_worker_for_interval,
 		handle_retron_levels_6_7,
+		capheight,
 	} = config;
 
 	// need to drop non-serializable fields
@@ -125,6 +169,7 @@ export function getSerializableConfigCopy(config) {
 		use_half_height,
 		use_worker_for_interval,
 		handle_retron_levels_6_7,
+		capheight,
 		tasks: {},
 	};
 
