@@ -5,6 +5,11 @@ export const DEFAULT_1P_CAPTURE_HEIGHT = (value =>
 	QueryString.get('capheight')
 );
 
+export const DEFAULT_1P_CAPTURE_FPS = (value =>
+	/^(24|25|30|50|60)\d+$/.test(value) ? parseInt(value, 10) : 60)(
+	QueryString.get('capfps')
+);
+
 export async function getConnectedDevices(type) {
 	let stream;
 
@@ -44,7 +49,7 @@ export async function getStream(config) {
 		throw new Exception(`getSream(): Unexpected device id`);
 	}
 
-	const default_frame_rate = 60;
+	const ideal_frame_rate = config.frame_rate || 60;
 
 	let stream;
 
@@ -54,7 +59,7 @@ export async function getStream(config) {
 				audio: false,
 				video: {
 					cursor: 'never',
-					frameRate: { ideal: config.frame_rate || default_frame_rate },
+					frameRate: { ideal: ideal_frame_rate },
 				},
 			};
 
@@ -69,7 +74,7 @@ export async function getStream(config) {
 						ideal:
 							config.mode === 'multiviewer' ? 1080 : DEFAULT_1P_CAPTURE_HEIGHT,
 					},
-					frameRate: { ideal: config.frame_rate || default_frame_rate }, // Should we always try to get the highest the card can support?
+					frameRate: { ideal: ideal_frame_rate }, // Should we always try to get the highest the card can support?
 				},
 			};
 
@@ -84,7 +89,20 @@ export async function getStream(config) {
 		logStreamDetails(stream);
 		return stream;
 	} catch (err) {
-		console.error(`Unable to get stream: ${err.message}`);
+		if (err.name === 'AbortError') {
+			if (ideal_frame_rate === 60 || ideal_frame_rate === 50) {
+				const recovery_frame_rate = ideal_frame_rate === 60 ? 30 : 25;
+
+				console.warn(
+					`Unable to get stream: ${err.name}: ${err.message}. Was requesting ${ideal_frame_rate}fps. Attempting recovery with ${recovery_frame_rate}fps`
+				);
+
+				config.frame_rate = recovery_frame_rate;
+				return getStream(config);
+			}
+		}
+
+		console.error(`Unable to get stream: ${err.name}: ${err.message}`);
 		throw err;
 	}
 }

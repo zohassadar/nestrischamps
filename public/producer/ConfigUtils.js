@@ -166,7 +166,7 @@ export function getDefaultOcrConfig() {
 	return {
 		game_type: 1,
 		palette: '',
-		frame_rate: 30,
+		frame_rate: 60,
 		focus_alarm: true,
 		allow_video_feed: false,
 		video_feed_device_id: null,

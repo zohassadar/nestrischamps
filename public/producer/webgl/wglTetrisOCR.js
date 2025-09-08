@@ -783,9 +783,9 @@ export class WGlTetrisOCR extends GpuTetrisOCR {
 	async processVideoFrame(frame) {
 		if (!this.#ready) return;
 
-		super.processVideoFrame(frame);
-
 		performance.mark(`start-processVideoFrame-${this.perfSuffix}`);
+
+		super.processVideoFrame(frame);
 
 		this.runPass1ToAtlas(frame);
 

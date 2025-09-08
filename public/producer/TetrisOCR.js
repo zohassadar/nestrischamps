@@ -131,9 +131,9 @@ export class TetrisOCR extends EventTarget {
 	}
 
 	processVideoFrame(frame) {
-		if (this.video !== frame.video) {
-			this.video = frame.video;
-		}
+		this.dispatchEvent(
+			new CustomEvent('process-video-frame', { detail: frame })
+		);
 	}
 
 	instrument(...methods) {

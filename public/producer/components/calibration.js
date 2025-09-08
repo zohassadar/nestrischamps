@@ -106,7 +106,7 @@ const MARKUP = html`
 const cssOverride = new CSSStyleSheet();
 cssOverride.replaceSync(`
 	:host {
-		display: block
+		display: block;
 	}
 
 	#capture {
@@ -160,6 +160,7 @@ const ATTRIBUTES = {
 export class NTC_Producer_Calibration extends NtcComponent {
 	#domrefs;
 	#observer;
+	#video;
 
 	static get observedAttributes() {
 		return Object.values(ATTRIBUTES).map(v => v.name);
@@ -278,13 +279,6 @@ export class NTC_Producer_Calibration extends NtcComponent {
 				this.attributeChangedCallback(name, '', init);
 			});
 
-		if ('MediaStreamTrackProcessor' in window) {
-			// assume we use a frame reader rather than a interval timer
-			// and therefore we must hide the capture rate selector
-			// regardless of what the consumer said or the default value
-			this.#domrefs.capture_rate.closest('.field').classList.add('is-hidden');
-		}
-
 		this.#observer.observe(this);
 	}
 
@@ -385,9 +379,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 
 				adjustments.querySelector(`#${name}`).setCoordinates(task.crop);
 
-				this.ocr.capture_canvas.height = Math.ceil(
-					this.ocr.video.videoHeight / 2
-				);
+				this.ocr.capture_canvas.height = Math.ceil(this.#video.videoHeight / 2);
 			}
 		} else {
 			for (const [name, task] of Object.entries(config.tasks)) {
@@ -398,7 +390,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 
 				adjustments.querySelector(`#${name}`).setCoordinates(task.crop);
 
-				this.ocr.capture_canvas.height = this.ocr.video.videoHeight;
+				this.ocr.capture_canvas.height = this.#video.videoHeight;
 			}
 		}
 
@@ -461,6 +453,33 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		this.ocr.config.save();
 	};
 
+	#updateAvailableFrameRates() {
+		if (!this.#video) return;
+
+		const { capture_rate } = this.#domrefs;
+
+		const stream = this.#video.srcObject;
+		const videoTrack = stream.getVideoTracks()[0];
+		const settings = videoTrack.getSettings();
+		const capabilities = videoTrack.getCapabilities?.() || null;
+		const curFrameRate = settings.frameRate;
+		const maxFrameRate = capabilities?.frameRate?.max || 60;
+
+		const options = [24, 25, 30, 50, 60]
+			.filter(fps => fps <= maxFrameRate)
+			.map(fps => {
+				const option = document.createElement('option');
+
+				option.value = fps;
+				option.textContent = `${fps} fps`;
+
+				return option;
+			});
+
+		capture_rate.replaceChildren(...options);
+		capture_rate.value = curFrameRate;
+	}
+
 	#onCaptureRateChange = async () => {
 		const { capture_rate } = this.#domrefs;
 
@@ -469,24 +488,30 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		this.ocr.config.frame_rate = frame_rate;
 		this.ocr.config.save();
 
-		const video = this.ocr.video;
-		const stream = video.srcObject;
+		const stream = this.#video.srcObject;
 		const videoTrack = stream.getVideoTracks()[0];
+		const originalSettings = videoTrack.getSettings();
 
-		const newConstraints = {
-			frameRate: { ideal: frame_rate },
-		};
+		if (originalSettings.frameRate !== frame_rate) {
+			const newConstraints = {
+				frameRate: { ideal: frame_rate },
+			};
 
-		try {
-			// Apply the new constraints
-			await videoTrack.applyConstraints(newConstraints);
+			try {
+				// Apply the new constraints
+				await videoTrack.applyConstraints(newConstraints);
 
-			// Check the settings again to confirm only the frame rate changed
-			const updatedSettings = videoTrack.getSettings();
-			console.log('New frame rate:', updatedSettings.frameRate);
-		} catch (error) {
-			console.error('Failed to update constraints:', error);
+				// Check the settings again to confirm only the frame rate changed
+				const updatedSettings = videoTrack.getSettings();
+				console.log('New frame rate:', updatedSettings.frameRate);
+			} catch (error) {
+				console.error('Failed to update constraints:', error);
+			}
 		}
+
+		this.#updateAvailableFrameRates();
+
+		this.#video.dispatchEvent(new CustomEvent('playback-settings-update'));
 	};
 
 	setDriver(driver) {
@@ -550,8 +575,15 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		this.#onBrightnessChange();
 		this.#onContrastChange();
 
+		this.ocr.addEventListener('process-video-frame', this.#handleFrameDetails);
 		this.ocr.addEventListener('frame', this.#handleFrame);
 	}
+
+	#handleFrameDetails = ({ detail: frame }) => {
+		if (this.#video !== frame.video) {
+			this.#video = frame.video;
+		}
+	};
 
 	#handleFrame = event => {
 		if (!this.ocr.config.show_capture_ui) return;

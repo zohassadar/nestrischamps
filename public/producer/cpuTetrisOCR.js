@@ -72,6 +72,8 @@ export class CpuTetrisOCR extends TetrisOCR {
 
 		performance.mark(`start-processVideoFrame-${this.perfSuffix}`);
 
+		super.processVideoFrame(frame);
+
 		const { videoFrame, video } = frame;
 		const { width, height } = this.capture_canvas;
 
