@@ -9,21 +9,31 @@ function getConfigName() {
 	return QueryString.get('config') || 'config_v2';
 }
 
-function carryOldConfig(config) {
-	const parsed = JSON.parse(config);
+// the old config can be consumed ONCE
+function tryOldConfig() {
+	if (localStorage.getItem(`${OLD_CONFIG_NAME}_v1_consumed`) === 'true') {
+		// old config was previously consumed
+		throw new Error('Old config has already been used');
+	}
+
+	const oldConfig = localStorage.getItem(OLD_CONFIG_NAME);
+	const parsed = JSON.parse(oldConfig);
+
+	if (parsed.use_half_height) {
+		throw new Error('Old config uses half_height');
+	}
 
 	// convert all tasks crop format
 	Object.entries(parsed.tasks).forEach(([name, task]) => {
-		let crop;
-		if (Array.isArray(task.crop)) {
-			const [x, y, w, h] = task.crop;
-			crop = { x, y, w, h };
-		}
 		const newTask = {
 			...REFERENCE_LOCATIONS[name],
 			...task,
-			crop,
 		};
+
+		if (Array.isArray(task.crop)) {
+			const [x, y, w, h] = task.crop;
+			newTask.crop = { x, y, w, h };
+		}
 
 		parsed.tasks[name] = newTask;
 	});
@@ -32,7 +42,8 @@ function carryOldConfig(config) {
 
 	const upgraded_config = JSON.stringify(parsed);
 
-	localStorage.setItem(getConfigName(), upgraded_config);
+	saveConfig(parsed);
+	localStorage.setItem(`${OLD_CONFIG_NAME}_v1_consumed`, 'true');
 
 	return upgraded_config;
 }
@@ -41,15 +52,10 @@ export function hasConfig() {
 	let maybeConfig = localStorage.getItem(getConfigName());
 
 	if (!maybeConfig) {
-		// let's if an old config is available and if we can convert it to new
-		const oldConfig = localStorage.getItem(OLD_CONFIG_NAME);
-
-		if (oldConfig) {
-			try {
-				maybeConfig = carryOldConfig(oldConfig);
-			} catch (err) {
-				return false;
-			}
+		try {
+			maybeConfig = tryOldConfig();
+		} catch (err) {
+			return false;
 		}
 	}
 
