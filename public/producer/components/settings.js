@@ -10,13 +10,6 @@ const MARKUP = html`
 			<legend>Controls</legend>
 
 			<div class="field">
-				<label class="checkbox" for="focus_alarm">
-					Enable Focus Alarm
-					<input type="checkbox" class="checkbox" id="focus_alarm" checked />
-				</label>
-			</div>
-
-			<div class="field">
 				<button id="clear_config" class="button is-light">
 					Clear Config and Restart
 				</button>
@@ -99,7 +92,6 @@ export class NTC_Producer_Settings extends NtcComponent {
 		this.style.display = 'block';
 
 		this.#domrefs = {
-			focus_alarm: this.shadow.getElementById('focus_alarm'),
 			clear_config: this.shadow.getElementById('clear_config'),
 			save_game_palette: this.shadow.getElementById('save_game_palette'),
 			timer_control: this.shadow.getElementById('timer_control'),
@@ -115,10 +107,6 @@ export class NTC_Producer_Settings extends NtcComponent {
 			vdoninja_iframe: this.shadow.getElementById('vdoninja_iframe'),
 		};
 
-		this.#domrefs.focus_alarm.addEventListener(
-			'change',
-			this.#onFocusAlarmChange
-		);
 		this.#domrefs.clear_config.addEventListener('click', clearConfigAndReset);
 		this.#domrefs.video_feed_selector.addEventListener(
 			'change',
@@ -195,14 +183,6 @@ export class NTC_Producer_Settings extends NtcComponent {
 			})
 		);
 	}
-
-	#onFocusAlarmChange = () => {
-		const { focus_alarm } = this.#domrefs;
-
-		if (focus_alarm.checked) {
-		} else {
-		}
-	};
 
 	startSharingVideoFeed = async () => {
 		const { allow_video_feed, video_feed, video_feed_selector } = this.#domrefs;

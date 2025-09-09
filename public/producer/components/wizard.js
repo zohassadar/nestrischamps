@@ -609,7 +609,6 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				});
 
 				delete playerConfig.use_worker_for_interval;
-				delete playerConfig.focus_alarm;
 				delete playerConfig.frame_rate;
 				delete playerConfig.save;
 
@@ -680,7 +679,6 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				});
 
 				delete playerConfig.use_worker_for_interval;
-				delete playerConfig.focus_alarm;
 				delete playerConfig.frame_rate;
 				delete playerConfig.save;
 
