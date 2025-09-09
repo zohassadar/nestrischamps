@@ -18,17 +18,6 @@ const MARKUP = html`
 		<fieldset class="inputs">
 			<legend>Controls</legend>
 
-			<div
-				class="field"
-				style="display: none;"
-				title="Use only half the height of the input video stream (1 line in 2), to help remove interlacing artefacts"
-			>
-				<label class="checkbox">
-					Use half capture-height ⓘ
-					<input type="checkbox" id="use_half_height" />
-				</label>
-			</div>
-
 			<div class="field">
 				<label class="checkbox">
 					7 digits score
@@ -139,10 +128,6 @@ const ATTRIBUTES = {
 		name: 'enable-show-parts',
 		init: 'true',
 	},
-	enableHalfHeight: {
-		name: 'enable-use-half-height',
-		init: 'true',
-	},
 	enableCaptureRate: {
 		name: 'enable-capture-rate',
 		init: 'true',
@@ -183,7 +168,6 @@ export class NTC_Producer_Calibration extends NtcComponent {
 
 			instructions: this.shadow.getElementById('instructions'),
 
-			use_half_height: this.shadow.getElementById('use_half_height'),
 			score7: this.shadow.getElementById('score7'),
 			handle_retron_levels_6_7: this.shadow.getElementById(
 				'handle_retron_levels_6_7'
@@ -214,10 +198,6 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		this.#domrefs.contrast_reset.addEventListener(
 			'click',
 			this.#onContrastReset
-		);
-		this.#domrefs.use_half_height.addEventListener(
-			'change',
-			this.#onUseHalfHeightChange
 		);
 		this.#domrefs.score7.addEventListener('change', this.#onScore7Change);
 		this.#domrefs.handle_retron_levels_6_7.addEventListener(
@@ -363,40 +343,6 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		contrast_slider.focus();
 	};
 
-	#onUseHalfHeightChange = () => {
-		const { use_half_height, adjustments } = this.#domrefs;
-		const config = this.ocr.config;
-
-		config.use_half_height = !!use_half_height.checked;
-
-		if (config.use_half_height) {
-			// half the y and height of everything
-			for (const [name, task] of Object.entries(config.tasks)) {
-				if (!task?.crop) continue;
-
-				task.crop.y = Math.floor(task.crop.y / 2);
-				task.crop.h = Math.ceil(task.crop.h / 2);
-
-				adjustments.querySelector(`#${name}`).setCoordinates(task.crop);
-
-				this.ocr.capture_canvas.height = Math.ceil(this.#video.videoHeight / 2);
-			}
-		} else {
-			for (const [name, task] of Object.entries(config.tasks)) {
-				if (!task?.crop) continue;
-
-				task.crop.y = Math.floor(task.crop.y * 2);
-				task.crop.h = Math.ceil(task.crop.h * 2);
-
-				adjustments.querySelector(`#${name}`).setCoordinates(task.crop);
-
-				this.ocr.capture_canvas.height = this.#video.videoHeight;
-			}
-		}
-
-		config.save();
-	};
-
 	#onScore7Change = ({ adjustCropWidth }) => {
 		const config = this.ocr.config;
 		const task = config.tasks.score;
@@ -529,7 +475,6 @@ export class NTC_Producer_Calibration extends NtcComponent {
 			capture,
 			adjustments,
 			score7,
-			use_half_height,
 			handle_retron_levels_6_7,
 			capture_rate,
 			contrast_slider,
@@ -568,7 +513,6 @@ export class NTC_Producer_Calibration extends NtcComponent {
 		brightness_slider.value = this.ocr.config.brightness;
 
 		score7.checked = !!this.ocr.config.score7;
-		use_half_height.checked = !!this.ocr.config.use_half_height;
 		handle_retron_levels_6_7.checked =
 			!!this.ocr.config.handle_retron_levels_6_7;
 

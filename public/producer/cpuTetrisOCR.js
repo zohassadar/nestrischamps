@@ -80,8 +80,7 @@ export class CpuTetrisOCR extends TetrisOCR {
 		// dirty lazy init actions?
 		if (!this.capture_ctx) {
 			this.capture_canvas.width = video.videoWidth;
-			this.capture_canvas.height =
-				video.videoHeight >> (this.config.use_half_height ? 1 : 0);
+			this.capture_canvas.height = video.videoHeight;
 
 			this.capture_ctx = this.capture_canvas.getContext('2d', { alpha: false });
 			this.capture_ctx.imageSmoothingEnabled = false;

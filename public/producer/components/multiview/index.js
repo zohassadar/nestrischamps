@@ -152,7 +152,6 @@ export class NTC_MultiView extends NtcComponent {
 		const cal = document.createElement('ntc-calibration');
 		cal.id = `player-${playerId}`;
 		cal.setAttribute('enable-show-parts', 'false');
-		cal.setAttribute('enable-use-half-height', 'false');
 		cal.setAttribute('enable-capture-rate', 'false');
 
 		player.ocrPromise.then(ocr => {

@@ -37,6 +37,8 @@ async function initMultiViewerCapture(config) {
 async function initOCRCapture(config, tabToOpen, stream) {
 	console.log('initOCRCapture');
 
+	console.log(config);
+
 	const driver = new CaptureDriver(config, stream);
 	const player = new Player(config);
 
