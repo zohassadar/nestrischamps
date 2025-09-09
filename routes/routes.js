@@ -78,15 +78,15 @@ router.get(/^\/remote_calibration/, (req, res) => {
 });
 
 router.get(
-	/^\/room\/(producer2?|emu)/,
+	/^\/room\/(producer1?|emu)/,
 	middlewares.assertSession,
 	middlewares.checkToken,
 	(req, res) => {
 		console.log('/room/producer');
-		const tplPath = /producer2/.test(req.path)
-			? '/producer/index.html'
+		const tplPath = /producer1/.test(req.path)
+			? '/ocr/ocr.html'
 			: /producer/.test(req.path)
-				? '/ocr/ocr.html'
+				? '/producer/index.html'
 				: '/emu/index.html';
 
 		res.sendFile(path.join(path.resolve(), `public${tplPath}`));
@@ -95,7 +95,7 @@ router.get(
 
 // access producer by url secret
 router.get(
-	/^\/room\/u\/([^/]+)\/(producer2?|emu)\/([a-zA-Z0-9-]+)/,
+	/^\/room\/u\/([^/]+)\/(producer1?|emu)\/([a-zA-Z0-9-]+)/,
 	async (req, res) => {
 		const host_user = await UserDAO.getUserByLogin(req.params[0]);
 
@@ -111,10 +111,10 @@ router.get(
 			return;
 		}
 
-		const tplPath = /producer2/.test(req.path)
-			? '/producer/index.html'
+		const tplPath = /producer1/.test(req.path)
+			? '/ocr/ocr.html'
 			: /producer/.test(req.path)
-				? '/ocr/ocr.html'
+				? '/producer/index.html'
 				: '/emu/index.html';
 
 		console.log([req.path, tplPath]);
@@ -124,7 +124,7 @@ router.get(
 );
 
 router.get(
-	/^\/room\/u\/([^/]+)\/(producer2?|emu)/,
+	/^\/room\/u\/([^/]+)\/(producer1?|emu)/,
 	middlewares.assertSession,
 	middlewares.checkToken,
 	async (req, res) => {
@@ -135,10 +135,10 @@ router.get(
 			return;
 		}
 
-		const tplPath = /producer2/.test(req.path)
-			? '/producer/index.html'
+		const tplPath = /producer1/.test(req.path)
+			? '/ocr/ocr.html'
 			: /producer/.test(req.path)
-				? '/ocr/ocr.html'
+				? '/producer/index.html'
 				: '/emu/index.html';
 
 		res.sendFile(path.join(path.resolve(), `public${tplPath}`));

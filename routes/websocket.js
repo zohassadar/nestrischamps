@@ -110,7 +110,7 @@ export default function init(server, wss) {
 		}
 
 		m = request.nc_url.pathname.match(
-			/^\/ws\/room\/(u\/([a-z0-9_-]+)\/)?(producer2?|emu)\/([a-zA-Z0-9-]+)/
+			/^\/ws\/room\/(u\/([a-z0-9_-]+)\/)?(producer[12]?|emu)\/([a-zA-Z0-9-]+)/
 		);
 
 		request.is_secret_producer = !!m;
@@ -308,7 +308,7 @@ export default function init(server, wss) {
 		} else if (pathname.startsWith('/ws/room/admin')) {
 			console.log(`MatchRoom: ${user.login}: Admin connected`);
 			user.getHostRoom().setAdmin(connection);
-		} else if (/^\/ws\/room\/(producer2?|emu)/.test(pathname)) {
+		} else if (/^\/ws\/room\/(producer[12]?|emu)/.test(pathname)) {
 			console.log(`PrivateRoom: ${user.login}: Producer connected`);
 			user.setProducerConnection(connection, {
 				match: false,
@@ -348,6 +348,7 @@ export default function init(server, wss) {
 				}
 				/** */
 
+				case 'producer1':
 				case 'producer2':
 				case 'producer':
 				case 'emu': {

@@ -9,7 +9,7 @@ const MARKUP = html`
 		<div id="instructions" class="mt-5 content notification is-warning">
 			<h1 class="title is-6">Warning - Processing Load</h1>
 			<p>
-				When you are on the calibration tab, NTC does extra work to show you the
+				When you are on a calibration tab, NTC does extra work to show you the
 				parts being captured.<br />
 				When you are done, move to another tab to save processing resources.
 			</p>
