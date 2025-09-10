@@ -29,7 +29,7 @@ const dom = {
 	curtain_logo_url: document.querySelector('#curtain_logo_url'),
 };
 
-const MAX_BEST_OF = 13;
+const MAX_BEST_OF = 19;
 
 const apiHandler = {
 	get(target, prop, receiver) {
