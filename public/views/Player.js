@@ -186,7 +186,6 @@ const DEFAULT_OPTIONS = {
 	running_trt_dot_size: 4,
 	preview_align: 'c',
 	running_trt_rtl: 0,
-	wins_rtl: 0,
 	tetris_flash: parseInt(
 		/^[01234]$/.test(QueryString.get('tetris_flash'))
 			? QueryString.get('tetris_flash')
@@ -275,7 +274,6 @@ export default class Player extends EventTarget {
 		this.preview_pixel_size =
 			this.options.preview_pixel_size || this.options.pixel_size;
 		this.render_running_trt_rtl = !!this.options.running_trt_rtl;
-		this.render_wins_rtl = !!this.options.wins_rtl;
 
 		const styles = getComputedStyle(this.dom.field);
 

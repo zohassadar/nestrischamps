@@ -221,27 +221,23 @@ class TetrisCompetitionAPI {
 		const victories = this.victories[player_idx];
 		const hearts = player.dom.hearts;
 
-		if (!hearts || !hearts.childNodes) return;
+		if (!hearts?.childNodes) return;
 
-		// clear all the hearts
-		while (hearts.childNodes.length) {
-			hearts.removeChild(hearts.childNodes[0]);
-		}
+		const newHearts = Array(this.first_to)
+			.fill()
+			.map((_, idx) => {
+				const heart = document.createElement('span');
 
-		// reset to specified value
-		for (let idx = 0; idx < this.first_to; idx++) {
-			const heart = document.createElement('span');
+				heart.innerHTML = '&#338;'; // represented as a heart in the font
 
-			heart.innerHTML = '&#338;'; // represented as a heart in the font
+				if (idx < victories) {
+					heart.classList.add('win');
+				}
 
-			if (idx < victories) {
-				heart.classList.add('win');
-			}
+				return heart;
+			});
 
-			const insert_method = player.render_wins_rtl ? 'prepend' : 'appendChild';
-
-			hearts[insert_method](heart);
-		}
+		hearts.replaceChildren(...newHearts);
 	}
 
 	frame(player_idx, data) {
