@@ -228,7 +228,7 @@
 				font-size: 0px;
 				line-height: 32px;
 				display: flex;
-				flex-direction: column;
+				flex-direction: column-reverse;
 			}
 
 			.hearts span {
@@ -435,6 +435,7 @@
 			.match.small .hearts {
 				bottom: unset;
 				top: 477px;
+				flex-direction: column;
 			}
 
 			.heartpos1 .match.small .hearts {
@@ -457,23 +458,26 @@
 				height: 29px;
 				padding: 0 6px 0 9px;
 				gap: 2px;
-				flex-direction: row;
+				flex-direction: row-reverse;
 			}
 
 			.heartpos3 .match.small .p2 .hearts,
 			.heartpos4 .match.small .p2 .hearts {
 				right: unset;
+				flex-direction: row;
 			}
 
 			.heartpos4 .match.small .hearts {
 				--offset: calc(-1 * var(--player-width));
 				left: var(--offset);
 				right: unset;
+				flex-direction: row;
 			}
 
 			.heartpos4 .match.small .p2 .hearts {
 				left: unset;
 				right: var(--offset);
+				flex-direction: row-reverse;
 			}
 
 			.match.small .flag,
