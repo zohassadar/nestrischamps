@@ -213,36 +213,12 @@
 				}
 			}
 
-			.hearts,
 			.level,
 			.tetris_rate,
 			.drought,
-			.flag {
+			.flag,
+			.wins {
 				--offset: var(--board-offset);
-			}
-
-			.hearts {
-				bottom: -765px;
-				padding-right: 0;
-				height: unset;
-				font-size: 0px;
-				line-height: 32px;
-				display: flex;
-				flex-direction: column-reverse;
-			}
-
-			.hearts span {
-				width: 24px;
-				height: 30px;
-				overflow: hidden;
-				background: url(/views/heart_grey.png);
-				background-repeat: no-repeat;
-				background-position: center left;
-				display: inline-block;
-			}
-
-			.hearts span.win {
-				background-image: url(/views/heart_red.png);
 			}
 
 			.level,
@@ -255,11 +231,20 @@
 
 			.tetris_rate,
 			.drought {
+				top: 756px;
+			}
+
+			.wins {
 				top: 839px;
+				padding-top: 5px;
+				width: 99px;
+				height: 54px;
+				font-size: 36px;
+				line-height: 54px;
 			}
 
 			.level {
-				top: 756px;
+				top: 673px;
 				width: 56px;
 			}
 
@@ -402,26 +387,35 @@
 				--offset: var(--board-offset);
 			}
 
-			.match.small .next_piece {
+			.match.small .wins {
 				z-index: 4;
 				top: 139px;
+				width: 151px;
+				height: 58px;
+				font-size: 40px;
+				line-height: 58px;
+			}
+
+			.match.small .next_piece {
+				z-index: 4;
+				top: 225px;
 			}
 
 			.match.small .lines {
 				z-index: 3;
 				width: 154px;
-				top: 225px;
+				top: 311px;
 			}
 
 			.match.small .level {
 				z-index: 2;
-				top: 311px;
+				top: 397px;
 				width: 78px;
 			}
 
 			.match.small .tetris_rate,
 			.match.small .drought {
-				top: 394px;
+				top: 480px;
 				z-index: 1;
 			}
 
@@ -432,54 +426,6 @@
 			.match.small .score {
 				z-index: 7;
 			}
-			.match.small .hearts {
-				bottom: unset;
-				top: 477px;
-				flex-direction: column;
-			}
-
-			.heartpos1 .match.small .hearts {
-				top: 311px;
-				--offset: 459px;
-			}
-
-			.heartpos2 .match.small .hearts {
-				top: 139px;
-				--offset: 535px;
-			}
-
-			.heartpos3 .match.small .hearts,
-			.heartpos4 .match.small .hearts {
-				--border-size: 14;
-				--offset: var(--score-offset);
-
-				width: unset;
-				top: 91px;
-				height: 29px;
-				padding: 0 6px 0 9px;
-				gap: 2px;
-				flex-direction: row-reverse;
-			}
-
-			.heartpos3 .match.small .p2 .hearts,
-			.heartpos4 .match.small .p2 .hearts {
-				right: unset;
-				flex-direction: row;
-			}
-
-			.heartpos4 .match.small .hearts {
-				--offset: calc(-1 * var(--player-width));
-				left: var(--offset);
-				right: unset;
-				flex-direction: row;
-			}
-
-			.heartpos4 .match.small .p2 .hearts {
-				left: unset;
-				right: var(--offset);
-				flex-direction: row-reverse;
-			}
-
 			.match.small .flag,
 			.match.small .name {
 				z-index: 6;
@@ -517,12 +463,6 @@
 					top: 91px;
 					width: 43px;
 					height: 27px;
-				}
-
-				.heartpos3 .match.small .hearts {
-					--offset: calc(
-						var(--score-offset) + 64px
-					); /* accounts for flag width */
 				}
 			}
 
@@ -656,8 +596,6 @@
 			<div class="player">
 				<video class="player_vid"></video>
 
-				<div class="box hearts">&nbsp;</div>
-
 				<div class="box name">
 					<div class="header">PLAYER 1</div>
 					<div class="content"></div>
@@ -696,6 +634,10 @@
 				<div class="box drought">
 					<div class="header"><img src="/views/red_bar.png" /></div>
 					<div class="value">99</div>
+				</div>
+
+				<div class="box wins">
+					<span class="value">99</span><img src="/views/heart_red.png" />
 				</div>
 
 				<div class="box board"></div>
@@ -952,7 +894,7 @@
 
 							runways_box: player_node.querySelector(`.runways`),
 
-							hearts: player_node.querySelector(`.hearts.box`),
+							wins: player_node.querySelector(`.wins.box .value`),
 							drought_box: player_node.querySelector(`.drought`),
 							video: player_node.querySelector(`.player_vid`),
 							flag: showFlagInFlagBox
@@ -981,7 +923,6 @@
 					}
 
 					if (QueryString.get('qual') === '1') {
-						player.dom.hearts.remove();
 						player.dom.runways_box.remove();
 						player_node.querySelector(`.score .tetris_diff`).remove();
 						player_node.querySelector(`.score .diff`).remove();
@@ -1325,6 +1266,11 @@
 
 				loser.showLoserFrame();
 				winner.playWinnerAnimation();
+			};
+
+			competition.API._repaintVictories = function (player_idx) {
+				const player = players[player_idx];
+				player.dom.wins.textContent = this.victories[player_idx];
 			};
 
 			for (let player_idx = 0; player_idx < players.length; player_idx += 2) {
