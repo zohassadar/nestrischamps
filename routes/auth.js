@@ -441,19 +441,19 @@ router.get(
 		// sanity check before deleting
 		const identities = await UserDAO.getIdentities(req.session.user.id);
 		const identity = identities.find(
-			identity => (identity.id = req.params.identity_id)
+			identity => identity.id === req.params.identity_id
 		);
 
 		// we only accept to remove an identity if it's not the last one
 		if (identity && identities.length > 1) {
-			const res = await UserDAO.removeIdentity(
+			const removed = await UserDAO.removeIdentity(
 				req.session.user.id,
 				identity.id
 			);
 
 			const new_token = { ...req.session.token };
 
-			delete new_token[res.provider]; // we clear the identity tokens from the session
+			delete new_token[removed.provider]; // we clear the identity tokens from the session
 
 			req.session.token = new_token;
 		}
