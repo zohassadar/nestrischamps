@@ -23,39 +23,39 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.817.0",
-		"@aws-sdk/lib-storage": "3.817.0",
-		"@twurple/api": "7.3.0",
-		"@twurple/auth": "7.3.0",
-		"@twurple/chat": "7.3.0",
+		"@aws-sdk/client-s3": "^3.887.0",
+		"@aws-sdk/lib-storage": "^3.887.0",
+		"@twurple/api": "^7.4.0",
+		"@twurple/auth": "^7.4.0",
+		"@twurple/chat": "^7.4.0",
 		"connect-pg-simple": "10.0.0",
 		"cors": "2.8.5",
-		"country-list": "2.3.0",
+		"country-list": "^2.4.1",
 		"csv-parse": "5.6.0",
 		"dotenv": "16.5.0",
 		"ejs": "3.1.10",
 		"express": "5.1.0",
-		"express-session": "1.18.1",
-		"glob": "11.0.2",
+		"express-session": "^1.18.2",
+		"glob": "^11.0.3",
 		"google-auth-library": "^9.13.0",
-		"got": "14.4.7",
+		"got": "^14.4.8",
 		"lodash": "4.17.21",
 		"nocache": "4.0.0",
 		"passport-google-oauth20": "^2.0.0",
-		"pg": "^8.12.0",
+		"pg": "^8.16.3",
 		"timezones.json": "1.7.2",
-		"ulid": "3.0.0",
+		"ulid": "^3.0.1",
 		"uuid": "11.1.0",
-		"ws": "8.18.2"
+		"ws": "^8.18.3"
 	},
 	"engines": {
 		"node": "22.x"
 	},
 	"devDependencies": {
-		"eslint": "^9.27.0",
-		"eslint-config-prettier": "^10.1.5",
+		"eslint": "^9.35.0",
+		"eslint-config-prettier": "^10.1.8",
 		"husky": "^9.1.7",
-		"prettier": "^3.5.3",
-		"pretty-quick": "^4.1.1"
+		"prettier": "^3.6.2",
+		"pretty-quick": "^4.2.2"
 	}
 }
