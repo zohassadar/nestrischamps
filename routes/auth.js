@@ -322,8 +322,14 @@ router.get('/discord/callback', async (req, res) => {
 		const { body: token } = await got.post(
 			'https://discord.com/api/oauth2/token',
 			{
-				username: process.env.DISCORD_CLIENT_ID,
-				password: process.env.DISCORD_CLIENT_SECRET,
+				headers: {
+					'Authorization':
+						'Basic ' +
+						Buffer.from(
+							`${process.env.DISCORD_CLIENT_ID}:${process.env.DISCORD_CLIENT_SECRET}`
+						).toString('base64'),
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
 				form: {
 					code: req.query.code,
 					grant_type: 'authorization_code',
