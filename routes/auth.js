@@ -45,10 +45,23 @@ function getTwitchAuthUrl(req) {
 	return `${TWITCH_LOGIN_BASE_URI}${qs}`;
 }
 
-function getGoogleAuthUrl() {
+// replace your current getGoogleAuthUrl() with this version
+function getGoogleAuthUrl(req) {
+	const state = ulid();
+	const nonce = ulid();
+
+	// store for callback verification
+	req.session.google_oauth_state = state;
+	req.session.google_oauth_nonce = nonce;
+
 	return googleOAuth2Client.generateAuthUrl({
 		access_type: 'offline',
-		scope: ['profile', 'email'],
+		// prompt: 'consent', // ensures refresh_token on first consent
+		scope: ['openid', 'email', 'profile'],
+		state,
+		// nonce is a valid OIDC param supported by Google
+		// TypeScript users: you may need a ts-ignore if your types are older
+		nonce,
 	});
 }
 
@@ -238,18 +251,38 @@ router.get('/twitch/callback', async (req, res) => {
 });
 
 router.get('/google/callback', async (req, res) => {
-	const code = req.query.code;
+	const { code, state } = req.query;
+
+	// 1) CSRF protection: check state
+	if (!state || state !== req.session.google_oauth_state) {
+		return res.status(400).send('Invalid state');
+	}
+
+	if (!code) {
+		return res.redirect('/');
+	}
+
 	if (code) {
 		try {
+			// 2) Exchange code for tokens
 			const { tokens } = await googleOAuth2Client.getToken(code);
 			googleOAuth2Client.setCredentials(tokens);
 
-			// Get user info from Google
+			// 3) Verify ID token, including nonce + get user info
 			const ticket = await googleOAuth2Client.verifyIdToken({
 				idToken: tokens.id_token,
 				audience: process.env.GOOGLE_AUTH_CLIENT_ID,
 			});
 			const payload = ticket.getPayload();
+
+			// 4) Replay protection: check nonce from ID token
+			if (!payload || payload.nonce !== req.session.google_oauth_nonce) {
+				return res.status(400).send('Invalid nonce');
+			}
+
+			// clear state and nonce after successful checks
+			req.session.google_oauth_state = undefined;
+			req.session.google_oauth_nonce = undefined;
 
 			// mimic twitch shape
 			const login = ulid().toLowerCase();
