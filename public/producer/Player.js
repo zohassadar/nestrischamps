@@ -34,6 +34,14 @@ export class Player extends EventTarget {
 		this.notice = document.createElement('div');
 
 		this.API = {
+			message: msg => {
+				this.dispatchEvent(
+					new CustomEvent('chat_message', {
+						detail: msg,
+					})
+				);
+			},
+
 			setViewPeerId: _view_peer_id => {
 				this.view_peer_id = _view_peer_id;
 			},

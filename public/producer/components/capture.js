@@ -1,5 +1,8 @@
 import { NtcComponent } from './NtcComponent.js';
 
+import QueryString from '/js/QueryString.js';
+import speak from '/views/tts.js';
+
 import './settings.js';
 import './calibration.js';
 import './ocrresults.js';
@@ -121,6 +124,12 @@ export class NTC_Producer_Capture extends NtcComponent {
 		player.addEventListener('remote_config_update', ({ detail: config }) => {
 			this.#domrefs.calibration.handleRemoteConfigUpdate(config);
 		});
+
+		if (QueryString.get('tts') === '1') {
+			player.addEventListener('chat_message', ({ detail: msg }) => {
+				msg && speak(msg);
+			});
+		}
 
 		const ocr = await this.#player.ocrPromise;
 		this.#domrefs.ocr_results.setOCR(ocr);
