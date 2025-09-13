@@ -27,13 +27,50 @@ function hasWebGL2({ allowSoftware = true } = {}) {
 	}
 }
 
-async function hasWebGPU() {
+// webgpu probe for external textures
+async function supportsExternalTextures(device) {
+	// 1) Fast path, reliable on Chrome/Edge
+	if (device.features?.has?.('chromium-experimental-external-texture')) {
+		return true;
+	}
+
+	// 2) Probe under a validation error scope
+	device.pushErrorScope('validation');
 	try {
-		const adapter = await navigator.gpu?.requestAdapter();
-		return !!adapter;
+		device.createBindGroupLayout({
+			entries: [
+				{
+					binding: 0,
+					visibility: GPUShaderStage.FRAGMENT,
+					externalTexture: {},
+				},
+			],
+		});
+		const err = await device.popErrorScope();
+		return err === null;
 	} catch {
+		await device.popErrorScope();
 		return false;
 	}
+}
+
+async function hasWebGPU() {
+	const adapter = await navigator.gpu?.requestAdapter();
+	if (!adapter) return false;
+
+	let device;
+	try {
+		device = await adapter.requestDevice();
+		if (!device) return false;
+
+		return supportsExternalTextures(device);
+	} catch {
+		// do nothing
+	} finally {
+		device?.destroy?.();
+	}
+
+	return false;
 }
 
 async function doGetOcrClass() {
