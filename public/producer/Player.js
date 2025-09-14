@@ -9,7 +9,7 @@ import { getSerializableConfigCopy } from './ConfigUtils.js';
 import GameTracker from './GameTracker.js';
 import { createOCRInstance } from './ocrStrategy.js';
 
-const send_binary = QueryString.get('binary') !== '0';
+const SEND_BINARY = QueryString.get('binary') !== '0';
 
 export class Player extends EventTarget {
 	#ready = false;
@@ -210,7 +210,7 @@ export class Player extends EventTarget {
 
 		this.#lastFrame = data;
 
-		if (send_binary) {
+		if (SEND_BINARY) {
 			this.#connection?.send(BinaryFrame.encode(data));
 		} else {
 			// convert Uint8Array to normal array so it can be json-encoded properly
