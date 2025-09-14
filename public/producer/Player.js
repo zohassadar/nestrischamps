@@ -10,6 +10,7 @@ import GameTracker from './GameTracker.js';
 import { createOCRInstance } from './ocrStrategy.js';
 
 const SEND_BINARY = QueryString.get('binary') !== '0';
+const HEART_BEAT_TIMEOUT = 1000;
 
 export class Player extends EventTarget {
 	#ready = false;
@@ -202,7 +203,7 @@ export class Player extends EventTarget {
 			}
 
 			// all fields equal, do a sanity check on time
-			if (data.ctime - this.#lastFrame.ctime >= 250) break; // max 1 in 15 frames (4fps)
+			if (data.ctime - this.#lastFrame.ctime >= HEART_BEAT_TIMEOUT) break; // even if there's no change, send a "heartbeat frame" at least every HEART_BEAT_TIMEOUT ms
 
 			// no need to send frame
 			return;
