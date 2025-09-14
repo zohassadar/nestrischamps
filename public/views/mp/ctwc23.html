@@ -1280,6 +1280,13 @@
 						player.dom.score_box.classList.toggle('with_tdiff');
 					});
 				}, CYCLE_TDIFF * 1000);
+
+				// initialize inverted tetris diff displays for player 1 and 4
+				players
+					.filter((_, idx) => idx === 0 || idx === 3)
+					.forEach(player => {
+						player.dom.score_box.classList.add('with_tdiff');
+					});
 			}
 
 			const competition = new Competition(players);
