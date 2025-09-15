@@ -98,6 +98,7 @@ export class Player extends EventTarget {
 						},
 						config: getSerializableConfigCopy(this.config),
 						imageArgs: this.#remoteCalibrationImageArgs,
+						userAgent: window.navigator.userAgent,
 					},
 				});
 
