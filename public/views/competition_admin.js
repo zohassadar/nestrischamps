@@ -187,6 +187,39 @@ class Player {
 		};
 
 		this.dom.remote_calibration_btn.onclick = async () => {
+			const remote_calibration_progress = document.querySelector(
+				'#remote_calibration_progress'
+			);
+
+			// replace button by brand new one to drop potential left over listeners
+			const oldCancelBtn = remote_calibration_progress.querySelector('button'); // only one button...
+			const newCancelBtn = oldCancelBtn.cloneNode(true); // true = copy children, but no listeners
+			oldCancelBtn.parentNode.replaceChild(newCancelBtn, oldCancelBtn);
+
+			remote_calibration_progress.showModal();
+
+			const progress = {
+				loadUI: { label: 'Loading configuration UI' },
+				connecting: { label: 'Connecting as Peer' },
+				requesting: { label: 'Requesting remote calibration call from player' },
+				waitingForFrame: { label: 'Waiting for first frame' },
+			};
+
+			function updateModal() {
+				remote_calibration_progress.querySelector('.messages').replaceChildren(
+					...Object.values(progress).map(({ label, status }) => {
+						const p = document.createElement('p');
+
+						if (status === undefined) p.classList.add('pending');
+
+						p.textContent = `${label}: ${status ? 'DONE' : '...'}`;
+						return p;
+					})
+				);
+			}
+
+			updateModal();
+
 			let overlay = document.createElement('iframe');
 
 			// Style it to cover 100% of the viewport
@@ -209,6 +242,9 @@ class Player {
 			document.body.appendChild(overlay);
 
 			overlay.addEventListener('load', () => {
+				progress.loadUI.status = true;
+				updateModal();
+
 				const clearPeer = () => {
 					if (!this.peer) return;
 					// this.peer.removeAllListeners();
@@ -221,12 +257,17 @@ class Player {
 					// overlay.removeAllListeners();
 					// closeOnly.removeAllListeners();
 					// saveAndClose.removeAllListeners();
+					remote_calibration_progress.close();
+					newCancelBtn.removeEventListener('click', clearAll);
+
 					overlay.remove();
 					overlay = null;
 					this.dataConnection = null;
 					if (driver) driver.destroy();
 					clearPeer();
 				};
+
+				newCancelBtn.addEventListener('click', clearAll);
 
 				const doc = overlay.contentDocument || overlay.contentWindow.document;
 				const closeOnly = doc.getElementById('close_only');
@@ -279,6 +320,9 @@ class Player {
 				let srcCtx;
 
 				peer.on('connection', async dataConnection => {
+					progress.requesting.status = true;
+					updateModal();
+
 					console.log(
 						'Received peer connection call:',
 						dataConnection.metadata
@@ -310,6 +354,9 @@ class Player {
 						if (!data.img) return;
 
 						console.log('Received video frame from peer');
+						progress.waitingForFrame.status = true;
+						updateModal();
+						remote_calibration_progress.close();
 
 						const blob = new Blob([data.img]);
 						const bitmap = await createImageBitmap(blob);
@@ -330,6 +377,10 @@ class Player {
 					console.log(
 						`Connected via peerjs, requesting remoteCalibration on player ${this.idx}`
 					);
+
+					progress.connecting.status = true;
+					updateModal();
+
 					remoteAPI.requestRemoteCalibration(this.idx, peerid);
 				});
 			});

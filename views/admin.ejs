@@ -44,6 +44,7 @@
 
 			button {
 				font-size: 24px;
+				cursor: pointer;
 			}
 
 			.win {
@@ -153,6 +154,19 @@
 			input[type='radio'] {
 				margin-left: 2em;
 			}
+
+			#remote_calibration_progress {
+				cursor: progress;
+			}
+
+			#remote_calibration_progress::backdrop {
+				background-color: rgba(0, 0, 0, 0.80);
+			}
+
+			#remote_calibration_progress .pending {
+				color: grey
+			}
+
 		</style>
 	</head>
 	<body><%- include('partials/gtm_body') %>
@@ -320,6 +334,13 @@
 				</div>
 			</div>
 		</template>
+
+		<dialog id="remote_calibration_progress" closedby="none">
+			<div class="messages"></div>
+			<div class="controls">
+				<button class="cancel">Cancel</button>
+			</div>
+		</dialog>
 
 		<script src="/vendor/lodash.4.17.21.min.js"></script>
 		<script src="/vendor/peerjs.1.5.4.min.js"></script>
