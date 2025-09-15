@@ -5,6 +5,7 @@ import Connection from '/js/connection.js';
 import { peerServerOptions } from '/views/constants.js';
 
 import { getSerializableConfigCopy } from './ConfigUtils.js';
+import { supportsImageType } from './MediaUtils.js';
 
 import GameTracker from './GameTracker.js';
 import { createOCRInstance } from './ocrStrategy.js';
@@ -12,8 +13,24 @@ import { createOCRInstance } from './ocrStrategy.js';
 const SEND_BINARY = QueryString.get('binary') !== '0';
 const HEART_BEAT_TIMEOUT = 1000;
 
+async function getRemoteCalibrationImageArgs() {
+	const IMAGE_TYPE_PRECEDENCE = [
+		{ type: 'image/webp', quality: 0.5 },
+		{ type: 'image/jpeg', quality: 0.8 },
+	];
+
+	for (const { type, quality } of Object.values(IMAGE_TYPE_PRECEDENCE)) {
+		if (await supportsImageType(type)) return [type, quality];
+	}
+
+	return ['image/png'];
+}
+
+const remoteCalibrationImageArgsPromise = getRemoteCalibrationImageArgs(); // no await
+
 export class Player extends EventTarget {
 	#ready = false;
+	#remoteCalibrationImageArgs;
 	#startTime;
 	#lastFrame;
 	#connection = null;
@@ -67,7 +84,7 @@ export class Player extends EventTarget {
 				console.log('requestRemoteCalibration', admin_peer_id);
 
 				if (this.conn) {
-					clearInterval(this.conn.sendWebpIntervalId);
+					clearInterval(this.conn.sendVideoFrameIntervalId);
 					this.conn.close();
 				}
 
@@ -80,18 +97,23 @@ export class Player extends EventTarget {
 							height: video.videoHeight,
 						},
 						config: getSerializableConfigCopy(this.config),
+						imageArgs: this.#remoteCalibrationImageArgs,
 					},
 				});
 
-				const sendWebp = async () => {
-					const webp = await this.#getVideoFrameAsWebpBlob();
-					this.conn.send({ webp });
+				const sendVideoFrame = async () => {
+					console.log('sending remote calibration frame');
+					const img = await this.#getVideoFrameAsImgBlob();
+					this.conn.send({ img });
 				};
 
 				this.conn.on('open', () => {
-					clearInterval(this.conn.sendWebpIntervalId);
-					this.conn.sendWebpIntervalId = setInterval(sendWebp, 10000);
-					sendWebp();
+					clearInterval(this.conn.sendVideoFrameIntervalId);
+					this.conn.sendVideoFrameIntervalId = setInterval(
+						sendVideoFrame,
+						10000
+					);
+					sendVideoFrame();
 				});
 
 				this.conn.on('data', ({ config }) => {
@@ -117,28 +139,33 @@ export class Player extends EventTarget {
 				});
 
 				this.conn.on('close', () => {
-					clearInterval(this.conn.sendWebpIntervalId);
+					clearInterval(this.conn.sendVideoFrameIntervalId);
 				});
 			},
 
 			setVdoNinjaURL: () => {},
 		};
 
-		// async init
+		// don't remove this, this.ocrPromise is used by the capture component T_T
 		this.ocrPromise = createOCRInstance(config);
 
-		this.ocrPromise.then(ocr => {
-			this.ocr = ocr;
-			this.ocr.addEventListener('frame', ({ detail: frame }) => {
-				this.gameTracker.processFrame(frame);
-			});
-			this.connect();
-			this.#ready = true;
-		});
+		// async init
+		Promise.all([this.ocrPromise, remoteCalibrationImageArgsPromise]).then(
+			([ocr, imageArgs]) => {
+				this.#remoteCalibrationImageArgs = imageArgs;
+
+				this.ocr = ocr;
+				this.ocr.addEventListener('frame', ({ detail: frame }) => {
+					this.gameTracker.processFrame(frame);
+				});
+				this.connect();
+				this.#ready = true;
+			}
+		);
 	}
 
 	// manual async
-	#getVideoFrameAsWebpBlob() {
+	#getVideoFrameAsImgBlob() {
 		const video = this._driver.getVideo();
 
 		if (!this.remote_calibration_canvas) {
@@ -164,8 +191,7 @@ export class Player extends EventTarget {
 		return new Promise(resolve => {
 			this.remote_calibration_canvas.toBlob(
 				blob => resolve(blob),
-				'image/webp',
-				0.5 // quality 0..1
+				...this.#remoteCalibrationImageArgs
 			);
 		});
 	}

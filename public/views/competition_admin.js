@@ -118,7 +118,7 @@ class Player {
 					icon.display = 'none';
 					this.dom.vdo_ninja_url.querySelector('svg.failure').style.display =
 						'inline';
-					console.error('Umable to write to clipboard');
+					console.error('Unable to write to clipboard');
 				}
 
 				setTimeout(() => {
@@ -279,6 +279,10 @@ class Player {
 				let srcCtx;
 
 				peer.on('connection', async dataConnection => {
+					console.log(
+						'Received peer connection call:',
+						dataConnection.metadata
+					);
 					this.dataConnection = dataConnection;
 
 					const { config, video } = dataConnection.metadata;
@@ -302,9 +306,12 @@ class Player {
 
 					// receive new frames (VERY low frame rate)
 					dataConnection.on('data', async data => {
-						if (!data.webp) return;
+						console.log('Received data object from peer');
+						if (!data.img) return;
 
-						const blob = new Blob([data.webp], { type: 'image/webp' });
+						console.log('Received video frame from peer');
+
+						const blob = new Blob([data.img]);
 						const bitmap = await createImageBitmap(blob);
 						srcCtx.drawImage(bitmap, 0, 0);
 					});
@@ -320,6 +327,9 @@ class Player {
 				});
 
 				peer.on('open', id => {
+					console.log(
+						`Connected via peerjs, requesting remoteCalibration on player ${this.idx}`
+					);
 					remoteAPI.requestRemoteCalibration(this.idx, peerid);
 				});
 			});

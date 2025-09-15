@@ -194,3 +194,43 @@ export async function playVideoFromConfig(video, frame_rate = 60) {
 		.querySelectorAll('.device_only')
 		.forEach(elmt => (elmt.hidden = config.device_id === 'window'));
 }
+
+function checkImageTypeSupport(type) {
+	return new Promise(resolve => {
+		const c = document.createElement('canvas');
+		c.width = c.height = 1;
+		c.toBlob(
+			blob => {
+				if (blob?.type !== type) return resolve(false);
+
+				// Try to decode it back
+				const img = new Image();
+				img.onload = () => resolve(true);
+				img.onerror = () => resolve(false);
+				img.src = URL.createObjectURL(blob);
+			},
+			type,
+			0.5
+		);
+	});
+}
+
+async function _getSupportedImageTypes() {
+	const [webp, jpeg, png] = await Promise.all([
+		checkImageTypeSupport('image/webp'),
+		checkImageTypeSupport('image/jpeg'),
+		checkImageTypeSupport('image/png'),
+	]);
+
+	return {
+		'image/webp': webp,
+		'image/jpeg': jpeg,
+		'image/png': png,
+	};
+}
+
+const supportedImageTypesPromise = _getSupportedImageTypes();
+
+export async function supportsImageType(type) {
+	return !!(await supportedImageTypesPromise)[type];
+}
