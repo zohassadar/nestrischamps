@@ -26,7 +26,7 @@ class Game {
 		this.over = false;
 		this.num_frames = 0;
 
-		this.save_frame = process.env.FF_SAVE_GAME_FRAMES === '1';
+		this.save_frame = process.env.FF_SAVE_GAME_FRAMES !== '0'; // explicit zero needed to NOT save frames - anything else saves!
 
 		if (this.save_frame) {
 			// We use ulid ids for games, and games get binned into part of the 10 bits timestamp
