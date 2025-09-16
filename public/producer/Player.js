@@ -12,6 +12,7 @@ import { createOCRInstance } from './ocrStrategy.js';
 
 const SEND_BINARY = QueryString.get('binary') !== '0';
 const HEART_BEAT_TIMEOUT = 1000;
+const REMOTE_CALIBRATION_FRAME_INTERVAL_MS = 10000; // ms
 
 async function getRemoteCalibrationImageArgs() {
 	const IMAGE_TYPE_PRECEDENCE = [
@@ -112,7 +113,7 @@ export class Player extends EventTarget {
 					clearInterval(this.conn.sendVideoFrameIntervalId);
 					this.conn.sendVideoFrameIntervalId = setInterval(
 						sendVideoFrame,
-						10000
+						REMOTE_CALIBRATION_FRAME_INTERVAL_MS
 					);
 					sendVideoFrame();
 				});
