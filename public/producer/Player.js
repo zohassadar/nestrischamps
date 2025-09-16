@@ -91,13 +91,18 @@ export class Player extends EventTarget {
 
 				const video = this._driver.getVideo();
 
+				const remoteConfig = getSerializableConfigCopy(this.config);
+
+				// strip out fields that should not be shared
+				delete remoteConfig.device_id; // this should never be shared - device_id is specific to the local hardware and site
+
 				this.conn = this.#peer.connect(admin_peer_id, {
 					metadata: {
 						video: {
 							width: video.videoWidth,
 							height: video.videoHeight,
 						},
-						config: getSerializableConfigCopy(this.config),
+						config: remoteConfig,
 						imageArgs: this.#remoteCalibrationImageArgs,
 						userAgent: window.navigator.userAgent,
 					},
