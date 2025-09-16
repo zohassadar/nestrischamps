@@ -516,6 +516,9 @@
 						player.dom.score_box.classList.toggle('with_tdiff');
 					});
 				}, CYCLE_TDIFF * 1000);
+
+				// player 1 and player 2 will showe the tetris diff at different times
+				players[0].dom.score_box.classList.add('with_tdiff');
 			}
 
 			let focusedPlayer = null;
