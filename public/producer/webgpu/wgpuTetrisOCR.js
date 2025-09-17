@@ -3,12 +3,39 @@ import { PATTERN_MAX_INDEXES, GYM_PAUSE_LUMA_THRESHOLD } from '../constants.js';
 import { findMinIndex, u32ToRgba } from '/ocr/utils.js';
 import { OcrCompute } from './ocrCompute.js';
 
+function getDeviceLimits(device) {
+	const res = {};
+	for (const key in device.limits) res[key] = device.limits[key];
+	return res;
+}
+
 async function getGPU() {
 	const adapter = await navigator.gpu.requestAdapter({
 		powerPreference: 'high-performance',
 	});
 	const device = await adapter.requestDevice();
 	const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+
+	// adding some debug info
+	const adapterInfo = await adapter.requestAdapterInfo?.();
+	const features = Array.from(adapter.features);
+	const limits = getDeviceLimits(device);
+
+	console.log(
+		JSON.stringify(
+			{
+				gpu: {
+					adapterInfo,
+					features,
+					limits,
+				},
+				userAgent: navigator.userAgent,
+				userAgentData: navigator.userAgentData,
+			},
+			null,
+			2
+		)
+	);
 
 	const [vertex, fragment, compute] = await Promise.all([
 		GpuTetrisOCR.loadShaderSource('/producer/webgpu/shaders/vertex.wgsl'),
