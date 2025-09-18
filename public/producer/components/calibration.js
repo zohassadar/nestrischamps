@@ -536,6 +536,7 @@ export class NTC_Producer_Calibration extends NtcComponent {
 	#handleFrameDetails = ({ detail: frame }) => {
 		if (this.#video !== frame.video) {
 			this.#video = frame.video;
+			this.#updateAvailableFrameRates();
 		}
 	};
 
