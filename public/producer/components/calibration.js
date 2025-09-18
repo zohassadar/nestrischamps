@@ -431,25 +431,35 @@ export class NTC_Producer_Calibration extends NtcComponent {
 
 		const frame_rate = parseInt(capture_rate.value, 10);
 
-		this.ocr.config.frame_rate = frame_rate;
-		this.ocr.config.save();
-
 		const stream = this.#video.srcObject;
 		const videoTrack = stream.getVideoTracks()[0];
 		const originalSettings = videoTrack.getSettings();
 
 		if (originalSettings.frameRate !== frame_rate) {
+			const lockedConstraints = ['width', 'height'].reduce((acc, prop) => {
+				if (originalSettings[prop] != null) {
+					acc[prop] = { exact: originalSettings[prop] };
+				}
+				return acc;
+			}, {});
+
 			const newConstraints = {
 				frameRate: { ideal: frame_rate },
 			};
 
 			try {
 				// Apply the new constraints
-				await videoTrack.applyConstraints(newConstraints);
+				await videoTrack.applyConstraints({
+					...lockedConstraints,
+					...newConstraints,
+				});
 
 				// Check the settings again to confirm only the frame rate changed
 				const updatedSettings = videoTrack.getSettings();
 				console.log('New frame rate:', updatedSettings.frameRate);
+
+				this.ocr.config.frame_rate = updatedSettings.frameRate || frame_rate;
+				this.ocr.config.save();
 			} catch (error) {
 				console.error('Failed to update constraints:', error);
 			}
