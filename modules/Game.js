@@ -104,6 +104,7 @@ class Game {
 			this.num_pieces = 0;
 			this.prior_preview = 'O';
 
+			this.tracked_lines = 0;
 			this.tetris_lines = 0;
 
 			this.cur_drought = 0;
@@ -383,10 +384,15 @@ class Game {
 		if (cleared) {
 			this.data.lines = data.lines;
 
-			this.clears.push(cleared);
+			if (cleared > 0) {
+				// negative clears are due to capture issues, we ignore 🤷
 
-			if (cleared === 4) {
-				this.tetris_lines += cleared;
+				this.tracked_lines += cleared;
+				this.clears.push(cleared);
+
+				if (cleared === 4) {
+					this.tetris_lines += cleared;
+				}
 			}
 
 			// when line changes, level may have changed
@@ -450,8 +456,8 @@ class Game {
 		let tetris_rate = null;
 		let das_avg = -1;
 
-		if (this.clears.length) {
-			tetris_rate = this.tetris_lines / this.data.lines;
+		if (this.tracked_lines) {
+			tetris_rate = this.tetris_lines / this.tracked_lines;
 		}
 
 		if (this.pieces.length && this.das_total) {
