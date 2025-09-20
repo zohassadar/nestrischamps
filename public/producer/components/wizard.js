@@ -1,11 +1,10 @@
 import BinaryFrame from '/js/BinaryFrame.js';
 import { html } from '../StringUtils.js';
 import {
-	DEFAULT_1P_CAPTURE_HEIGHT,
-	DEFAULT_1P_CAPTURE_FPS,
 	getConnectedDevices,
 	playVideoFromDevice,
 	playVideoFromScreenCap,
+	getStreamSettings,
 } from '../MediaUtils.js';
 import { NtcComponent } from './NtcComponent.js';
 import {
@@ -263,6 +262,9 @@ export class NTC_Producer_Wizard extends NtcComponent {
 		[...step2.querySelectorAll(`.mode:not(.${this.#mode})`)].forEach(elmt =>
 			elmt.classList.add('is-hidden')
 		);
+
+		// depending on the chosen mode, we may need to hide some device entries
+		this.resetDevices();
 	}
 
 	async #updatePaletteList() {
@@ -310,9 +312,7 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				video.ntcType = 'device';
 				playVideoFromDevice(video, {
 					device_id,
-					fps: this.#mode === 'multiviewer' ? 30 : DEFAULT_1P_CAPTURE_FPS, // could multiviewer han dle 60fps?
-					height:
-						this.#mode === 'multiviewer' ? 1080 : DEFAULT_1P_CAPTURE_HEIGHT,
+					mode: this.#mode,
 				});
 			}
 		}
@@ -582,6 +582,18 @@ export class NTC_Producer_Wizard extends NtcComponent {
 
 		config.mode = this.#mode;
 
+		const { video } = this.#domrefs;
+
+		// OCR from video, we need to store capture settings in the config
+		const settings = getStreamSettings(video.srcObject);
+
+		config.cap_frame_rate = settings.frameRate;
+
+		if (config.device_id != 'window') {
+			config.cap_width = settings.width;
+			config.cap_height = settings.height;
+		}
+
 		// below here we are in device or window capture
 		const game_type = CONFIGS[rom_type].game_type;
 
@@ -593,7 +605,6 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				tasks: this.#getTasks(rom_type, tetris_ui_in_video_xywh),
 			});
 		} else if (this.#mode === 'multiviewer') {
-			config.frame_rate = 30; // cap multiviewer at 30fps
 			config.players = this.#getMultiviewerOffsets().map(({ x, y }) => {
 				const ui_xywh = [...tetris_ui_in_video_xywh];
 
@@ -609,7 +620,6 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				});
 
 				delete playerConfig.use_worker_for_interval;
-				delete playerConfig.frame_rate;
 				delete playerConfig.save;
 
 				return playerConfig;
@@ -656,6 +666,11 @@ export class NTC_Producer_Wizard extends NtcComponent {
 
 		const retron_definitions = RETRON_HD_CONFIG[this.#mode][aspect];
 		const game_type = BinaryFrame.GAME_TYPE[rom_id.toUpperCase()];
+		const settings = getStreamSettings(video.srcObject);
+
+		config.cap_frame_rate = settings.frameRate;
+		config.cap_width = settings.width;
+		config.cap_height = settings.height;
 
 		if (this.#mode === 'single') {
 			Object.assign(config, getDefaultOcrConfig(), {
@@ -671,7 +686,6 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				);
 			});
 		} else if (this.#mode === 'multiviewer') {
-			config.frame_rate = 30; // cap multiviewer at 30fps
 			config.players = this.#getMultiviewerOffsets().map(({ x, y }) => {
 				const playerConfig = Object.assign(getDefaultOcrConfig(), {
 					game_type,
@@ -679,7 +693,6 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				});
 
 				delete playerConfig.use_worker_for_interval;
-				delete playerConfig.frame_rate;
 				delete playerConfig.save;
 
 				CONFIGS[rom_id].fields.forEach(name => {
@@ -767,19 +780,22 @@ export class NTC_Producer_Wizard extends NtcComponent {
 				label: '-',
 				deviceId: '',
 			},
-			{
-				label: 'Window Capture',
-				deviceId: 'window',
-			},
 		];
 
-		if ('serial' in navigator) {
-			default_devices.splice(1, 0, {
-				label: 'Everdrive N8 Pro - Direct USB Capture',
-				deviceId: 'everdrive',
+		if (this.#mode == 'single') {
+			default_devices.push({
+				label: 'Window Capture',
+				deviceId: 'window',
 			});
-		} else {
-			device_selector.after('(For EverDrive Capture, use Chrome)');
+
+			if ('serial' in navigator) {
+				default_devices.splice(1, 0, {
+					label: 'Everdrive N8 Pro - Direct USB Capture',
+					deviceId: 'everdrive',
+				});
+			} else {
+				device_selector.after('(For EverDrive Capture, use Chrome)');
+			}
 		}
 
 		device_selector.replaceChildren(

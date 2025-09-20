@@ -1,14 +1,7 @@
 import QueryString from '/js/QueryString.js';
 
-export const DEFAULT_1P_CAPTURE_HEIGHT = (value =>
-	/^[1-9]\d+$/.test(value) ? parseInt(value, 10) : 720)(
-	QueryString.get('capheight')
-);
-
-export const DEFAULT_1P_CAPTURE_FPS = (value =>
-	/^(24|25|30|50|60)\d+$/.test(value) ? parseInt(value, 10) : 60)(
-	QueryString.get('capfps')
-);
+export const CAP_TYPE = (value =>
+	/^(pal|ntsc)$/.test(value) ? value : 'ntsc')(QueryString.get('captype'));
 
 export async function getConnectedDevices(type) {
 	let stream;
@@ -35,6 +28,11 @@ export async function getConnectedDevices(type) {
 	return devices;
 }
 
+export function getStreamSettings(stream) {
+	const track = stream.getVideoTracks()[0];
+	return track.getSettings();
+}
+
 export function logStreamDetails(stream) {
 	const track = stream.getVideoTracks()[0];
 	const settings = track.getSettings();
@@ -49,7 +47,7 @@ export async function getStream(config) {
 		throw new Exception(`getSream(): Unexpected device id`);
 	}
 
-	const ideal_frame_rate = config.frame_rate || 60;
+	const ideal_frame_rate = config.cap_frame_rate || 60;
 
 	let stream;
 
@@ -66,16 +64,16 @@ export async function getStream(config) {
 			stream = await navigator.mediaDevices.getDisplayMedia(constraints);
 			stream.ntcType = 'screencap';
 		} else {
+			// for consistency sake, the config is assumed to have the details of capture height and framerate
 			const constraints = {
 				audio: false,
 				video: {
 					deviceId: { exact: config.device_id },
+					width: {
+						ideal: config.cap_width,
+					},
 					height: {
-						ideal:
-							config.capheight ||
-							(config.mode === 'multiviewer'
-								? 1080
-								: DEFAULT_1P_CAPTURE_HEIGHT),
+						ideal: config.cap_height,
 					},
 					frameRate: { ideal: ideal_frame_rate }, // Should we always try to get the highest the card can support?
 				},
@@ -112,34 +110,95 @@ export async function getStream(config) {
 
 export async function playVideoFromDevice(video, options = {}) {
 	console.log('playVideoFromDevice()');
-	const ideal = {
-		device_id: options.device_id || undefined,
-		fps: options.fps || 60,
-		height: options.height || DEFAULT_1P_CAPTURE_HEIGHT,
-	};
+
+	const { mode, device_id } = options;
 
 	try {
-		const constraints = {
+		const initConstraints = {
 			audio: false,
 			video: {
-				height: { ideal: ideal.height },
-				frameRate: { ideal: ideal.fps }, // Should we try to get the highest the card can support?
-				// brightness: { ideal: ideal.brightness || 0 },
-				// contrast: { ideal: ideal.contrast || 140 },
-				// saturation: { ideal: ideal.saturation || 140 },
+				frameRate: { ideal: mode === 'multiviewer' ? 30 : 60 },
+				height: { ideal: mode === 'multiviewer' ? 1080 : 720 },
 			},
 		};
 
-		if (ideal.device_id) {
-			constraints.video.deviceId = { exact: ideal.device_id };
+		if (device_id) {
+			initConstraints.video.deviceId = { exact: device_id };
 		}
 
-		console.log(`Capture Constraints: ${JSON.stringify(constraints, null, 2)}`);
+		console.log(
+			`Initial Constraints: ${JSON.stringify(initConstraints, null, 2)}`
+		);
 
-		const stream = await navigator.mediaDevices.getUserMedia(constraints);
+		const stream = await navigator.mediaDevices.getUserMedia(initConstraints);
 
 		// we only prompt for permission with the first call
-		if (ideal.device_id === undefined) return;
+		if (!device_id) return;
+
+		// now that we have the stream, we apply additional constraint to find the best operation match
+		let videoConstraints;
+
+		if (mode === 'multiviewer') {
+			videoConstraints = {
+				height: { min: 720, ideal: 1080 },
+				frameRate: { ideal: 30 },
+				advanced:
+					CAP_TYPE === 'pal'
+						? [
+								{ height: 1080, frameRate: 50 },
+								{ width: 1920, height: 1080, frameRate: 25 },
+								{ height: 720, frameRate: 50 },
+								{ width: 1280, height: 720, frameRate: 25 },
+								{ height: 1080 }, // try for size - any fps
+							]
+						: [
+								// { height: 1080, frameRate: 60 }, // works on OSX, freezes on windows ??
+								{ height: 1080, frameRate: 30 },
+								{ height: 720, frameRate: 60 },
+								{ height: 720, frameRate: 30 },
+								{ height: 1080 }, // try for size - any fps
+							],
+			};
+		} else {
+			videoConstraints = {
+				height: { min: 240, ideal: 720 },
+				frameRate: { ideal: 60 },
+				advanced:
+					CAP_TYPE === 'pal'
+						? [
+								{ height: 720, frameRate: 50 },
+								{ width: 1280, height: 720, frameRate: 25 },
+								{ height: 720, frameRate: 25 },
+								{ height: 480, frameRate: 50 },
+								{ height: 480, frameRate: 25 },
+								{ frameRate: 25 },
+								{ height: 480 },
+							]
+						: [
+								{ height: 720, frameRate: 60 },
+								{ width: 1280, height: 720, frameRate: 30 },
+								{ height: 720, frameRate: 30 },
+								{ height: 480, frameRate: 60 },
+								{ height: 480, frameRate: 30 },
+								{ frameRate: 30 },
+								{ height: 480 },
+							],
+			};
+		}
+
+		const track = stream.getVideoTracks()[0];
+
+		console.log(
+			`Updated Video Constraints: ${JSON.stringify(videoConstraints, null, 2)}`
+		);
+
+		try {
+			await track.applyConstraints(videoConstraints);
+			console.log('Successfully applied video constraints');
+		} catch (err) {
+			// Note: should we abort?
+			console.warn('Unable to apply video constraints');
+		}
 
 		logStreamDetails(stream);
 
@@ -160,7 +219,7 @@ export async function playVideoFromScreenCap(video, fps = 60) {
 		const constraints = {
 			audio: false,
 			video: {
-				cursor: 'never',
+				cursor: 'never', // https://www.w3.org/TR/screen-capture/#dom-cursorcaptureconstraint
 				frameRate: { ideal: fps },
 			},
 		};

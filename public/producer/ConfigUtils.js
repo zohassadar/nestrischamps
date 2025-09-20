@@ -1,62 +1,20 @@
 import QueryString from '/js/QueryString.js';
 import BinaryFrame from '/js/BinaryFrame.js';
 import { getPalette } from '/ocr/palettes.js';
-import { REFERENCE_LOCATIONS } from './constants.js';
 
-const OLD_CONFIG_NAME = 'config';
+const OLD_CONFIG_NAME = 'config_v2';
 
 function getConfigName() {
-	return QueryString.get('config') || 'config_v2';
-}
-
-// the old config can be consumed ONCE
-function tryOldConfig() {
-	if (localStorage.getItem(`${OLD_CONFIG_NAME}_v1_consumed`) === 'true') {
-		// old config was previously consumed
-		throw new Error('Old config has already been used');
-	}
-
-	const oldConfig = localStorage.getItem(OLD_CONFIG_NAME);
-	const parsed = JSON.parse(oldConfig);
-
-	if (parsed.use_half_height) {
-		throw new Error('Old config uses half_height');
-	}
-
-	// convert all tasks crop format
-	Object.entries(parsed.tasks).forEach(([name, task]) => {
-		const newTask = {
-			...REFERENCE_LOCATIONS[name],
-			...task,
-		};
-
-		if (Array.isArray(task.crop)) {
-			const [x, y, w, h] = task.crop;
-			newTask.crop = { x, y, w, h };
-		}
-
-		parsed.tasks[name] = newTask;
-	});
-
-	parsed.capheight = 480; // because old system was capturing at 480p
-
-	const upgraded_config = JSON.stringify(parsed);
-
-	saveConfig(parsed);
-	localStorage.setItem(`${OLD_CONFIG_NAME}_v1_consumed`, 'true');
-
-	return upgraded_config;
+	return QueryString.get('config') || 'config_v2b';
 }
 
 export function hasConfig() {
 	let maybeConfig = localStorage.getItem(getConfigName());
 
 	if (!maybeConfig) {
-		try {
-			maybeConfig = tryOldConfig();
-		} catch (err) {
-			return false;
-		}
+		// delete old config, just in case
+		localStorage.removeItem(OLD_CONFIG_NAME);
+		return false;
 	}
 
 	// minimal checks for validity of the config object
@@ -147,7 +105,9 @@ export function getSerializableConfigCopy(config) {
 		device_id,
 		game_type,
 		palette,
-		frame_rate,
+		cap_frame_rate,
+		cap_width,
+		cap_height,
 		allow_video_feed,
 		video_feed_device_id,
 		brightness,
@@ -155,7 +115,6 @@ export function getSerializableConfigCopy(config) {
 		score7,
 		use_worker_for_interval,
 		handle_retron_levels_6_7,
-		capheight,
 	} = config;
 
 	// need to drop non-serializable fields
@@ -163,7 +122,9 @@ export function getSerializableConfigCopy(config) {
 		device_id,
 		game_type,
 		palette,
-		frame_rate,
+		cap_frame_rate,
+		cap_width,
+		cap_height,
 		allow_video_feed,
 		video_feed_device_id,
 		brightness,
@@ -171,7 +132,6 @@ export function getSerializableConfigCopy(config) {
 		score7,
 		use_worker_for_interval,
 		handle_retron_levels_6_7,
-		capheight,
 		tasks: {},
 	};
 
@@ -213,7 +173,6 @@ export function getDefaultOcrConfig() {
 	return {
 		game_type: 1,
 		palette: '',
-		frame_rate: 60,
 		allow_video_feed: false,
 		video_feed_device_id: null,
 		brightness: 1,
