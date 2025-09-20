@@ -145,7 +145,7 @@ export async function playVideoFromDevice(video, options = {}) {
 				advanced:
 					CAP_TYPE === 'pal'
 						? [
-								{ height: 1080, frameRate: 50 },
+								// { height: 1080, frameRate: 50 }, // works on OSX, freezes on windows ??
 								{ width: 1920, height: 1080, frameRate: 25 },
 								{ height: 720, frameRate: 50 },
 								{ width: 1280, height: 720, frameRate: 25 },
@@ -188,16 +188,28 @@ export async function playVideoFromDevice(video, options = {}) {
 
 		const track = stream.getVideoTracks()[0];
 
-		console.log(
-			`Updated Video Constraints: ${JSON.stringify(videoConstraints, null, 2)}`
-		);
+		let remainingAttempts = 1;
 
-		try {
-			await track.applyConstraints(videoConstraints);
-			console.log('Successfully applied video constraints');
-		} catch (err) {
-			// Note: should we abort?
-			console.warn('Unable to apply video constraints');
+		while (true) {
+			console.log('Attempting to apply video constraints', videoConstraints);
+			try {
+				await track.applyConstraints(videoConstraints);
+				console.log('Successfully applied video constraints');
+			} catch (err) {
+				// try one more time while dropping the most aggressive constraint
+				if (remainingAttempts-- > 0) {
+					console.warn(
+						'Unable to apply video constraints - retrying with looser constraints',
+						err
+					);
+					videoConstraints.advanced.shift();
+					continue;
+				}
+
+				console.warn('Unable to apply video constraints');
+			}
+
+			break;
 		}
 
 		logStreamDetails(stream);
