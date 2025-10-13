@@ -150,6 +150,18 @@ const MARKUP = html`
 				</div>
 			</div>
 
+			<div id="ed-patch-link" class="is-hidden content notification is-info">
+				<h3 class="title is-3">Download Patch</h3>
+				<p>
+					This connector requires a specific version of TetrisGYM. Download
+					here: <a href="../../producer/ed2ntc251013.bps">ed2ntc251013.bps</a>.
+					Patching can be done at
+					<a href="https://www.marcrobledo.com/RomPatcher.js"
+						>https://www.marcrobledo.com/RomPatcher.js</a
+					>.
+				</p>
+			</div>
+
 			<div id="instructions" class="content notification is-warning is-hidden">
 				<h1 class="title is-4">Please read these next-steps instructions!</h1>
 				<ol start="1">
@@ -227,6 +239,7 @@ export class NTC_Producer_Wizard extends NtcComponent {
 			instructions: this.shadow.getElementById('instructions'),
 			video_container: this.shadow.getElementById('video_container'),
 			video: this.shadow.getElementById('video'),
+			ed_patch_link: this.shadow.getElementById('ed-patch-link'),
 		};
 
 		this.#domrefs.palette_selector.disabled = true;
@@ -569,6 +582,8 @@ export class NTC_Producer_Wizard extends NtcComponent {
 	}
 
 	#finalizeEverdriveConfig() {
+		const { ed_patch_link } = this.#domrefs;
+		ed_patch_link.classList.remove('is-hidden');
 		this.#saveAndDispatchConfig({
 			device_id: 'everdrive',
 		});
