@@ -3,13 +3,20 @@ import pg from 'pg';
 let pool;
 
 const isPublicServer = /^(1|on|true)$/i.test(process.env.IS_PUBLIC_SERVER);
+const pgUser = process.env.POSTGRES_USER;
+const pgDb = process.env.POSTGRES_DB;
+const pgPass = process.env.POSTGRES_PASSWORD;
+const dbUrl = process.env.DATABASE_URL;
+const connectionString = dbUrl
+	? dbUrl
+	: `postgres://${pgUser}:${pgPass}@localhost:5432/${pgDb}?sslmode=disable`;
 
 console.log(`DB initialization`, {
 	IS_PUBLIC_SERVER: isPublicServer,
 });
 
 pool = new pg.Pool({
-	connectionString: process.env.DATABASE_URL,
+	connectionString: connectionString,
 	ssl: {
 		rejectUnauthorized: false, // isPublicServer,
 	},

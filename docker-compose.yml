@@ -1,0 +1,13 @@
+services:
+  db:
+    restart: unless-stopped
+    image: postgres:13.22-alpine
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ${PWD}/setup:/setup:ro
+    ports:
+      - '5432:5432'
+
+volumes:
+  pgdata:
