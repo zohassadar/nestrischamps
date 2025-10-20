@@ -1,6 +1,7 @@
 import QueryString from '/js/QueryString.js';
 import { timer } from './timer.js';
-import { getStream } from './MediaUtils.js';
+import { getStream, getDeviceLabel } from './MediaUtils.js';
+import { getOcrClass } from './ocrStrategy.js';
 
 const defaultDriverMode = (value =>
 	/^(mstp|callback|interval)$/.test(value) ? value : 'interval')(
@@ -27,6 +28,7 @@ export class CaptureDriver extends EventTarget {
 	#captureIntervalId;
 	#captureFrameCallbackId;
 	#captureDetails;
+	#skippedFrames = 0;
 	#then;
 
 	constructor(config, stream = null) {
@@ -91,7 +93,8 @@ export class CaptureDriver extends EventTarget {
 		}
 	}
 
-	#updateCaptureDetails() {
+	async #updateCaptureDetails() {
+		let deviceLabel;
 		let trackFps = null;
 
 		try {
@@ -102,10 +105,12 @@ export class CaptureDriver extends EventTarget {
 		}
 
 		this.#captureDetails = {
+			device: await getDeviceLabel(this.config.device_id),
 			video: this.#video,
 			videoSize: `${this.#video.videoWidth} x ${this.#video.videoHeight}`,
 			videoFps: trackFps,
 			driverMode: DRIVER_MODE,
+			ocrClass: (await getOcrClass()).name,
 		};
 	}
 
@@ -123,7 +128,8 @@ export class CaptureDriver extends EventTarget {
 
 	#startFrameCapture = async () => {
 		this.#stopFrameCapture();
-		this.#updateCaptureDetails();
+
+		await this.#updateCaptureDetails();
 
 		console.log(
 			`#startFrameCapture: ${JSON.stringify(
@@ -132,6 +138,7 @@ export class CaptureDriver extends EventTarget {
 					MediaStreamTrackProcessorSupported,
 					videoFps: this.#captureDetails.videoFps,
 					diverMode: this.#captureDetails.driverMode,
+					ocrClass: this.#captureDetails.ocrClass,
 				},
 				null,
 				2
@@ -185,16 +192,7 @@ export class CaptureDriver extends EventTarget {
 		const now = performance.now();
 
 		if (this.#working) {
-			this.dispatchEvent(
-				new CustomEvent('frame', {
-					detail: {
-						ts: now,
-						skipped: true,
-						elapsed: now - this.#then,
-						captureDetails: this.#captureDetails,
-					},
-				})
-			);
+			this.#skippedFrames += 1;
 			return;
 		}
 
@@ -212,7 +210,7 @@ export class CaptureDriver extends EventTarget {
 		};
 
 		// Run all players in parallel
-		await Promise.allSettled(this.players.map(p => p.processVideoFrame(frame)));
+		await Promise.allSettled(this.players.map(p => p.processFrame(frame)));
 
 		performance.mark(`end-driver-${this.driverSuffix}`);
 
@@ -226,13 +224,14 @@ export class CaptureDriver extends EventTarget {
 			new CustomEvent('frame', {
 				detail: {
 					ts: now,
-					skipped: false,
+					skipped: this.#skippedFrames,
 					elapsed: measure.duration,
 					captureDetails: this.#captureDetails,
 				},
 			})
 		);
 
+		this.#skippedFrames = 0;
 		this.#working = false;
 	}
 

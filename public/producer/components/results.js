@@ -5,7 +5,7 @@ import './CaptureDetails.js';
 import './PerfResults.js';
 
 const MARKUP = html`
-	<div id="ocr_results" class="columns container is-fluid">
+	<div id="results" class="columns container is-fluid">
 		<fieldset class="column">
 			<legend>Frame Data</legend>
 			<dl id="frame_data"></dl>
@@ -16,14 +16,14 @@ const MARKUP = html`
 				<ntc-capturedetails id="capture_details"></ntc-capturedetails>
 			</fieldset>
 			<fieldset>
-				<legend>OCR Performance (in ms)</legend>
+				<legend>Performance (in ms)</legend>
 				<ntc-perfresults id="perf_data"></ntc-perfresults>
 			</fieldset>
 		</div>
 	</div>
 `;
 
-export class NTC_Producer_OcrResults extends NtcComponent {
+export class NTC_Producer_Results extends NtcComponent {
 	#domrefs;
 
 	constructor() {
@@ -43,10 +43,6 @@ export class NTC_Producer_OcrResults extends NtcComponent {
 		driver.addEventListener('frame', this.#handleDriverFrame);
 	}
 
-	setOCR(ocr) {
-		ocr.addEventListener('frame', this.#handleOCRFrame);
-	}
-
 	setGameTracker(game_tracker) {
 		this.game_tracker = game_tracker;
 
@@ -57,9 +53,9 @@ export class NTC_Producer_OcrResults extends NtcComponent {
 		this.#domrefs.capture_details.showCaptureDetails(event);
 	};
 
-	#handleOCRFrame = event => {
-		this.#domrefs.perf_data.showPerfData(event);
-	};
+	showPerfData() {
+		this.#domrefs.perf_data.showPerfData();
+	}
 
 	#handleGameTrackerFrame = ({ detail: frame }) => {
 		this.#setFrameData(frame);
@@ -117,4 +113,4 @@ export class NTC_Producer_OcrResults extends NtcComponent {
 	}
 }
 
-customElements.define('ntc-ocrresults', NTC_Producer_OcrResults);
+customElements.define('ntc-results', NTC_Producer_Results);

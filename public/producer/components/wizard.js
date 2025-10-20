@@ -18,7 +18,12 @@ import {
 	getFieldCoordinates,
 	getCaptureCoordinates,
 } from '../../ocr/calibration.js';
-import { saveMultiviewerConfig, getDefaultOcrConfig } from '../ConfigUtils.js';
+import { getEDSerialPort } from '../../ocr/EDClient.js';
+import {
+	saveConfig,
+	saveMultiviewerConfig,
+	getDefaultOcrConfig,
+} from '../ConfigUtils.js';
 import { sleep } from '../timer.js';
 
 function css_size(css_pixel_width) {
@@ -581,11 +586,36 @@ export class NTC_Producer_Wizard extends NtcComponent {
 		this.#saveAndDispatchConfig(config);
 	}
 
-	#finalizeEverdriveConfig() {
-		const { ed_patch_link } = this.#domrefs;
-		ed_patch_link.classList.remove('is-hidden');
+	async #finalizeEverdriveConfig() {
+		try {
+			// We get the serial port NOW (i.e. on handling a user gesture)
+			// On very first interaction, that will prompt the user to agree to use serial
+			// Not doing it now would mean not able to auto-start the everdrive capture later on, and in particular on refresh
+      const { ed_patch_link } = this.#domrefs;
+      ed_patch_link.classList.remove('is-hidden');
+			const port = await getEDSerialPort();
+		} catch (err) {
+			let msg = `Unexpected error requesting serial port: ${err.message}`;
+
+			if (err.name === 'NotFoundError') {
+				msg =
+					'EverDrive Device not found, or user did not select a prompt when prompted';
+			} else if (err.name === 'SecurityError') {
+				msg =
+					'Security Error: Unable to access EverDrive device via Web Serial API';
+			}
+
+			console.error(msg);
+			alert(msg);
+
+			return;
+		}
+
 		this.#saveAndDispatchConfig({
 			device_id: 'everdrive',
+			save: function () {
+				saveConfig(this);
+			},
 		});
 	}
 

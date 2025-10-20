@@ -8,11 +8,28 @@ import { sleep, timer } from './timer.js';
 import { hasConfig, loadConfig } from './ConfigUtils.js';
 
 import { CaptureDriver } from './CaptureDriver.js';
-import { Player } from './Player.js';
+import { OcrPlayer } from './OcrPlayer.js';
+import EDClient from '/ocr/EDClient.js'; // is the EDDriver!
+import { EverdrivePlayer } from './EverdrivePlayer.js';
 
-async function initEverDriveCapture(config, tabToOpen) {
-	removeCalibrationTab();
-	initCaptureFromEverdrive(config.frame_rate); // TODO
+function initEverDriveCapture(config) {
+	console.log('initEverDriveCapture');
+
+	const capture = document.createElement('ntc-capture');
+	document.body.prepend(capture);
+
+	const edClient = new EDClient(config.frame_rate || 60);
+	const player = new EverdrivePlayer(config);
+
+	edClient.addEventListener('frame', event => {
+		player.processFrame(event.detail.data);
+	});
+
+	capture.setDriver(edClient);
+	capture.setPlayer(player);
+
+	capture.dropTab('calibration');
+	capture.showTab('results');
 }
 
 async function initMultiViewerCapture(config) {
@@ -27,7 +44,7 @@ async function initMultiViewerCapture(config) {
 	})(QueryString.get('first_player'));
 
 	for (const playerConfig of config.players) {
-		const player = new Player(playerConfig, playerNum++);
+		const player = new OcrPlayer(playerConfig, playerNum++);
 		driver.addPlayer(player);
 	}
 
@@ -40,7 +57,7 @@ async function initOCRCapture(config, tabToOpen, stream) {
 	console.log(config);
 
 	const driver = new CaptureDriver(config, stream);
-	const player = new Player(config);
+	const player = new OcrPlayer(config);
 
 	driver.addPlayer(player);
 
@@ -57,7 +74,7 @@ async function initFromConfig(tabToOpen, stream = null) {
 	const config = await loadConfig();
 
 	if (config.device_id === 'everdrive') {
-		initEverDriveCapture(config, 'ocr_results');
+		initEverDriveCapture(config);
 	} else if (config.mode === 'multiviewer') {
 		initMultiViewerCapture(config);
 	} else {
@@ -73,7 +90,7 @@ async function initFromConfig(tabToOpen, stream = null) {
 
 	if (hasConfig()) {
 		console.log('has config');
-		initFromConfig('ocr_results');
+		initFromConfig('results');
 	} else {
 		const wizard = document.createElement('ntc-wizard');
 		document.body.prepend(wizard);
