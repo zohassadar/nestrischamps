@@ -1,0 +1,46 @@
+
+openssl req
+    -x509 \
+    -newkey rsa:4096 \
+    -keyout key.pem \
+    -out cert.pem \
+    -sha256 \
+    -days 3650 \
+    -nodes \
+    -subj "/C=XX/ST=State/L=City/O=NTC/OU=NTC/CN=localhost"
+
+mkdir certs
+chmod 700 certs
+mv *.pem certs
+
+cat > .env << EOF
+export DATABASE_URL=postgres://ntc:ntc@localhost:5432/ntc?sslmode=disable
+export NODE_ENV=production
+export PGSSLMODE=disable
+export SESSION_SECRET=1234567890ABCDEF
+export FF_SAVE_GAME_FRAMES=1
+export TLS_KEY=certs/key.pem
+export TLS_CERT=certs/cert.pem
+EOF
+
+chmod 600 .env
+
+docker compose up -d
+docker compose exec -it db psql -U ntc -d ntc -f /setup/db.sql
+
+sudo tee /etc/systemd/system/nestrischamps.service > /dev/null << EOF
+ [Unit]
+ Description=NesTrisChamps Service
+ Requires=docker.service
+
+ [Service]
+ User=$USER
+ Type=simple
+ WorkingDirectory="${PWD}"/nestrischamps
+ ExecStart=/usr/bin/node -r dotenv/config "${PWD}"/server.js
+ StandardOutput=file:"${PWD}"/logs/stdouterr.log
+ Restart=always
+
+ [Install]
+ WantedBy=multi-user.target
+EOF

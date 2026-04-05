@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:13.22-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ntc
+      POSTGRES_USER: ntc
+      POSTGRES_DB: ntc
+    volumes:
+      - ./postgresql/pgdata:/var/lib/postgresql/data
+      - ./setup:/setup:ro
+    ports:
+      - '5432:5432'
