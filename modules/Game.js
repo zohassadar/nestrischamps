@@ -231,7 +231,11 @@ class Game {
 		// Check board for gameover event (curtain has fallen)
 		if (cur_num_blocks >= 200) {
 			this.end();
-		} else if (this._isNoCurtainTopOut(data)) {
+		} else if (this._isEverdriveIdle(data)) {
+			console.log('Everdrive is idle');
+			this.end();
+		} else if (this._isEverdriveTopout(data)) {
+			console.log('Everdrive topout');
 			this.end();
 		}
 	}
@@ -241,6 +245,18 @@ class Game {
 			if (field[rowIdx * 10 + colIdx]) return false;
 		}
 		return true;
+	}
+
+	_isEverdriveIdle(data) {
+		return [data.T, data.J, data.Z, data.O, data.S, data.L, data.I].every(
+			stat => stat === 0x3ef
+		);
+	}
+
+	_isEverdriveTopout(data) {
+		return [data.T, data.J, data.Z, data.O, data.S, data.L, data.I].every(
+			stat => stat === 0x3fe
+		);
 	}
 
 	_isNoCurtainTopOut(data) {
