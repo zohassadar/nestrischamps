@@ -105,7 +105,7 @@ export default class BaseGame {
 	onGameOver() {}
 	onNewGame() {}
 	onCurtainDown() {}
-	onTetris(full_rows) {}
+	onTetris(_full_rows) {}
 
 	end() {
 		if (!this.over) {

@@ -506,7 +506,7 @@ export default class Player extends EventTarget {
 	onGameStart() {}
 	onGameOver() {}
 	onCurtainDown() {}
-	onTetris(full_rows) {}
+	onTetris(_full_rows) {}
 	onMoveRating() {}
 
 	setupSounds() {

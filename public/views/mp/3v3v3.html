@@ -380,12 +380,9 @@
 				const spacer = 3;
 				Math.round((1920 - pair_width * num_teams) / (num_teams - 1));
 
-				console.log({ spacer });
-
 				let player_num = 0;
 
 				teams.forEach((team, team_idx) => {
-					console.log(team_idx);
 					team.node.style.left = `${(spacer + pair_width) * team_idx}px`;
 
 					[1, 2, 3].forEach(col_num => {
@@ -398,6 +395,10 @@
 
 						player_node.classList.add(`p${player_num}`);
 						team.node.appendChild(player_node);
+
+						if (QueryString.get('rtrt') === '0') {
+							player_node.querySelector(`.running_trt`)?.remove();
+						}
 
 						const player = new Player(
 							{
@@ -430,9 +431,11 @@
 
 						player.onGameOver();
 
-						player.onTetris = function (full_rows) {
-							renderTetrisExplosion(this, full_rows);
-						};
+						if (QueryString.get('explosions') !== '0') {
+							player.onTetris = function (full_rows) {
+								renderTetrisExplosion(this, full_rows);
+							};
+						}
 
 						players.push(player);
 
@@ -443,10 +446,6 @@
 						Object.assign(player_node.style, {
 							left: `${(col_num - 1) * player_width}px`,
 						});
-
-						if (QueryString.get('rtrt') === '0') {
-							player.dom.running_trt.remove();
-						}
 					});
 				});
 

@@ -17,7 +17,7 @@ export default function init(server, wss) {
 		request.nc_url = new URL(request.url, 'ws://nestrischamps.io');
 
 		let m = request.nc_url.pathname.match(
-			/^\/ws\/replay\/([a-z0-9_-]+)\/((\d+)(-(\d+)){0,8})/
+			/^\/ws\/replay\/([a-z0-9_-]+)\/((\d+)(-(\d+)){0,11})/
 		);
 
 		if (m) {
