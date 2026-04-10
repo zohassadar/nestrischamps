@@ -252,7 +252,7 @@ class Game {
 
 	_isEverdriveIdle(data) {
 		return [data.T, data.J, data.Z, data.O, data.S, data.L, data.I].every(
-			stat => stat === 0x3ef
+			stat => stat === 0x3ff
 		);
 	}
 
