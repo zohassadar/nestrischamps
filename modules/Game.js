@@ -231,6 +231,8 @@ class Game {
 		// Check board for gameover event (curtain has fallen)
 		if (cur_num_blocks >= 200) {
 			this.end();
+		} else if (this._isNoCurtainTopOut(data)) {
+			this.end();
 		} else if (this._isEverdriveIdle(data)) {
 			console.log('Everdrive is idle');
 			this.end();
@@ -265,14 +267,14 @@ class Game {
 		// 2. top row hasn't changed over some frames
 		// 3. 1150ms of nothing new happening
 
-		for (let rowidx = 0; rowidx < 20; rowidx++) {
-			if (this._isRowEmpty(data.field, rowidx)) {
-				this.pending_topout = false;
-				this.pending_topout_start_ts = 0;
+		// for (let rowidx = 0; rowidx < 20; rowidx++) {
+		// 	if (this._isRowEmpty(data.field, rowidx)) {
+		// 		this.pending_topout = false;
+		// 		this.pending_topout_start_ts = 0;
 
-				return false;
-			}
-		}
+		// 		return false;
+		// 	}
+		// }
 
 		if (!this.pending_topout) {
 			// first frame of potential top out - record top 2 rows for later

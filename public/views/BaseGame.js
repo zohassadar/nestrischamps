@@ -176,9 +176,20 @@ export default class BaseGame {
 			if (piece_events.drought_end) this.onDroughtEnd(last_frame);
 		}
 
-		// Check board for everdrive gameover event
+		// Check board for gameover event (curtain is falling)
 		if (!this.over) {
-			if (this._isEverdriveIdle(frame)) {
+			if (this._isCurtainFalling(frame)) {
+				this.curtain_falling = true;
+				this.end();
+
+				if (this._getNumBlocks(frame) >= 200) {
+					this.curtain_falling = false;
+					this.onCurtainDown();
+				}
+			} else if (this._isNoCurtainTopOut(frame)) {
+				this.no_curtain_top_out = true;
+				this.end();
+			} else if (this._isEverdriveIdle(frame)) {
 				console.log('Everdrive is idle');
 				this.no_curtain_top_out = true;
 				this.end();
@@ -407,14 +418,14 @@ export default class BaseGame {
 		// 2. top row hasn't changed over some frames
 		// 3. 1150ms of nothing new happening
 
-		for (let rowidx = 0; rowidx < 20; rowidx++) {
-			if (this._isRowEmpty(data.field, rowidx)) {
-				this.pending_topout = false;
-				this.pending_topout_start_ts = 0;
-
-				return false;
-			}
-		}
+		// for (let rowidx = 0; rowidx < 20; rowidx++) {
+		// 	if (this._isRowEmpty(data.field, rowidx)) {
+		// 		this.pending_topout = false;
+		// 		this.pending_topout_start_ts = 0;
+		//
+		// 		return false;
+		// 	}
+		// }
 
 		if (!this.pending_topout) {
 			// first frame of potential top out - record top 2 rows for later
