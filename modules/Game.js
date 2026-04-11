@@ -17,9 +17,6 @@ const PIECES = ['T', 'J', 'Z', 'O', 'S', 'L', 'I'];
 const SCORE_BASES = [0, 40, 100, 300, 1200];
 const LINE_CLEAR_IGNORE_FRAMES = 7;
 
-// hack for everdrive
-const EVERDRIVE = true;
-
 class Game {
 	constructor(user, { competition = false }) {
 		this.frame_file = '';
@@ -147,7 +144,7 @@ class Game {
 
 		const cur_num_blocks = this._getNumBlocks(data);
 
-		if (this.pending_score || EVERDRIVE) {
+		if (this.pending_score) {
 			this.pending_score = false;
 			this.onScore(data); // updates state
 		} else {
@@ -380,28 +377,24 @@ class Game {
 		const cleared = data.lines - this.data.lines;
 		const line_score = (SCORE_BASES[cleared] || 0) * (data.level + 1);
 
-		if (EVERDRIVE) {
-			this.data.score = data.score;
-		} else {
-			if (data.score === 999999 && this.data.score + line_score >= 999999) {
-				// Compute score beyond maxout
-				this.data.score += line_score;
-			} else if (data.score < this.data.score) {
-				const num_wraps = Math.floor((this.data.score + line_score) / 1600000);
+		if (data.score === 999999 && this.data.score + line_score >= 999999) {
+			// Compute score beyond maxout
+			this.data.score += line_score;
+		} else if (data.score < this.data.score) {
+			const num_wraps = Math.floor((this.data.score + line_score) / 1600000);
 
-				if (num_wraps >= 1) {
-					// Using Hex score Game Genie code XNEOOGEX
-					// The GG code makes the score display wrap around to 0
-					// when reaching 1,600,000. We correct accordingly here.
-					this.data.score = 1600000 * num_wraps + data.score;
-				} else {
-					// weird reading
-					// but we take the new value anyway 🤷‍♂️
-					this.data.score = data.score;
-				}
+			if (num_wraps >= 1) {
+				// Using Hex score Game Genie code XNEOOGEX
+				// The GG code makes the score display wrap around to 0
+				// when reaching 1,600,000. We correct accordingly here.
+				this.data.score = 1600000 * num_wraps + data.score;
 			} else {
+				// weird reading
+				// but we take the new value anyway 🤷‍♂️
 				this.data.score = data.score;
 			}
+		} else {
+			this.data.score = data.score;
 		}
 
 		// when score changes, lines may have changed

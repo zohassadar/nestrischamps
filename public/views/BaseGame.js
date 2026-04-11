@@ -15,9 +15,6 @@ import {
 	getRunway,
 } from './constants.js';
 
-// hack for this branch
-const EVERDRIVE = true;
-
 const ALL_POSSIBLE_NEGATIVE_DIFFS = [
 	-2, -4, -6, -8, -10, -12, -16, -18, -20, -24, -30, -32, -40,
 ];
@@ -485,7 +482,7 @@ export default class BaseGame {
 	}
 
 	_checkScore(data) {
-		if (this.pending_score || EVERDRIVE) {
+		if (this.pending_score) {
 			this.pending_score = false;
 			return this._doScore(data);
 		}
@@ -520,30 +517,28 @@ export default class BaseGame {
 
 		let real_score = data.score;
 
-		if (!EVERDRIVE) {
-			if (
-				data.score === 999999 &&
-				this.data.score.current + lines_score >= 999999
-			) {
-				// Compute score beyond maxout
-				real_score = this.data.score.current + lines_score;
-			} else if (
-				data.score < this.data.score.current &&
-				data.score < 1600000 // if data.score reads over 1.6M, score OCR is 7-digits, and so 1.6M rollovers do not apply. We ignore the weird reading and accept data.score as-is. Should we exit even?
-			) {
-				const num_wraps = Math.floor(
-					(this.data.score.current + lines_score) / 1600000
-				);
+		if (
+			data.score === 999999 &&
+			this.data.score.current + lines_score >= 999999
+		) {
+			// Compute score beyond maxout
+			real_score = this.data.score.current + lines_score;
+		} else if (
+			data.score < this.data.score.current &&
+			data.score < 1600000 // if data.score reads over 1.6M, score OCR is 7-digits, and so 1.6M rollovers do not apply. We ignore the weird reading and accept data.score as-is. Should we exit even?
+		) {
+			const num_wraps = Math.floor(
+				(this.data.score.current + lines_score) / 1600000
+			);
 
-				if (num_wraps >= 1) {
-					// Using Hex score Game Genie code XNEOOGEX
-					// The GG code makes the score display wrap around to 0
-					// when reaching 1,600,000. We correct accordingly here.
-					real_score = 1600000 * num_wraps + data.score;
-				} else {
-					// weird reading (score goes lower than it was)
-					// but we do nothing and will accept it anyway
-				}
+			if (num_wraps >= 1) {
+				// Using Hex score Game Genie code XNEOOGEX
+				// The GG code makes the score display wrap around to 0
+				// when reaching 1,600,000. We correct accordingly here.
+				real_score = 1600000 * num_wraps + data.score;
+			} else {
+				// weird reading (score goes lower than it was)
+				// but we do nothing and will accept it anyway
 			}
 		}
 
