@@ -178,18 +178,7 @@ export default class BaseGame {
 
 		// Check board for gameover event (curtain is falling)
 		if (!this.over) {
-			if (this._isCurtainFalling(frame)) {
-				this.curtain_falling = true;
-				this.end();
-
-				if (this._getNumBlocks(frame) >= 200) {
-					this.curtain_falling = false;
-					this.onCurtainDown();
-				}
-			} else if (this._isNoCurtainTopOut(frame)) {
-				this.no_curtain_top_out = true;
-				this.end();
-			} else if (this._isEverdriveIdle(frame)) {
+			if (this._isEverdriveIdle(frame)) {
 				console.log('Everdrive is idle');
 				this.no_curtain_top_out = true;
 				this.end();
@@ -198,6 +187,18 @@ export default class BaseGame {
 				this.no_curtain_top_out = true;
 				this.end();
 			}
+			//          } else if (this._isCurtainFalling(frame)) {
+			// 	this.curtain_falling = true;
+			// 	this.end();
+			//
+			// 	if (this._getNumBlocks(frame) >= 200) {
+			// 		this.curtain_falling = false;
+			// 		this.onCurtainDown();
+			// 	}
+			// } else if (this._isNoCurtainTopOut(frame)) {
+			// 	this.no_curtain_top_out = true;
+			// 	this.end();
+			// }
 		}
 
 		this.onValidFrame(last_frame);
