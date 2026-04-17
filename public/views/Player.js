@@ -166,6 +166,7 @@ const DEFAULT_DOM_REFS = {
 	runway_lv29: DOM_DEV_NULL,
 	runway_lv39: DOM_DEV_NULL,
 	projection: DOM_DEV_NULL,
+	accuracy: DOM_DEV_NULL,
 	level: DOM_DEV_NULL,
 	lines: DOM_DEV_NULL,
 	trt: DOM_DEV_NULL,
@@ -181,8 +182,6 @@ const DEFAULT_DOM_REFS = {
 };
 
 const DEFAULT_OPTIONS = {
-	field_pixel_size: 3,
-	preview_pixel_size: 3,
 	running_trt_dot_size: 4,
 	preview_align: 'c',
 	running_trt_rtl: 0,
@@ -234,6 +233,7 @@ const DEFAULT_OPTIONS = {
 		const value = QueryString.get('flags');
 		return /^(c?fi|fpw?)$/.test(value) ? value : 'cfi'; // cfi: country-flag-icons - fi: flag-icons
 	})(),
+	seekableFrames: false,
 };
 
 const flagUrisFn = {
@@ -273,13 +273,34 @@ export default class Player extends EventTarget {
 
 		this.hide_profile_card_on_next_game = false;
 
-		this.field_pixel_size =
-			this.options.field_pixel_size || this.options.pixel_size;
-		this.preview_pixel_size =
-			this.options.preview_pixel_size || this.options.pixel_size;
-		this.render_running_trt_rtl = !!this.options.running_trt_rtl;
-
 		const styles = getComputedStyle(this.dom.field);
+		const field_width = css_size(styles.width);
+		this._is_small_field = field_width < 79 * 4; // pixel size of 4
+
+		this.field_pixel_size = Math.max(1, Math.ceil(field_width / 79));
+
+		this.preview_pixel_size = 3; // default
+
+		if (this.options.preview_pixel_size) {
+			this.preview_pixel_size = this.options.preview_pixel_size;
+		} else if (this.dom.preview && this.dom.preview !== DOM_DEV_NULL) {
+			const preview_styles = getComputedStyle(this.dom.preview);
+
+			do {
+				const preview_width = css_size(preview_styles.width);
+				if (preview_width <= 0) break;
+
+				const preview_height = css_size(preview_styles.height);
+				if (preview_height <= 0) break;
+
+				this.preview_pixel_size = Math.max(
+					1,
+					Math.floor(Math.min(preview_width / 31, preview_height / 15))
+				);
+			} while (false); // eslint-disable-line no-constant-condition
+		}
+
+		this.render_running_trt_rtl = !!this.options.running_trt_rtl;
 
 		// getComputedStyle returns padding in Chrome,
 		// but Firefox returns 4 individual properties paddingTop, paddingLeft, etc...
@@ -294,7 +315,7 @@ export default class Player extends EventTarget {
 			field_canva_offset_l;
 
 		if (field_padding_lr || field_padding_tb) {
-			bg_width = css_size(styles.width) + 2 * field_padding_lr;
+			bg_width = field_width + 2 * field_padding_lr;
 			bg_height = css_size(styles.height) + 2 * field_padding_tb;
 			bg_offset = 0;
 			field_canva_offset_t = field_padding_tb;
@@ -302,11 +323,12 @@ export default class Player extends EventTarget {
 		} else {
 			// when padding is zero, we assume the padding is embedded in the border itself and equal on all sides
 			// and the padding has the size of this.field_pixel_size
-			bg_width = css_size(styles.width) + this.field_pixel_size * 2;
-			bg_height = css_size(styles.height) + this.field_pixel_size * 2;
-			bg_offset = this.field_pixel_size * -1;
-			field_canva_offset_t = this.field_pixel_size;
-			field_canva_offset_l = this.field_pixel_size;
+			const effective_pixel_size = css_size(styles.width) / 79;
+			bg_width = field_width + effective_pixel_size * 2;
+			bg_height = css_size(styles.height) + effective_pixel_size * 2;
+			bg_offset = effective_pixel_size * -1;
+			field_canva_offset_t = effective_pixel_size;
+			field_canva_offset_l = effective_pixel_size;
 		}
 
 		this.bg_height = bg_height; // store value for curtain animation
@@ -337,11 +359,12 @@ export default class Player extends EventTarget {
 
 		// Avatar Block
 		if (this.options.avatar) {
+			const effective_pixel_size = css_size(styles.width) / 79;
 			this.avatar = document.createElement('div');
 			this.avatar.classList.add('avatar');
 			Object.assign(this.avatar.style, {
 				position: 'absolute',
-				top: `${field_padding_tb + this.field_pixel_size * 8}px`,
+				top: `${field_padding_tb + Math.floor(effective_pixel_size * 8)}px`,
 				left: `${bg_offset}px`,
 				width: `${bg_width}px`,
 				height: `${bg_width}px`,
@@ -366,8 +389,16 @@ export default class Player extends EventTarget {
 				canvas.style.left = styles.paddingLeft;
 			}
 
-			canvas.setAttribute('width', css_size(styles.width));
-			canvas.setAttribute('height', css_size(styles.height));
+			if (name === 'field') {
+				canvas.setAttribute('width', 79 * this.field_pixel_size);
+				canvas.setAttribute('height', 159 * this.field_pixel_size);
+				canvas.style.width = styles.width;
+				canvas.style.height = styles.height;
+				canvas.style.imageRendering = 'auto'; // ensure bicubic stretch natively
+			} else {
+				canvas.setAttribute('width', css_size(styles.width));
+				canvas.setAttribute('height', css_size(styles.height));
+			}
 
 			this.dom[name].appendChild(canvas);
 
@@ -572,24 +603,19 @@ export default class Player extends EventTarget {
 			custom_logo.src = url;
 			Object.assign(custom_logo.style, {
 				maxWidth:
-					this.options.field_pixel_size <= 4 && !this.options.biglogo
-						? '180px'
-						: '260px',
+					this._is_small_field && !this.options.biglogo ? '180px' : '260px',
 				marginTop:
-					this.options.field_pixel_size <= 4 && !this.options.biglogo
-						? '-100px'
-						: '-200px',
+					this._is_small_field && !this.options.biglogo ? '-100px' : '-200px',
 			});
 
 			const small_nestrischamps_logo = document.createElement('img');
-			small_nestrischamps_logo.src =
-				this.options.field_pixel_size <= 4
-					? '/brand/logo.v3.white.png'
-					: '/brand/logo.v3.white.2x.png';
+			small_nestrischamps_logo.src = this._is_small_field
+				? '/brand/logo.v3.white.png'
+				: '/brand/logo.v3.white.2x.png';
 
 			Object.assign(small_nestrischamps_logo.style, {
 				position: 'absolute',
-				bottom: this.options.field_pixel_size <= 4 ? '35px' : '55px',
+				bottom: this._is_small_field ? '35px' : '55px',
 			});
 
 			this.curtain_container.appendChild(custom_logo);
@@ -597,10 +623,9 @@ export default class Player extends EventTarget {
 		} else {
 			const big_nestrischamps_logo = document.createElement('img');
 			big_nestrischamps_logo.classList.add('logo');
-			big_nestrischamps_logo.src =
-				this.options.field_pixel_size < 4
-					? '/brand/logo.v3.white.2x.png'
-					: '/brand/logo.v3.white.3x.png';
+			big_nestrischamps_logo.src = this._is_small_field
+				? '/brand/logo.v3.white.2x.png'
+				: '/brand/logo.v3.white.3x.png';
 
 			this.curtain_container.appendChild(big_nestrischamps_logo);
 		}
@@ -862,6 +887,17 @@ export default class Player extends EventTarget {
 	_gameReset() {
 		this.winner_frame = 0;
 
+		this.stackrabbit_accuracy = {
+			evaluations: 0,
+			total_grade: 0,
+			grades: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 },
+			get overall() {
+				return this.evaluations === 0
+					? 0
+					: this.total_grade / (this.evaluations * 4);
+			},
+		};
+
 		this.preview_ctx.clear();
 		this.field_ctx.clear();
 		this.running_trt_ctx?.clear();
@@ -879,6 +915,7 @@ export default class Player extends EventTarget {
 		this.dom.trt.textContent = '-';
 		this.dom.eff.textContent = '-';
 		this.dom.burn.textContent = 0;
+		this.dom.accuracy.textContent = '-';
 
 		this._destroyGame();
 		this._showCurtain();
@@ -1028,7 +1065,9 @@ export default class Player extends EventTarget {
 	createGame() {
 		this._destroyGame();
 
-		this.game = new BaseGame();
+		this.game = new BaseGame({
+			seekableFrames: this.options.seekableFrames,
+		});
 
 		// Handlers with local rendering actions or custom behaviours
 		this.game.onScore = this._renderScore;
@@ -1182,34 +1221,50 @@ export default class Player extends EventTarget {
 			point_evt.score.current
 		);
 
-		if (point_evt.score.transition === null) {
+		if (
+			point_evt.score.transition === null &&
+			this.dom.runway_tr !== DOM_DEV_NULL
+		) {
 			this.dom.runway_tr.textContent = this.options.format_score(
 				point_evt.score.tr_runway,
 				6
 			);
 		}
 
-		this.dom.runway_game.textContent = this.options.format_score(
-			point_evt.score.runway,
-			7
-		);
+		if (this.dom.runway_game !== DOM_DEV_NULL) {
+			this.dom.runway_game.textContent = this.options.format_score(
+				point_evt.score.runway,
+				7
+			);
+		}
 
-		this.dom.runway_lv19.textContent = this.options.format_score(
-			point_evt.score.runways.LV19,
-			6
-		);
-		this.dom.runway_lv29.textContent = this.options.format_score(
-			point_evt.score.runways.LV29,
-			7
-		);
-		this.dom.runway_lv39.textContent = this.options.format_score(
-			point_evt.score.runways.LV39,
-			7
-		);
-		this.dom.projection.textContent = this.options.format_score(
-			point_evt.score.projection,
-			7
-		);
+		if (this.dom.runway_lv19 !== DOM_DEV_NULL) {
+			this.dom.runway_lv19.textContent = this.options.format_score(
+				point_evt.score.runways.LV19,
+				6
+			);
+		}
+
+		if (this.dom.runway_lv29 !== DOM_DEV_NULL) {
+			this.dom.runway_lv29.textContent = this.options.format_score(
+				point_evt.score.runways.LV29,
+				7
+			);
+		}
+
+		if (this.dom.runway_lv39 !== DOM_DEV_NULL) {
+			this.dom.runway_lv39.textContent = this.options.format_score(
+				point_evt.score.runways.LV39,
+				7
+			);
+		}
+
+		if (this.dom.projection !== DOM_DEV_NULL) {
+			this.dom.projection.textContent = this.options.format_score(
+				point_evt.score.projection,
+				7
+			);
+		}
 
 		this.onScore(frame);
 	}
@@ -1217,10 +1272,12 @@ export default class Player extends EventTarget {
 	_renderTransition(frame) {
 		const point_evt = peek(frame.points);
 
-		this.dom.runway_tr.textContent = this.options.format_score(
-			point_evt.score.transition,
-			6
-		);
+		if (this.dom.runway_tr !== DOM_DEV_NULL) {
+			this.dom.runway_tr.textContent = this.options.format_score(
+				point_evt.score.transition,
+				6
+			);
+		}
 
 		this.onTransition(frame);
 	}
@@ -1231,13 +1288,21 @@ export default class Player extends EventTarget {
 		if (!clear_evt) clear_evt = fake_clear_evt;
 
 		this.dom.lines.textContent = `${frame.raw.lines}`.padStart(3, '0');
-		this.dom.burn.textContent = clear_evt.burn;
+
+		if (this.dom.burn !== DOM_DEV_NULL) {
+			this.dom.burn.textContent = clear_evt.burn;
+		}
 
 		if (frame.clears.length) {
-			this.dom.trt.textContent = getPercent(clear_evt.tetris_rate);
-			this.dom.eff.textContent = (Math.round(clear_evt.efficiency) || 0)
-				.toString()
-				.padStart(3, '0');
+			if (this.dom.trt !== DOM_DEV_NULL) {
+				this.dom.trt.textContent = getPercent(clear_evt.tetris_rate);
+			}
+
+			if (this.dom.eff !== DOM_DEV_NULL) {
+				this.dom.eff.textContent = (Math.round(clear_evt.efficiency) || 0)
+					.toString()
+					.padStart(3, '0');
+			}
 
 			this.renderRunningTRT(frame.clears);
 		}
@@ -1253,7 +1318,9 @@ export default class Player extends EventTarget {
 	}
 
 	_renderLevel(frame) {
-		this.dom.level.textContent = `${frame.raw.level}`.padStart(2, '0');
+		if (this.dom.level !== DOM_DEV_NULL) {
+			this.dom.level.textContent = `${frame.raw.level}`.padStart(2, '0');
+		}
 
 		this.onLevel(frame);
 	}
@@ -1340,6 +1407,16 @@ export default class Player extends EventTarget {
 								grade = 1;
 							} else {
 								grade = 0;
+							}
+
+							this.stackrabbit_accuracy.evaluations++;
+							this.stackrabbit_accuracy.grades[grade]++;
+							this.stackrabbit_accuracy.total_grade += grade;
+
+							if (this.dom.accuracy !== DOM_DEV_NULL) {
+								this.dom.accuracy.textContent = getPercent(
+									this.stackrabbit_accuracy.overall
+								);
 							}
 
 							this.onMoveRating({ params: moveParams, ratings, grade });

@@ -47,6 +47,7 @@
 
 			.box .header {
 				padding-bottom: 6px;
+				color: #747474;
 			}
 
 			.board,
@@ -140,6 +141,7 @@
 			.name,
 			.tetris_rate,
 			.drought,
+			.accuracy,
 			.level {
 				padding-right: 0;
 			}
@@ -159,6 +161,7 @@
 			}
 
 			.name .header {
+				color: white;
 				font-size: 32.01px; /* sad -_- */
 				line-height: 32px; /* sad -_- */
 				padding-top: 18px;
@@ -217,26 +220,29 @@
 			.level,
 			.tetris_rate,
 			.drought,
+			.accuracy,
 			.flag {
 				--offset: var(--board-offset);
 			}
 
 			.hearts {
-				bottom: -765px;
+				bottom: -682px;
 				height: unset;
+				padding: 5px 3px;
 				font-size: 0px;
 				line-height: 32px;
 				display: flex;
 				flex-direction: column-reverse;
+				gap: 9px;
 			}
 
 			.hearts span {
-				width: 24px;
-				height: 30px;
+				width: 21px;
+				height: 21px;
 				overflow: hidden;
 				background: url(/views/heart_grey.png);
 				background-repeat: no-repeat;
-				background-position: center center;
+				background-position: center;
 				display: inline-block;
 			}
 
@@ -246,7 +252,8 @@
 
 			.level,
 			.tetris_rate,
-			.drought {
+			.drought,
+			.accuracy {
 				padding-top: 5px;
 				width: 78px;
 				height: 54px;
@@ -257,8 +264,12 @@
 				top: 839px;
 			}
 
-			.level {
+			.accuracy {
 				top: 756px;
+			}
+
+			.level {
+				top: 673px;
 				width: 56px;
 			}
 
@@ -452,11 +463,10 @@
 				--border-size: 14;
 				--offset: var(--score-offset);
 
-				width: unset;
 				top: 91px;
-				height: 29px;
-				padding: 0 6px 0 9px;
-				gap: 2px;
+				width: unset;
+				height: 21px;
+				padding: 4px 9px;
 				flex-direction: row-reverse;
 			}
 
@@ -530,18 +540,30 @@
 					--score-width: 333px;
 				}
 			}
-
-			.hearts span {
-				background-image: url(/views/wsg.win.png);
-				filter: brightness(0.5);
-				background-size: 75%;
-			}
-			.hearts span.win {
-				background-image: url(/views/wsg.win.png);
-				filter: none;
-				background-size: unset;
-			}
 		</style>
+		<template id="hearts_1">
+			<style>
+				.hearts span {
+					width: 30px;
+					height: 30px;
+					background-image: url(/views/canada.svg);
+					background-size: cover;
+					filter: grayscale(100%) brightness(175%);
+				}
+
+				.hearts span.win {
+					background-image: url(/views/canada.svg);
+					transform: unset;
+					filter: none;
+				}
+
+				.heartpos3 .match.small .hearts,
+				.heartpos4 .match.small .hearts {
+					height: 29px;
+					padding: 0px 9px;
+				}
+			</style>
+		</template>
 	</head>
 	<body>
 		<template id="curtain_0">
@@ -662,6 +684,21 @@
 				<img src="/brand/logo.v3.white.3x.png" style="max-width: 90px" />
 			</div>
 		</template>
+		<template id="curtain_7">
+			<div class="custom_curtain">
+				<img src="/images/ctwc_singapore.webp" style="max-width: 260px" />
+				<br />
+				<br />
+				<img
+					src="/images/sponsors/razer-seeklogo.2.svg"
+					style="width: 260px; margin-left: -15px"
+				/>
+				<br />
+				<br />
+				<br />
+				<img src="/brand/logo.v3.white.3x.png" style="max-width: 85px" />
+			</div>
+		</template>
 		<template id="player">
 			<div class="player">
 				<video class="player_vid"></video>
@@ -700,12 +737,17 @@
 
 				<div class="box tetris_rate">
 					<div class="header">TRT</div>
-					<div class="content">---</div>
+					<div class="content">-</div>
 				</div>
 
 				<div class="box drought">
 					<div class="header"><img src="/views/red_bar.png" /></div>
 					<div class="value">99</div>
+				</div>
+
+				<div class="box accuracy">
+					<div class="header">ACC</div>
+					<div class="content">-</div>
 				</div>
 
 				<div class="box board"></div>
@@ -839,7 +881,7 @@
 				: 0;
 
 			let curtain_template;
-			if (/^[0-6]$/.test(QueryString.get('curtain'))) {
+			if (/^[0-7]$/.test(QueryString.get('curtain'))) {
 				curtain_template = document.getElementById(
 					`curtain_${QueryString.get('curtain')}`
 				);
@@ -854,20 +896,8 @@
 				c.charCodeAt(0)
 			);
 
-			function getHalfDarkColor(col) {
-				const r = ((col >> 16) & 0xff) >> 1;
-				const g = ((col >> 8) & 0xff) >> 1;
-				const b = ((col >> 0) & 0xff) >> 1;
-				return (r << 16) | (g << 8) | b;
-			}
-
 			function getImageUrl(col1, col2) {
 				const buf = new Uint8Array(TEMPLATE_BUF); // Fast clone
-
-				if (col2 === undefined) {
-					col2 = col1;
-					col1 = getHalfDarkColor(col2);
-				}
 
 				buf[16] = (col1 >> 16) & 0xff;
 				buf[17] = (col1 >> 8) & 0xff;
@@ -882,18 +912,21 @@
 				return URL.createObjectURL(blob);
 			}
 
-			const cssRules = [];
-
 			if (
 				/^[0-9a-f]{6}(-[0-9a-f]{6})?$/i.test(QueryString.get('border-colors'))
 			) {
 				const colors = QueryString.get('border-colors').split('-');
+				const cssRules = [];
+
 				let col1 = parseInt(colors[0], 16);
 				let col2 = colors[1] ? parseInt(colors[1], 16) : undefined;
 
 				if (col2 === undefined) {
 					col2 = col1;
-					col1 = getHalfDarkColor(col2);
+					const col1r = ((col1 >> 16) & 0xff) >> 1;
+					const col1g = ((col1 >> 8) & 0xff) >> 1;
+					const col1b = ((col1 >> 0) & 0xff) >> 1;
+					col1 = (col1r << 16) | (col1g << 8) | col1b;
 
 					// use the dark color for normal headers, white for name header
 					cssRules.push(
@@ -905,16 +938,20 @@
 				cssRules.push(
 					`.box { border-image-source: url(${getImageUrl(col1, col2)}) }`
 				);
-			} else {
-				// default WSG color
-				cssRules.push(
-					`.box { border-image-source: url(${getImageUrl(0x009343)}) }`
-				);
+
+				const stylesheet = new CSSStyleSheet();
+				stylesheet.replaceSync(cssRules.join('\n'));
+				document.adoptedStyleSheets = [stylesheet];
 			}
 
-			const stylesheet = new CSSStyleSheet();
-			stylesheet.replaceSync(cssRules.join('\n'));
-			document.adoptedStyleSheets = [stylesheet];
+			// handle heart styles
+			if (/^[1]$/.test(QueryString.get('hearts'))) {
+				const template = document.getElementById(
+					`hearts_${QueryString.get('hearts')}`
+				);
+				const clone = template.content.cloneNode(true);
+				document.head.appendChild(clone);
+			}
 
 			// triple-typed variable... that is disgusting -_-
 			// false: never show runways (default)
@@ -1023,6 +1060,7 @@
 							preview: player_node.querySelector(`.next_piece`),
 							field: player_node.querySelector(`.board`),
 							drought: player_node.querySelector(`.drought .value`),
+							accuracy: player_node.querySelector(`.accuracy .content`),
 
 							runway_lv19: player_node.querySelector(`.runways .value .lv19`),
 							runway_lv29: player_node.querySelector(`.runways .value .lv29`),
@@ -1049,7 +1087,6 @@
 						{
 							biglogo: true,
 							bigntc: true,
-							running_trt_dot_size: 5,
 							preview_pixel_size: 3.75,
 							format_score: v => readableScoreFomatter(v),
 							stereo: translate([1, 2], [-1, 1], player_num),

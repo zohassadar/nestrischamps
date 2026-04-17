@@ -70,7 +70,7 @@ function fuzzyBinarySearchWithLowerBias(array, path, target_value) {
 
 const DEFAULT_OPTIONS = {
 	usePieceStats: false,
-	seekableFrames: true,
+	seekableFrames: false,
 };
 
 export default class BaseGame {
@@ -141,8 +141,8 @@ export default class BaseGame {
 			}
 		}
 
-		if (this.frames.length > 0) {
-			this.duration = frame.ctime - this.frames[0].raw.ctime;
+		if (this.num_frames > 0 && this.start_ctime !== undefined) {
+			this.duration = frame.ctime - this.start_ctime;
 		}
 
 		// Warning: order of the 3 operations below matters!
@@ -219,6 +219,8 @@ export default class BaseGame {
 			points: [],
 			clears: [],
 		};
+
+		this.num_frames = 0;
 
 		// this.data is used to track game stats and data as they progress
 		// snapshots of them will be stored in frames as needed
@@ -478,7 +480,7 @@ export default class BaseGame {
 
 	_addFrame(data) {
 		const frame = {
-			idx: this.frames.length,
+			idx: this.num_frames,
 			raw: data,
 
 			pieces: this.array_views.pieces,
@@ -489,6 +491,11 @@ export default class BaseGame {
 		};
 
 		this.frames.push(frame);
+		this.num_frames++;
+
+		if (!this.options.seekableFrames && this.frames.length > 2) {
+			this.frames.shift();
+		}
 
 		return frame;
 	}
@@ -929,6 +936,8 @@ export default class BaseGame {
 		// we will update piece event with the deviation reactively
 		this._recordPieceEvent(cur_piece, data);
 
+		const len = this.pieces.length;
+
 		// Handle deviation
 		let distance_square = 0;
 
@@ -937,7 +946,7 @@ export default class BaseGame {
 		PIECES.forEach(name => {
 			const stats = this.data.pieces[name];
 
-			distance_square += Math.pow(stats.count / this.pieces.length - 1 / 7, 2);
+			distance_square += Math.pow(stats.count / len - 1 / 7, 2);
 		});
 
 		last_piece_event.deviation =
@@ -946,9 +955,7 @@ export default class BaseGame {
 				Math.sqrt(distance_square / PIECES.length);
 
 		// handle deviation
-		const len = this.pieces.length;
-
-		if (len > 28) {
+		if (len >= 28) {
 			// compute the 28 and 56 deviation
 			// TODO: compute over "true" bags, that would always yield 0 deviation in modern tetrises
 			const counts = {};
