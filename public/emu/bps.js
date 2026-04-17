@@ -8,7 +8,6 @@
  *   See https://github.com/eligrey/FileSaver.js/blob/master/LICENSE.md
  */
 
-/* eslint-disable */
 var saveAs =
 	saveAs ||
 	(function (c) {
@@ -274,8 +273,8 @@ function md5(data) {
 		_md5cycle(state, _md5blk(data.slice(i - 64, i)));
 	data = data.slice(i - 64);
 	var tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	for (i = 0; i < data.length; i++) tail[i >> 2] |= data[i] << (i % 4 << 3);
-	tail[i >> 2] |= 0x80 << (i % 4 << 3);
+	for (i = 0; i < data.length; i++) tail[i >> 2] |= data[i] << ((i % 4) << 3);
+	tail[i >> 2] |= 0x80 << ((i % 4) << 3);
 	if (i > 55) {
 		_md5cycle(state, tail);
 		for (i = 0; i < 16; i++) tail[i] = 0;

@@ -1386,7 +1386,7 @@ export default class Player extends EventTarget {
 						.then(ratings => {
 							const { playerMoveAfterAdjustment, bestMoveAfterAdjustment } =
 								ratings;
-							let grade = null;
+							let grade;
 
 							if (playerMoveAfterAdjustment >= bestMoveAfterAdjustment - 1) {
 								grade = 4;
@@ -1485,7 +1485,7 @@ export default class Player extends EventTarget {
 			);
 		}
 
-		let x_idx = 0;
+		let x_idx;
 
 		switch (preview) {
 			case 'I':

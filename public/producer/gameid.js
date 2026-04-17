@@ -1,7 +1,7 @@
 let gameid;
 
 export function getNextGameId() {
-	let new_game_id = 0;
+	let new_game_id;
 
 	// we want to minimize the risk of gameid being duplicated when the producer page refreshes
 	if (gameid === undefined) {
@@ -23,6 +23,7 @@ export function getNextGameId() {
 	if (!new_game_id) new_game_id = 1; // never report gameid as 0, so we can always assume a valid gameid is truthy
 
 	localStorage.setItem('gameid', new_game_id);
+	gameid = new_game_id;
 
 	return new_game_id;
 }

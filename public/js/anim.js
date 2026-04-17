@@ -29,7 +29,7 @@ export function easeInOutBack(t, b, c, d, s) {
 }
 
 export function easeOutElastic(t, b, c, d) {
-	let s = 1.70158;
+	let s;
 	let p = 0;
 	let a = c;
 

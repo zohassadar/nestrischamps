@@ -544,10 +544,8 @@ export class NTC_Producer_Wizard extends NtcComponent {
 	}
 
 	#finalizeConfig(...args) {
-		let config = null;
-
 		try {
-			config = this.#getConfig(...args);
+			const config = this.#getConfig(...args);
 
 			// TODO guard this for cases where calibration is actually needed
 			setTimeout(() => {

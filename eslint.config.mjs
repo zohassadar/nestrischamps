@@ -26,6 +26,14 @@ const rules = {
 };
 
 export default defineConfig([
+	// Global ignores for external files
+	{
+		ignores: [
+			'public/vendor/**',
+			'public/emu/**',
+			'public/views/stackrabbit/wasmRabbit.js',
+		],
+	},
 	// Backend config
 	{
 		ignores: ['public/**'],

@@ -838,11 +838,11 @@ function renderNextPiece(level, next_piece) {
 
 	ctx.clear();
 
-	let pos_x = 0,
+	let pos_x,
 		pos_y = Math.floor(
 			(ctx.canvas.height - pixels_per_block * 2 + PREVIEW_PIXEL_SIZE) / 2
 		),
-		x_idx = 0;
+		x_idx;
 
 	switch (next_piece) {
 		case 'I':
@@ -851,10 +851,10 @@ function renderNextPiece(level, next_piece) {
 			);
 			pos_y = Math.floor((ctx.canvas.height - PREVIEW_PIXEL_SIZE * 7) / 2);
 
-			positions.push([pos_x + x_idx++ * pixels_per_block, pos_y]);
-			positions.push([pos_x + x_idx++ * pixels_per_block, pos_y]);
-			positions.push([pos_x + x_idx++ * pixels_per_block, pos_y]);
-			positions.push([pos_x + x_idx++ * pixels_per_block, pos_y]);
+			positions.push([pos_x + 0 * pixels_per_block, pos_y]);
+			positions.push([pos_x + 1 * pixels_per_block, pos_y]);
+			positions.push([pos_x + 2 * pixels_per_block, pos_y]);
+			positions.push([pos_x + 3 * pixels_per_block, pos_y]);
 			break;
 
 		case 'O':
@@ -872,9 +872,9 @@ function renderNextPiece(level, next_piece) {
 		case 'J':
 		case 'L':
 			// top line is the same for both pieces
-			positions.push([x_offset_3 + x_idx++ * pixels_per_block, pos_y]);
-			positions.push([x_offset_3 + x_idx++ * pixels_per_block, pos_y]);
-			positions.push([x_offset_3 + x_idx++ * pixels_per_block, pos_y]);
+			positions.push([x_offset_3 + 0 * pixels_per_block, pos_y]);
+			positions.push([x_offset_3 + 1 * pixels_per_block, pos_y]);
+			positions.push([x_offset_3 + 2 * pixels_per_block, pos_y]);
 
 			if (next_piece == 'L') {
 				x_idx = 0;

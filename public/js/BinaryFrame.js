@@ -355,7 +355,7 @@ export default class BinaryFrame {
 			(frame_arr[bidx++] << 20) |
 			(frame_arr[bidx++] << 12) |
 			(frame_arr[bidx++] << 4) |
-			((frame_arr[bidx++] & 0xf0) >> 4)
+			((frame_arr[bidx] & 0xf0) >> 4)
 		);
 	}
 
