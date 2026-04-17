@@ -178,27 +178,18 @@ export default class BaseGame {
 
 		// Check board for gameover event (curtain is falling)
 		if (!this.over) {
-			if (this._isEverdriveIdle(frame)) {
-				console.log('Everdrive is idle');
-				this.no_curtain_top_out = true;
+			if (this._isCurtainFalling(frame)) {
+				this.curtain_falling = true;
 				this.end();
-			} else if (this._isEverdriveTopout(frame)) {
-				console.log('Everdrive topout');
+
+				if (this._getNumBlocks(frame) >= 200) {
+					this.curtain_falling = false;
+					this.onCurtainDown();
+				}
+			} else if (this._isNoCurtainTopOut(frame)) {
 				this.no_curtain_top_out = true;
 				this.end();
 			}
-			//          } else if (this._isCurtainFalling(frame)) {
-			// 	this.curtain_falling = true;
-			// 	this.end();
-			//
-			// 	if (this._getNumBlocks(frame) >= 200) {
-			// 		this.curtain_falling = false;
-			// 		this.onCurtainDown();
-			// 	}
-			// } else if (this._isNoCurtainTopOut(frame)) {
-			// 	this.no_curtain_top_out = true;
-			// 	this.end();
-			// }
 		}
 
 		this.onValidFrame(last_frame);
@@ -403,32 +394,20 @@ export default class BaseGame {
 		return this._isRowFull(data.field, 0);
 	}
 
-	_isEverdriveIdle(data) {
-		return [data.T, data.J, data.Z, data.O, data.S, data.L, data.I].every(
-			stat => stat === 0x3fd
-		);
-	}
-
-	_isEverdriveTopout(data) {
-		return [data.T, data.J, data.Z, data.O, data.S, data.L, data.I].every(
-			stat => stat === 0x3fe
-		);
-	}
-
 	_isNoCurtainTopOut(data) {
 		// topped out if:
 		// 1. all rows have blocks
 		// 2. top row hasn't changed over some frames
 		// 3. 1150ms of nothing new happening
 
-		// for (let rowidx = 0; rowidx < 20; rowidx++) {
-		// 	if (this._isRowEmpty(data.field, rowidx)) {
-		// 		this.pending_topout = false;
-		// 		this.pending_topout_start_ts = 0;
-		//
-		// 		return false;
-		// 	}
-		// }
+		for (let rowidx = 0; rowidx < 20; rowidx++) {
+			if (this._isRowEmpty(data.field, rowidx)) {
+				this.pending_topout = false;
+				this.pending_topout_start_ts = 0;
+
+				return false;
+			}
+		}
 
 		if (!this.pending_topout) {
 			// first frame of potential top out - record top 2 rows for later
