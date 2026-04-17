@@ -233,6 +233,12 @@ class Game {
 			this.end();
 		} else if (this._isNoCurtainTopOut(data)) {
 			this.end();
+		} else if (this._isEverdriveIdle(data)) {
+			console.log('Everdrive is idle');
+			this.end();
+		} else if (this._isEverdriveTopout(data)) {
+			console.log('Everdrive topout');
+			this.end();
 		}
 	}
 
@@ -243,11 +249,22 @@ class Game {
 		return true;
 	}
 
+	_isEverdriveIdle(data) {
+		return data.instant_das == 0x1d;
+	}
+
+	_isEverdriveTopout(data) {
+		return data.instant_das == 0x1e;
+	}
+
 	_isNoCurtainTopOut(data) {
 		// topped out if:
 		// 1. all rows have blocks
 		// 2. top row hasn't changed over some frames
 		// 3. 1150ms of nothing new happening
+
+		// ignore everdrive
+		if (data.cur_piece_das == 0x1e) return false;
 
 		for (let rowidx = 0; rowidx < 20; rowidx++) {
 			if (this._isRowEmpty(data.field, rowidx)) {

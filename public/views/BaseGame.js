@@ -178,7 +178,15 @@ export default class BaseGame {
 
 		// Check board for gameover event (curtain is falling)
 		if (!this.over) {
-			if (this._isCurtainFalling(frame)) {
+			if (this._isEverdriveIdle(frame)) {
+				console.log('Everdrive is idle');
+				this.no_curtain_top_out = true;
+				this.end();
+			} else if (this._isEverdriveTopout(frame)) {
+				console.log('Everdrive topout');
+				this.no_curtain_top_out = true;
+				this.end();
+			} else if (this._isCurtainFalling(frame)) {
 				this.curtain_falling = true;
 				this.end();
 
@@ -391,7 +399,17 @@ export default class BaseGame {
 	}
 
 	_isCurtainFalling(data) {
+		// ignore everdrive
+		if (data.cur_piece_das == 0x1e) return false;
 		return this._isRowFull(data.field, 0);
+	}
+
+	_isEverdriveIdle(data) {
+		return data.instant_das == 0x1d;
+	}
+
+	_isEverdriveTopout(data) {
+		return data.instant_das == 0x1e;
 	}
 
 	_isNoCurtainTopOut(data) {
@@ -399,6 +417,9 @@ export default class BaseGame {
 		// 1. all rows have blocks
 		// 2. top row hasn't changed over some frames
 		// 3. 1150ms of nothing new happening
+
+		// ignore everdrive
+		if (data.cur_piece_das == 0x1e) return false;
 
 		for (let rowidx = 0; rowidx < 20; rowidx++) {
 			if (this._isRowEmpty(data.field, rowidx)) {
