@@ -5,6 +5,9 @@ import express from 'express';
 import got from 'got';
 import ScoreDAO from '../daos/ScoreDAO.js';
 import UserDAO from '../daos/UserDAO.js';
+import ScoreService, {
+	handleUpdateScoreCompetition,
+} from '../domains/ScoreService.js';
 import config from '../modules/config.js';
 
 const STACKRABBIT_URL = 'https://stackrabbit.herokuapp.com/get-move';
@@ -135,6 +138,60 @@ async function checkUser(req, res, next) {
 
 	next();
 }
+
+async function handleGetScores(req, res) {
+	const { scores, total_scores, num_pages, options } =
+		await ScoreService.fetchPage(req.user, req.query, req);
+
+	res.json({
+		scores,
+		pagination: {
+			total_scores,
+			page_idx: options.page_idx,
+			page_size: options.page_size,
+			num_pages,
+		},
+		query: {
+			sort_field: options.sort_field,
+			sort_order: options.sort_order,
+			level: options.level,
+			competition: options.competition,
+		},
+	});
+}
+
+router.get('/user/scores', extractSecret, checkUser, handleGetScores);
+router.get('/user/scores/:id', extractSecret, checkUser, async (req, res) => {
+	if (!/^[1-9]\d*$/.test(req.params.id)) {
+		res.status(400).json({ error: 'Invalid Score id' });
+		return;
+	}
+
+	const score = await ScoreDAO.getScore(req.user, req.params.id);
+
+	if (!score) {
+		res.status(404).json({ error: `Score id ${req.params.id} not found` });
+		return;
+	}
+
+	if (score.frame_file) {
+		if (config.get('game.frames_bucket')) {
+			const base_url = `https://${config.get('game.frames_bucket')}.s3-${config.get('game.frames_region')}.amazonaws.com/`;
+			score.frame_url = `${base_url}${score.frame_file}`;
+		} else {
+			score.frame_url = `${req.protocol}://${req.headers.host}/api/files/${score.frame_file}`;
+		}
+	}
+
+	res.json(score);
+});
+
+router.put(
+	'/user/scores/:id/competition/:mode',
+	extractSecret,
+	checkUser,
+	handleUpdateScoreCompetition
+);
 
 function validateRpcBody(req, res, next) {
 	// We validate against the exact same message format for rpc commands as the websocket

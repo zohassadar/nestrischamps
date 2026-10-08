@@ -70,6 +70,7 @@ Caveat: global args apply to **MOST** layouts, but some layouts may not understa
 | `heartpos` | `0`: bottom, vertical<br>`1`: next to LV/TRT, vertical<br>`2`: next to Lines/next, vertical<br>`3`: next to score, horizontal<br>`4`: under flag, horizontal | `0` | This setting affect the position of hearts in the 2-match view |
 | `hearts` | `0`: Standard heart graphic<br>`1`: Canadian Flag Leaves for hearts| `0` | This setting controls how hearts are rendered |
 | `srabbit_rate` | `0`: No placement ratings<br>`1`: Show placement ratings | `0` | This only works if `srabbit=1` is added |
+| `bracket` | Controls the seed shimmer effect, box border color, and CTWC curtaib logo. Value can be:<br>`gold`: for gold bracket<br>`silver`: for silver bracket<br>`bronze`: for bronze bracket | `{not set}` | When not set, shows the main CTWC logo |
 
 ### League
 

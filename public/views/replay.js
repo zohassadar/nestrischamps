@@ -9,7 +9,7 @@ let manageReplay = noop;
 
 const URL_REPLAY_RE = /^\/replay\/([a-z0-9_-]+)\/((\d+)(-(\d+)){0,4})/;
 
-const match = document.location.pathname.match(URL_REPLAY_RE);
+const urlRegexMatch = document.location.pathname.match(URL_REPLAY_RE);
 
 const STACKRABBIT_INPUT_TIMELINES = {
 	2: 'X.............................',
@@ -29,26 +29,13 @@ const STACKRABBIT_INPUT_TIMELINES = {
 	30: 'X.',
 };
 
-// Playback tracking variables
-let playing = false,
-	games,
-	reference_game,
-	reference_frame,
-	refs,
-	autoplay = QueryString.get('autoplay') != '0',
-	time_scale = (() => {
-		const value = QueryString.get('speed');
-		return /^[12345]$/.test(value) ? parseInt(value, 10) : 1;
-	})(),
-	start_ctime,
-	start_time,
+// Replay constants (i.e. one-off query-string tunables)
+const autoplay = QueryString.get('autoplay') != '0',
 	start_ts = (() => {
 		const value = QueryString.get('ts');
 		return /^[1-9]\d+$/.test(value) ? parseInt(value, 10) : 0;
 	})(),
-	showFrame,
-	play_timeout,
-	stackRabbitWorker = null,
+	useStackRabbit = QueryString.get('srabbit') !== '0',
 	srabbit_input_speed = (() => {
 		const value = QueryString.get('srabbit_input_speed');
 		return /^\d+(_5)?$/.test(value) && value in STACKRABBIT_INPUT_TIMELINES
@@ -58,8 +45,24 @@ let playing = false,
 	srabbit_playout_length = (() => {
 		const value = QueryString.get('srabbit_playout_length');
 		return /^[123]$/.test(value) ? parseInt(value, 10) : 2;
-	})();
-const use_piece_stats = QueryString.get('use_piece_stats') === '1';
+	})(),
+	use_piece_stats = QueryString.get('use_piece_stats') === '1';
+
+// Playback tracking variables
+let playing = false,
+	time_scale = (() => {
+		const value = QueryString.get('speed');
+		return /^[12345]$/.test(value) ? parseInt(value, 10) : 1;
+	})(),
+	games,
+	reference_game,
+	reference_frame,
+	refs,
+	start_ctime,
+	start_time,
+	showFrame,
+	play_timeout,
+	stackRabbitWorker = null;
 
 export async function getReplayGame(gameid) {
 	const game_url = `/api/games/${gameid}`;
@@ -143,16 +146,25 @@ async function loadStackRabbitWorker() {
 async function startReplay(_showFrame) {
 	showFrame = _showFrame;
 
-	const gameids = match[2].split('-');
+	const gameids = urlRegexMatch[2].split('-');
+	const tasks = gameids.map(getReplayGame);
 
-	const [_, ...games_res] = await Promise.all([
-		loadStackRabbitWorker(),
-		...gameids.map(getReplayGame),
-	]);
+	if (useStackRabbit) {
+		tasks.push(loadStackRabbitWorker());
+	}
+
+	const games_res = await Promise.all(tasks);
+
+	if (useStackRabbit) {
+		games_res.pop(); // remove the worker init task result
+	}
 
 	games = games_res.map(res => res.game);
 
-	computeStackRabbitRecommendations();
+	if (useStackRabbit) {
+		// Don't call computeStackRabbitRecommendations() before games is initialized above
+		computeStackRabbitRecommendations();
+	}
 
 	// sort by duration descending to find the longest game
 	reference_game = [...games].sort((a, b) => b.duration - a.duration)[0];
@@ -354,12 +366,10 @@ function computeStackRabbitRecommendations() {
 		gameIdx = (gameIdx + 1) % games.length;
 
 		const piece_evts = peek(game.frames).pieces;
-		if (pieceEvtIdx >= piece_evts.length) {
-			getNextRecommendation();
-			return;
-		}
 
-		await askStackRabbit(piece_evts[pieceEvtIdx]);
+		if (pieceEvtIdx < piece_evts.length) {
+			await askStackRabbit(piece_evts[pieceEvtIdx]);
+		}
 
 		getNextRecommendation();
 	}
@@ -483,7 +493,7 @@ function showNextFrame() {
 	}, send_delay);
 }
 
-if (match) {
+if (urlRegexMatch) {
 	manageReplay = startReplay;
 }
 

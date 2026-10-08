@@ -24,6 +24,7 @@ const dom = {
 	show_profile_cards_controls: document.querySelector(
 		'#show_profile_cards_controls'
 	),
+	hide_all_profile_cards: document.querySelector('#hide_all_profile_cards'),
 	allow_autojoin: document.querySelector('#allow_autojoin'),
 	add_player: document.querySelector('#add_player'),
 	curtain_logo_url: document.querySelector('#curtain_logo_url'),
@@ -314,6 +315,10 @@ class Player {
 				const peerid = `${connection.id}-${this.idx}`;
 				const peer = (this.peer = new Peer(peerid, peerServerOptions));
 
+				peer.on('error', err => {
+					console.error('Admin peer connection error:', err);
+				});
+
 				let driver;
 				let ocr;
 				let srcCanvas;
@@ -328,6 +333,10 @@ class Player {
 						dataConnection.metadata
 					);
 					this.dataConnection = dataConnection;
+
+					dataConnection.on('error', err => {
+						console.error('Admin data connection error:', err);
+					});
 
 					const { config, video } = dataConnection.metadata;
 
@@ -689,6 +698,17 @@ function bootstrap() {
 				remoteAPI.showProfileCard(this.checked, this.value);
 			});
 		});
+
+	dom.hide_all_profile_cards.addEventListener('click', () => {
+		remoteAPI.showProfileCard(false, 0);
+		remoteAPI.showProfileCard(false, 1);
+
+		dom.show_profile_cards_controls
+			.querySelectorAll('input')
+			.forEach(checkbox => {
+				checkbox.checked = false;
+			});
+	});
 
 	dom.allow_autojoin.addEventListener('click', function () {
 		remoteAPI.allowAutoJoin(this.checked);

@@ -259,7 +259,7 @@
 				right: var(--offset);
 				width: 444px;
 				height: unset;
-				bottom: -1023px;
+				bottom: -1022px;
 				--border-size: 12;
 				padding: 3px 3px 1px 6px;
 			}
@@ -547,6 +547,8 @@
 
 				<div class="box board"></div>
 
+				<div class="box flag"></div>
+
 				<div class="box runways">
 					<div class="label">
 						<div class="lv19">LVL 19&#x202F;TỐI ĐA</div>
@@ -559,8 +561,6 @@
 						<div class="lv39">0&#x202F;000&#x202F;000</div>
 					</div>
 				</div>
-
-				<div class="box flag"></div>
 
 				<img class="simul-tetris" src="/images/simul-tetris.png" />
 			</div>
@@ -654,19 +654,83 @@
 				}
 			}
 
-			const borders = {
-				vn: '/views/border_3px_ctwcvn.webp',
-				vswinter: '/views/border_3px_ctvswinter.webp',
-				vsspring: '/views/border_3px_ctvsspring.webp',
+			// handle border style & colors
+			const BASE64_SOURCE =
+				'R0lGODlhJAAkAPEDAAAAAHR0dJz78AAAACH5BAUKAAMALAAAAAAkACQAAAKynA+py60Ho5s02kEzu0aFD4biCD5SQqaqCXnqG7JuoNVAyeA2pc971kN9FIKi8Yg0+nLDRPKJXC500KpAKlVqtLfm1MulcINdmrNYG3uz6G273KC+xW+y/OrGw5lmQHii1semR6dnBzYHWLcm1PfnEBiHSKhoyLjnlwi5KNhIZPWE5XkGGjX65Vhqiin6gyrZ6dpKJouJ0AjzwnJblruSYDHjm7J7UrvA0XKMnNyxXDxQAAA7';
+			const TEMPLATE_BUF = Uint8Array.from(atob(BASE64_SOURCE), c =>
+				c.charCodeAt(0)
+			);
+
+			function getImageUrl(col1, col2) {
+				const buf = new Uint8Array(TEMPLATE_BUF); // Fast clone
+
+				buf[16] = (col1 >> 16) & 0xff;
+				buf[17] = (col1 >> 8) & 0xff;
+				buf[18] = col1 & 0xff;
+
+				buf[19] = (col2 >> 16) & 0xff;
+				buf[20] = (col2 >> 8) & 0xff;
+				buf[21] = col2 & 0xff;
+
+				// Faster than manual string concatenation for larger buffers
+				const blob = new Blob([buf], { type: 'image/gif' });
+				return URL.createObjectURL(blob);
+			}
+
+			const border_presets = {
+				vn: [0xa33b30, 0xf89f46],
+				vswinter: [0x4652b5, 0x6ab1ef],
+				vsspring: [0xa736a9, 0xf785fa],
+				hh26: [0x6d441b, 0xde8a30],
 			};
 
+			const stylesheets = [];
+
 			const qs_box_border = QueryString.get('box_border');
-			if (qs_box_border && Object.hasOwn(borders, qs_box_border)) {
+			if (qs_box_border && Object.hasOwn(border_presets, qs_box_border)) {
+				const colors = border_presets[qs_box_border];
 				const stylesheet = new CSSStyleSheet();
 				stylesheet.replaceSync(
-					`.box { border-image-source: url(${borders[qs_box_border]}) }`
+					`.box { border-image-source: url(${getImageUrl(colors[0], colors[1])}) }`
 				);
-				document.adoptedStyleSheets = [stylesheet];
+				stylesheets.push(stylesheet);
+			}
+
+			if (
+				/^[0-9a-f]{6}(-[0-9a-f]{6})?$/i.test(QueryString.get('border-colors'))
+			) {
+				const colors = QueryString.get('border-colors').split('-');
+				const cssRules = [];
+
+				let col1 = parseInt(colors[0], 16);
+				let col2 = colors[1] ? parseInt(colors[1], 16) : undefined;
+
+				if (col2 === undefined) {
+					col2 = col1;
+					const col1r = ((col1 >> 16) & 0xff) >> 1;
+					const col1g = ((col1 >> 8) & 0xff) >> 1;
+					const col1b = ((col1 >> 0) & 0xff) >> 1;
+					col1 = (col1r << 16) | (col1g << 8) | col1b;
+
+					// use the dark color for normal headers, white for name header
+					cssRules.push(
+						`.box .header { color: #${col1.toString(16).padStart(6, '0')} }`,
+						`.box.name .header { color: white }`
+					);
+				}
+
+				cssRules.push(
+					`.box { border-image-source: url(${getImageUrl(col1, col2)}) }`
+				);
+
+				const stylesheet = new CSSStyleSheet();
+				stylesheet.replaceSync(cssRules.join('\n'));
+
+				stylesheets.push(stylesheet);
+			}
+
+			if (stylesheets.length > 0) {
+				document.adoptedStyleSheets = stylesheets;
 			}
 
 			let images;
@@ -678,6 +742,30 @@
 					return img;
 				});
 			}
+
+			const lang = (val => {
+				return val === 'en' ? val : 'vn';
+			})(QueryString.get('ui_lang'));
+
+			// handle localizations (poor man system)
+			const strings = {
+				en: {
+					player_1: 'PLAYER 1',
+					score: 'SCORE',
+					lines: 'LINES',
+					runs_on: 'RUNS ON',
+					runway: level => `LVL ${level}\u202FRUNWAY`,
+					runway_achieved: level => `LVL ${level}\u202FSCORE`,
+				},
+				vn: {
+					player_1: 'NGƯỜI CHƠI 1',
+					score: 'ĐIỂM',
+					lines: 'HÀNG',
+					runs_on: 'CHẠY TRÊN',
+					runway: level => `LVL ${level}\u202FTỐI ĐA`,
+					runway_achieved: level => `LVL ${level}\u202FĐẠT ĐƯỢC`,
+				},
+			}[lang];
 
 			const player_template = document.getElementById('player');
 			const players = [];
@@ -873,7 +961,7 @@
 								} else if (frame.raw.level === threshold_level) {
 									player.dom.runways_box.querySelector(
 										`.label .lv${threshold_level}`
-									).textContent = `LVL ${frame.raw.level} ĐẠT ĐƯỢC`;
+									).textContent = strings.runway_achieved(frame.raw.level);
 								}
 							}
 						};
@@ -902,7 +990,7 @@
 						[19, 29, 39].forEach(level => {
 							player.dom.runways_box.querySelector(
 								`.label .lv${level}`
-							).textContent = `LVL ${level} TỐI ĐA`;
+							).textContent = strings.runway(level);
 
 							player.dom.runways_box.querySelector(
 								`.value .lv${level}`
@@ -1080,26 +1168,6 @@
 				});
 			});
 
-			// handle localizations (poor man system)
-			const strings = {
-				en: {
-					player_1: 'PLAYER 1',
-					score: 'SCORE',
-					lines: 'LINES',
-					runs_on: 'RUNS ON',
-				},
-				vn: {
-					player_1: 'NGƯỜI CHƠI 1',
-					score: 'ĐIỂM',
-					lines: 'HÀNG',
-					runs_on: 'CHẠY TRÊN',
-				},
-			}[
-				/^en$/.test(QueryString.get('ui_lang'))
-					? QueryString.get('ui_lang')
-					: 'vn'
-			];
-
 			[...document.querySelectorAll('.player')].forEach(player_node => {
 				player_node.querySelector('.name .header').textContent =
 					strings.player_1;
@@ -1111,6 +1179,15 @@
 				if (runs_on) {
 					runs_on.textContent = strings.runs_on;
 				}
+
+				[19, 29, 39].forEach(level => {
+					const runways_lbl = player_node.querySelector(
+						`.runways .label .lv${level}`
+					);
+					if (runways_lbl) {
+						runways_lbl.textContent = strings.runway(level);
+					}
+				});
 			});
 
 			if (CYCLE_TDIFF) {

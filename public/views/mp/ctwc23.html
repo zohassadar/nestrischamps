@@ -310,7 +310,7 @@
 				right: var(--offset);
 				width: 444px;
 				height: unset;
-				bottom: -1023px;
+				bottom: -1022px;
 				--border-size: 12;
 				padding: 3px 3px 1px 6px;
 			}
@@ -601,7 +601,11 @@
 				<br />
 				<br />
 				<br />
-				<img src="/images/ctwc_logo.jpeg" style="max-width: 260px" />
+				<img
+					src="/images/ctwc_logo.jpeg"
+					class="ctwc_logo"
+					style="max-width: 260px"
+				/>
 				<br />
 				<br />
 				<br />
@@ -615,7 +619,11 @@
 			<div class="custom_curtain">
 				<br />
 				<br />
-				<img src="/images/ctwc_logo.jpeg" style="max-width: 260px" />
+				<img
+					src="/images/ctwc_logo.jpeg"
+					class="ctwc_logo"
+					style="max-width: 260px"
+				/>
 				<br />
 				<br />
 				<p style="font-size: 12px">Presented by</p>
@@ -630,7 +638,11 @@
 		</template>
 		<template id="curtain_3">
 			<div class="custom_curtain">
-				<img src="/images/ctwc_logo.jpeg" style="max-width: 240px" />
+				<img
+					src="/images/ctwc_logo.jpeg"
+					class="ctwc_logo"
+					style="max-width: 240px"
+				/>
 				<br />
 				<br />
 				<p style="font-size: 12px">Presented by</p>
@@ -852,11 +864,10 @@
 			import InvisibleMixin from '/views/InvisibleMixin.js';
 			import { easeOutElastic, getRandomAngle } from '/js/anim.js';
 
-			if (/^(gold|silver|bronze)$/.test(QueryString.get('bracket'))) {
-				document
-					.querySelector('#stream_bg')
-					.classList.add(QueryString.get('bracket'));
-			}
+			const bracket = (() => {
+				const val = QueryString.get('bracket');
+				return /^(gold|silver|bronze)$/i.test(val) ? val.toLowerCase() : null;
+			})();
 
 			if (/^[1234]$/.test(QueryString.get('heartpos'))) {
 				document
@@ -882,11 +893,6 @@
 				: 0;
 
 			let curtain_template;
-			if (/^[0-7]$/.test(QueryString.get('curtain'))) {
-				curtain_template = document.getElementById(
-					`curtain_${QueryString.get('curtain')}`
-				);
-			}
 
 			// handle theme - the border image is stored here as a base64 encoding of its gif image
 			// since gif is a format that contains indexed colors, we can easily modify the colors by
@@ -911,6 +917,36 @@
 				// Faster than manual string concatenation for larger buffers
 				const blob = new Blob([buf], { type: 'image/gif' });
 				return URL.createObjectURL(blob);
+			}
+
+			const stylesheets = [];
+
+			if (bracket) {
+				// mark the whole view with the bracket class
+				document.querySelector('#stream_bg').classList.add(bracket);
+
+				// yuk, hardcoded identifier 😢
+				curtain_template = document.getElementById('curtain_1');
+
+				// add bracket specific css rules
+				const colors = {
+					gold: 0xfeef8b,
+					silver: 0xc0c0c0,
+					bronze: 0xcd7f32,
+				};
+				const cssRules = [];
+
+				cssRules.push(
+					`.box { border-image-source: url(${getImageUrl(0x000000, colors[bracket])}) }`
+				);
+				cssRules.push(
+					`.custom_curtain .ctwc_logo { content: url('/images/ctwc/CTWC_${bracket}.webp'); }`
+				);
+
+				const stylesheet = new CSSStyleSheet();
+				stylesheet.replaceSync(cssRules.join('\n'));
+
+				stylesheets.push(stylesheet);
 			}
 
 			if (
@@ -942,7 +978,18 @@
 
 				const stylesheet = new CSSStyleSheet();
 				stylesheet.replaceSync(cssRules.join('\n'));
-				document.adoptedStyleSheets = [stylesheet];
+
+				stylesheets.push(stylesheet);
+			}
+
+			// K, done. Update the sheets now.
+			document.adoptedStyleSheets = stylesheets;
+
+			// an explicit curtain value overrides the bracket
+			if (/^[0-7]$/.test(QueryString.get('curtain'))) {
+				curtain_template = document.getElementById(
+					`curtain_${QueryString.get('curtain')}`
+				);
 			}
 
 			// handle heart styles
