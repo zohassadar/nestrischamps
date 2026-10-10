@@ -29,6 +29,14 @@ const MARKUP = html`
 					<input type="number" id="minutes" value="120" min="5" max="5949" />
 					minutes
 				</div>
+
+				<div
+					id="multiviewer_notice"
+					class="notification is-info is-light is-hidden mt-4"
+				>
+					Looking for multiviewer capture mode?
+					<a id="multiviewer_href" href="#">Click here</a>.
+				</div>
 			</fieldset>
 		</div>
 
@@ -67,12 +75,29 @@ export class NTC_Producer_Settings extends NtcComponent {
 			timer_control: this.shadow.getElementById('timer_control'),
 			start_timer: this.shadow.getElementById('start_timer'),
 			camera: this.shadow.getElementById('camera'),
+			multiviewer_notice: this.shadow.getElementById('multiviewer_notice'),
+			multiviewer_href: this.shadow.getElementById('multiviewer_href'),
 		};
 
 		this.#domrefs.clear_config.addEventListener('click', clearConfigAndReset);
 
 		if (QueryString.get('timer') === '1') {
 			this.#domrefs.timer_control.classList.remove('is_hidden');
+		}
+
+		const is_match_room = new URL(location).pathname.startsWith('/room/u/');
+		if (!is_match_room) {
+			fetch('/api/is_public_server')
+				.then(res => res.json())
+				.then(({ is_public_server, login }) => {
+					if (!is_public_server && login) {
+						this.#domrefs.multiviewer_href.href = `/room/u/${encodeURIComponent(login)}/producer${location.search}`;
+						this.#domrefs.multiviewer_notice.classList.remove('is-hidden');
+					}
+				})
+				.catch(err => {
+					console.error('Failed to check server status', err);
+				});
 		}
 	}
 

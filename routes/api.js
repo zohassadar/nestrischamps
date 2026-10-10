@@ -42,7 +42,10 @@ function parseStackRabbitRequest(query) {
 }
 
 router.get('/is_public_server', (req, res) => {
-	res.json({ is_public_server: config.get('server.is_public') });
+	res.json({
+		is_public_server: config.get('server.is_public'),
+		login: req.session?.user?.login ?? null,
+	});
 });
 
 // proxy to stack rabbit engine API

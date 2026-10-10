@@ -57,6 +57,15 @@ const MARKUP = html`
 		</fieldset>
 		<fieldset id="step2" class="is-hidden">
 			<legend>Wizard</legend>
+
+			<div
+				id="multiviewer_notice"
+				class="notification is-info is-light is-hidden mb-4"
+			>
+				Looking for multiviewer capture mode?
+				<a id="multiviewer_href" href="#">Click here</a>.
+			</div>
+
 			<div class="field is-horizontal">
 				<div class="field-label is-normal is-large-label">
 					<label class="label" for="device">Capture Method / Device</label>
@@ -229,6 +238,8 @@ export class NTC_Producer_Wizard extends NtcComponent {
 			instructions: this.shadow.getElementById('instructions'),
 			video_container: this.shadow.getElementById('video_container'),
 			video: this.shadow.getElementById('video'),
+			multiviewer_notice: this.shadow.getElementById('multiviewer_notice'),
+			multiviewer_href: this.shadow.getElementById('multiviewer_href'),
 		};
 
 		this.#domrefs.palette_selector.disabled = true;
@@ -275,6 +286,18 @@ export class NTC_Producer_Wizard extends NtcComponent {
 
 		if (!is_match_room) {
 			this.#domrefs.single.click(); // simulate selection of single player mode to move on
+
+			fetch('/api/is_public_server')
+				.then(res => res.json())
+				.then(({ is_public_server, login }) => {
+					if (!is_public_server && login) {
+						this.#domrefs.multiviewer_href.href = `/room/u/${encodeURIComponent(login)}/producer${location.search}`;
+						this.#domrefs.multiviewer_notice.classList.remove('is-hidden');
+					}
+				})
+				.catch(err => {
+					console.error('Failed to check server status', err);
+				});
 		} else {
 			// In a match room, we need to check if we are on a public server
 			// Public servers do not support multiviewer mode, since they lack local player secrets
