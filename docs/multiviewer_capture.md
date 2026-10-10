@@ -17,7 +17,7 @@ To run a hardware multiviewer setup, you will typically need:
 The multiviewer mode simplifies setup by allowing you to align and calibrate just **one** player (the top-left one). The system then automatically computes and applies the same offsets to the other players, dividing the video feed equally based on your chosen layout.
 
 ### Setup Steps:
-1. **Start the Producer**: Open your producer capture page.
+1. **Start the Producer**: Open the producer capture page for your match room: `http://localhost:5000/room/u/<playerid>/producer` (multiviewer capture requires being in a match room on a private/local server; it is not available in private rooms or on public servers).
 2. **Select Multiviewer Mode**: Choose the appropriate grid size (2x2, 3x2, or 4x2) in the setup Wizard. Choose your capture device.
 3. **Calibrate**: Start a game at level 0 on the console shown in the **TOP-LEFT** quadrant. Click somewhere black in that player's Tetris field to auto-calibrate. The system will extrapolate the coordinates for all other players in the grid automatically.
 4. **Connect**: The system internally creates individual players and connects them to the central match database simultaneously.
@@ -29,8 +29,8 @@ By default, a multiviewer capture assigns the players starting from "Player 1" (
 If you are running multiple capture instances (or using multiple PCs) to cover more players, you can specify the starting player number by appending the `?first_player={num}` parameter to your producer URL.
 
 For example, for two 2x2 multiviewer setups:
-- **Players 1 to 4** (Capture Card 1): `http://localhost:3000/producer?first_player=1` (or simply omit the parameter)
-- **Players 5 to 8** (Capture Card 2): `http://localhost:3000/producer?first_player=5`
+- **Players 1 to 4** (Capture Card 1): `http://localhost:5000/room/u/<playerid>/producer?first_player=1` (or simply omit the parameter)
+- **Players 5 to 8** (Capture Card 2): `http://localhost:5000/room/u/<playerid>/producer?first_player=5`
 
 *Note: You would open each URL in a separate browser tab or window, assigning their respective capture cards to each.*
 
