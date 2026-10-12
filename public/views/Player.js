@@ -199,6 +199,7 @@ const DEFAULT_OPTIONS = {
 	),
 	sound: QueryString.get('sound') !== '0',
 	stereo: 0, // [-1, 1] representing left:-1 to right:1
+	volume: 1, // [0, 1]
 	reliable_field: 1,
 	draw_field: 1,
 	avatar: QueryString.get('avatar') !== '0',
@@ -280,6 +281,7 @@ export default class Player extends EventTarget {
 
 		this.hide_profile_card_on_next_game = false;
 		this.muted = !!this.options.muted;
+		this.volume = clamp(this.options.volume, 0, 1);
 
 		const styles = getComputedStyle(this.dom.field);
 		const field_width = css_size(styles.width);
@@ -561,7 +563,9 @@ export default class Player extends EventTarget {
 		Object.entries(SOUNDS).forEach(([sound, { source, gain }]) => {
 			const audio = new Audio(source);
 			const track = AUDIO_CONTEXT.createMediaElementSource(audio);
-			const gainNode = new GainNode(AUDIO_CONTEXT, { gain });
+			const gainNode = new GainNode(AUDIO_CONTEXT, {
+				gain: gain * this.volume,
+			});
 			const stereoNode = new StereoPannerNode(AUDIO_CONTEXT, {
 				pan: this.options.stereo,
 			});
@@ -597,13 +601,34 @@ export default class Player extends EventTarget {
 		this.muted = true;
 		Object.values(this.sounds).forEach(soundFn => {
 			soundFn.gainNode.gain.value = 0;
+			soundFn.gainNode.gain.setValueAtTime(0, AUDIO_CONTEXT.currentTime);
 		});
 	}
 
 	unmute() {
 		this.muted = false;
 		Object.values(this.sounds).forEach(soundFn => {
-			soundFn.gainNode.gain.value = soundFn.gain;
+			const targetGain = soundFn.gain * this.volume;
+			soundFn.gainNode.gain.value = targetGain;
+			soundFn.gainNode.gain.setValueAtTime(
+				targetGain,
+				AUDIO_CONTEXT.currentTime
+			);
+		});
+	}
+
+	setVolume(volume) {
+		this.volume = clamp(volume, 0, 1);
+
+		if (this.muted) return;
+
+		Object.values(this.sounds).forEach(soundFn => {
+			const targetGain = soundFn.gain * this.volume;
+			soundFn.gainNode.gain.value = targetGain;
+			soundFn.gainNode.gain.setValueAtTime(
+				targetGain,
+				AUDIO_CONTEXT.currentTime
+			);
 		});
 	}
 

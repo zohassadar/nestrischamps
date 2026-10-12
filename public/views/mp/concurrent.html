@@ -202,6 +202,8 @@
 							player_node.querySelector(`.running_trt`).remove();
 						}
 
+						const stereo = translate([1, 3], [-1, 1], col_num);
+
 						const player = new Player(
 							{
 								name: player_node.querySelector(`.name`),
@@ -217,7 +219,7 @@
 							{
 								preview_pixel_size: 2,
 								preview_align: 'tr',
-								stereo: translate([1, 3], [-1, 1], col_num),
+								stereo,
 								format_score: readableScoreFomatter,
 							}
 						);
@@ -249,6 +251,7 @@
 						player._layout_data = {
 							left: player_node.style.left,
 							top: player_node.style.top,
+							stereo,
 						};
 					});
 				});
@@ -265,6 +268,9 @@
 							player.dom.node.style.right = null;
 							player.dom.node.style.top = player._layout_data.top;
 							player.dom.node.style.left = player._layout_data.left;
+
+							player.setVolume(1);
+							player.panSounds(player._layout_data.stereo);
 						});
 						return;
 					}
@@ -272,17 +278,20 @@
 					const players_copy = [...players];
 					const focus_player = players_copy.splice(player_idx, 1)[0];
 
+					if (!focus_player) return;
+
 					// position focus player
-					if (focus_player) {
-						focus_player.dom.node.classList.add('focus');
-						Object.assign(focus_player.dom.node.style, {
-							left: 0,
-							top: 0,
-							transform: null,
-							transformOrigin: null,
-							zIndex: 0,
-						});
-					}
+					focus_player.dom.node.classList.add('focus');
+					Object.assign(focus_player.dom.node.style, {
+						left: 0,
+						top: 0,
+						transform: null,
+						transformOrigin: null,
+						zIndex: 0,
+					});
+
+					focus_player.setVolume(1);
+					focus_player.panSounds(-0.8);
 
 					const scale = 0.41;
 					const top = 8;
@@ -296,6 +305,8 @@
 
 					players_copy.forEach(player => {
 						player.dom.node.classList.remove('focus');
+						player.setVolume(0.25);
+						player.panSounds(1);
 					});
 
 					players_copy.forEach((player, pidx) => {

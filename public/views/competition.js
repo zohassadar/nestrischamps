@@ -258,12 +258,20 @@ class TetrisCompetitionAPI {
 		// Implemented conditionally in competition layouts
 	}
 
+	focusPlayer() {
+		// Implemented conditionally in competition layouts
+	}
+
 	mute(player_idx) {
 		getPlayer(player_idx)?.mute?.();
 	}
 
 	unmute(player_idx) {
 		getPlayer(player_idx)?.unmute?.();
+	}
+
+	setVolume(player_idx, volume) {
+		getPlayer(player_idx)?.setVolume?.(volume);
 	}
 
 	scoreRecorded() {
