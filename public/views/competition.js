@@ -254,6 +254,18 @@ class TetrisCompetitionAPI {
 		// Implemented conditionally in competition class below
 	}
 
+	setMatch() {
+		// Implemented conditionally in competition layouts
+	}
+
+	mute(player_idx) {
+		getPlayer(player_idx)?.mute?.();
+	}
+
+	unmute(player_idx) {
+		getPlayer(player_idx)?.unmute?.();
+	}
+
 	scoreRecorded() {
 		// only relevant for single player layouts
 	}

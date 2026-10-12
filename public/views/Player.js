@@ -279,6 +279,7 @@ export default class Player extends EventTarget {
 		};
 
 		this.hide_profile_card_on_next_game = false;
+		this.muted = !!this.options.muted;
 
 		const styles = getComputedStyle(this.dom.field);
 		const field_width = css_size(styles.width);
@@ -495,6 +496,10 @@ export default class Player extends EventTarget {
 		this.setupSounds();
 		this.panSounds(this.options.stereo);
 
+		if (this.muted) {
+			this.mute();
+		}
+
 		if (this.options.srabbit) {
 			this.options.srabbit_input_timeline =
 				STACKRABBIT_INPUT_TIMELINES[this.options.srabbit_input_speed];
@@ -566,24 +571,49 @@ export default class Player extends EventTarget {
 				.connect(stereoNode)
 				.connect(AUDIO_CONTEXT.destination);
 
-			this.sounds[sound] = () => {
+			const soundFn = () => {
+				if (this.muted) return;
+
 				if (AUDIO_CONTEXT.state === 'suspended') {
 					AUDIO_CONTEXT.resume();
 				}
 
-				audio.play();
+				audio.currentTime = 0;
+				audio.play().catch(() => {});
 			};
 
-			this.sounds[sound].pan = stereoNode.pan;
+			soundFn.audio = audio;
+			soundFn.track = track;
+			soundFn.gain = gain;
+			soundFn.gainNode = gainNode;
+			soundFn.stereoNode = stereoNode;
+			soundFn.pan = stereoNode.pan;
+
+			this.sounds[sound] = soundFn;
+		});
+	}
+
+	mute() {
+		this.muted = true;
+		Object.values(this.sounds).forEach(soundFn => {
+			soundFn.gainNode.gain.value = 0;
+		});
+	}
+
+	unmute() {
+		this.muted = false;
+		Object.values(this.sounds).forEach(soundFn => {
+			soundFn.gainNode.gain.value = soundFn.gain;
 		});
 	}
 
 	panSounds(stereoValue) {
 		this.options.stereo = stereoValue = clamp(stereoValue, -1, 1);
 
-		Object.values(this.sounds).forEach(soundFunction =>
-			soundFunction.pan.setValueAtTime(stereoValue, 0)
-		);
+		Object.values(this.sounds).forEach(soundFunction => {
+			soundFunction.pan.value = stereoValue;
+			soundFunction.pan.setValueAtTime(stereoValue, AUDIO_CONTEXT.currentTime);
+		});
 	}
 
 	setHideProfileCardOnNextGame(do_hide) {
@@ -910,7 +940,7 @@ export default class Player extends EventTarget {
 			step();
 		}
 
-		if (this.options.sound) {
+		if (this.options.sound && !this.muted) {
 			this.sounds.tetris();
 		}
 

@@ -1462,23 +1462,33 @@
 						match_node.style.display = null;
 					});
 
+					players.forEach(player => player.unmute());
+
 					return;
 				}
 
 				let show_match, hide_match;
+				let show_players, hide_players;
 
 				if (match_idx === 0) {
 					show_match = document.querySelector('#match1');
 					hide_match = document.querySelector('#match2');
+					show_players = players.slice(0, 2);
+					hide_players = players.slice(2, 4);
 				} else {
 					show_match = document.querySelector('#match2');
 					hide_match = document.querySelector('#match1');
+					show_players = players.slice(2, 4);
+					hide_players = players.slice(0, 2);
 				}
 
 				show_match.classList.remove('small');
 
 				hide_match.style.display = 'none';
 				show_match.style.display = null;
+
+				hide_players.forEach(player => player.mute());
+				show_players.forEach(player => player.unmute());
 			};
 
 			competition.API.showProfileCard = function (visible, match_idx) {
