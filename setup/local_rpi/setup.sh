@@ -2,26 +2,13 @@
 
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y git build-essential vim zsh gawk postgresql coturn
-
-# Install oh-my-zsh without user interaction
-sudo chsh -s $(which zsh) "$(whoami)"
-export RUNZSH=no
-export KEEP_ZSHRC=yes
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended
+sudo apt install -y git build-essential vim postgresql coturn
 
 echo "CREATE USER nestrischamps with encrypted password 'nestrischamps'; CREATE DATABASE nestrischamps with owner=nestrischamps;" | sudo -u postgres psql
 
 DB_URL="postgres://nestrischamps:nestrischamps@localhost:5432/nestrischamps?sslmode=disable"
 
-cd ~ # go to home dir
-mkdir -p src
-cd src
-
-git clone https://github.com/nestrischamps/nestrischamps.git
-cd nestrischamps
 mkdir -p logs
-git checkout main
 
 cat setup/db.sql | psql "${DB_URL}"
 

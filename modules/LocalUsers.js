@@ -103,13 +103,11 @@ const _importUsers = async (
 		'seed',
 		'display_name',
 		'full_name',
-		'twitch',
 		'country',
 		'state',
 		'age',
 		'job',
 		'achievements',
-		'num_maxouts',
 		'style',
 		'pb18',
 		'pb19',
@@ -119,11 +117,9 @@ const _importUsers = async (
 		'interest2',
 		'interest3',
 		'interest4',
-		'pronouns',
-		'controller',
 	];
 
-	const NUMERIC_FIELDS = ['seed', 'pb18', 'pb19', 'pb29', 'num_maxouts', 'age'];
+	const NUMERIC_FIELDS = ['seed', 'pb18', 'pb19', 'pb29', 'age'];
 
 	// 1. we extract all records from the sheet and convert that in NTC-compatible player data
 	start = performance.now();
@@ -193,7 +189,7 @@ const _importUsers = async (
 		);
 		const ntc = {
 			id,
-			login: /^\s*$/.test(csv.twitch) ? `__user${id}` : csv.twitch,
+			login: `__user${id}`,
 			email: `__user${id}@nestrischamps.io`,
 			display_name: `${csv.seed ? `${csv.seed}. ` : ''}${csv.display_name}`,
 			full_name: csv.full_name,
@@ -233,9 +229,13 @@ const _importUsers = async (
 		};
 
 		const age = parseInt(csv.age, 10);
-		const dob = ntc.dob;
-		dob.setFullYear(dob.getFullYear() - age);
-		dob.setDate(dob.getDate() - 1);
+		if (Number.isFinite(age)) {
+			const dob = ntc.dob;
+			dob.setFullYear(dob.getFullYear() - age);
+			dob.setDate(dob.getDate() - 1);
+		} else {
+			ntc.dob = null;
+		}
 
 		player.ntc = ntc;
 	});

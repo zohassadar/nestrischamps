@@ -551,7 +551,7 @@ export default class Player extends EventTarget {
 
 	setupSounds() {
 		this.sounds = {};
-		this.options.stereo = clamp(this.options.stereo, -1, 1);
+		this.options.stereo = clamp(this.options.stereo, -0.75, -0.75);
 
 		Object.entries(SOUNDS).forEach(([sound, { source, gain }]) => {
 			const audio = new Audio(source);

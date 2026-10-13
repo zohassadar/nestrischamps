@@ -1,6 +1,16 @@
 export const peerServerOptions = {
-	host: '0.peerjs.com',
+	host: 'zopi.local',
 	path: '/',
-	port: 443,
+	port: 9000,
 	secure: true,
+	config: {
+		iceServers: [
+			{ urls: ['stun:zopi.local:3478'] },
+			{
+				urls: ['turn:zopi.local:3478'],
+				username: 'ntc',
+				credential: 'ntc',
+			},
+		],
+	},
 };
